@@ -26,11 +26,11 @@ jobs:
 
       - name: Generate Clean Android Project
         run: |
-          mv lib/main.dart main_backup.dart
-          mv pubspec.yaml pubspec_backup.yaml
+          cp -r lib lib_backup
+          cp pubspec.yaml pubspec_backup.yaml
           flutter create . --project-name islamic_app
-          mv main_backup.dart lib/main.dart
-          mv pubspec_backup.yaml pubspec.yaml
+          cp -r lib_backup/* lib/
+          cp pubspec_backup.yaml pubspec.yaml
 
       - name: Get Packages
         run: flutter pub get
