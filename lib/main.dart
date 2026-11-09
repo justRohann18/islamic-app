@@ -1,4 +1,7 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
+import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {
   runApp(const IslamicApp());
@@ -11,12 +14,12 @@ class IslamicApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      title: 'Noor - Islamic App',
+      title: 'Noor - Islamic Pro',
       theme: ThemeData(
         brightness: Brightness.dark,
-        scaffoldBackgroundColor: const Color(0xFF0A191E), // Deep Royal Dark
-        primaryColor: const Color(0xFF10B981), // Emerald Green
-        cardColor: const Color(0xFF122830),
+        scaffoldBackgroundColor: const Color(0xFF071318),
+        primaryColor: const Color(0xFF10B981),
+        cardColor: const Color(0xFF10242D),
         fontFamily: 'Roboto',
       ),
       home: const MainNavigation(),
@@ -34,25 +37,11 @@ class MainNavigation extends StatefulWidget {
 class _MainNavigationState extends State<MainNavigation> {
   int _currentIndex = 0;
 
-  // Shared state for Prayer Tracker
-  Map<String, Map<String, dynamic>> prayers = {
-    'Fajr': {'time': '05:15 AM', 'done': false, 'hindi': 'फज्र'},
-    'Dhuhr': {'time': '01:30 PM', 'done': false, 'hindi': 'ज़ुहर'},
-    'Asr': {'time': '04:45 PM', 'done': false, 'hindi': 'अस्र'},
-    'Maghrib': {'time': '06:20 PM', 'done': false, 'hindi': 'मग़रिब'},
-    'Isha': {'time': '08:00 PM', 'done': false, 'hindi': 'ईशा'},
-  };
-
-  void togglePrayer(String key, bool val) {
-    setState(() {
-      prayers[key]!['done'] = val;
-    });
-  }
-
   @override
   Widget build(BuildContext context) {
     final List<Widget> screens = [
-      DashboardScreen(prayers: prayers, onToggle: togglePrayer),
+      const DashboardScreen(),
+      const QuranScreen(),
       const TasbeehScreen(),
       const DuasScreen(),
       const AsmaUlHusnaScreen(),
@@ -67,12 +56,15 @@ class _MainNavigationState extends State<MainNavigation> {
         child: BottomNavigationBar(
           currentIndex: _currentIndex,
           onTap: (index) => setState(() => _currentIndex = index),
-          backgroundColor: const Color(0xFF0D2128),
-          selectedItemColor: const Color(0xFFFFD700), // Gold
+          backgroundColor: const Color(0xFF0A1920),
+          selectedItemColor: const Color(0xFFFFD700),
           unselectedItemColor: Colors.white54,
           type: BottomNavigationBarType.fixed,
+          selectedFontSize: 12,
+          unselectedFontSize: 11,
           items: const [
             BottomNavigationBarItem(icon: Icon(Icons.mosque), label: 'Home'),
+            BottomNavigationBarItem(icon: Icon(Icons.auto_stories), label: 'Quran'),
             BottomNavigationBarItem(icon: Icon(Icons.touch_app), label: 'Tasbeeh'),
             BottomNavigationBarItem(icon: Icon(Icons.menu_book), label: 'Duas'),
             BottomNavigationBarItem(icon: Icon(Icons.star), label: '99 Names'),
@@ -83,12 +75,94 @@ class _MainNavigationState extends State<MainNavigation> {
   }
 }
 
-// ---------------- 1. DASHBOARD SCREEN ----------------
-class DashboardScreen extends StatelessWidget {
-  final Map<String, Map<String, dynamic>> prayers;
-  final Function(String, bool) onToggle;
+// ---------------- 1. LIVE DASHBOARD SCREEN ----------------
+class DashboardScreen extends StatefulWidget {
+  const DashboardScreen({super.key});
 
-  const DashboardScreen({super.key, required this.prayers, required this.onToggle});
+  @override
+  State<DashboardScreen> createState() => _DashboardScreenState();
+}
+
+class _DashboardScreenState extends State<DashboardScreen> {
+  String selectedCity = 'Mumbai';
+  String hijriDate = 'Loading...';
+  bool isLoading = true;
+
+  final List<String> cities = [
+    'Mumbai', 'Delhi', 'Hyderabad', 'Lucknow', 'Kolkata', 
+    'Bangalore', 'Bhopal', 'Patna', 'Srinagar', 'Makkah', 'Madinah', 'Dubai'
+  ];
+
+  Map<String, Map<String, dynamic>> prayers = {
+    'Fajr': {'time': '--:--', 'done': false, 'hindi': 'फज्र'},
+    'Dhuhr': {'time': '--:--', 'done': false, 'hindi': 'ज़ुहर'},
+    'Asr': {'time': '--:--', 'done': false, 'hindi': 'अस्र'},
+    'Maghrib': {'time': '--:--', 'done': false, 'hindi': 'मग़रिब'},
+    'Isha': {'time': '--:--', 'done': false, 'hindi': 'ईशा'},
+  };
+
+  @override
+  void initState() {
+    super.initState();
+    _loadSavedData();
+  }
+
+  Future<void> _loadSavedData() async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      selectedCity = prefs.getString('city') ?? 'Mumbai';
+      for (var key in prayers.keys) {
+        prayers[key]!['done'] = prefs.getBool('prayer_$key') ?? false;
+      }
+    });
+    _fetchPrayerTimes(selectedCity);
+  }
+
+  Future<void> _fetchPrayerTimes(String city) async {
+    setState(() => isLoading = true);
+    try {
+      String country = (city == 'Makkah' || city == 'Madinah') ? 'Saudi Arabia' : (city == 'Dubai' ? 'UAE' : 'India');
+      final url = Uri.parse('https://api.aladhan.com/v1/timingsByCity?city=$city&country=$country&method=1');
+      final response = await http.get(url);
+
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body)['data'];
+        final timings = data['timings'];
+        final hijri = data['date']['hijri'];
+
+        setState(() {
+          prayers['Fajr']!['time'] = timings['Fajr'];
+          prayers['Dhuhr']!['time'] = timings['Dhuhr'];
+          prayers['Asr']!['time'] = timings['Asr'];
+          prayers['Maghrib']!['time'] = timings['Maghrib'];
+          prayers['Isha']!['time'] = timings['Isha'];
+          hijriDate = '${hijri['day']} ${hijri['month']['en']} ${hijri['year']}';
+          isLoading = false;
+        });
+      }
+    } catch (e) {
+      setState(() {
+        hijriDate = '1448 Hijri';
+        isLoading = false;
+      });
+    }
+  }
+
+  Future<void> _togglePrayer(String key, bool val) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('prayer_$key', val);
+    setState(() {
+      prayers[key]!['done'] = val;
+    });
+  }
+
+  Future<void> _changeCity(String? newCity) async {
+    if (newCity == null) return;
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('city', newCity);
+    setState(() => selectedCity = newCity);
+    _fetchPrayerTimes(newCity);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -101,32 +175,47 @@ class DashboardScreen extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Top Greeting & Hijri Date
+            // Top Bar with City Selector
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const Column(
+                Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('Assalamu Alaikum 👋', style: TextStyle(color: Colors.white70, fontSize: 14)),
-                    SizedBox(height: 4),
-                    Text('Noor Islamic Pro', style: TextStyle(color: Color(0xFFFFD700), fontSize: 22, fontWeight: FontWeight.bold)),
+                    const Text('Assalamu Alaikum 👋', style: TextStyle(color: Colors.white70, fontSize: 13)),
+                    const SizedBox(height: 2),
+                    Text('🌙 $hijriDate', style: const TextStyle(color: Color(0xFFFFD700), fontSize: 16, fontWeight: FontWeight.bold)),
                   ],
                 ),
+                // City Dropdown
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
                   decoration: BoxDecoration(
-                    color: const Color(0xFF1E3A44),
+                    color: const Color(0xFF16323F),
                     borderRadius: BorderRadius.circular(20),
                     border: Border.all(color: const Color(0xFFFFD700).withOpacity(0.5)),
                   ),
-                  child: const Text('🌙 1448 Hijri', style: TextStyle(color: Color(0xFFFFD700), fontWeight: FontWeight.w600)),
+                  child: DropdownButtonHideUnderline(
+                    child: DropdownButton<String>(
+                      value: selectedCity,
+                      dropdownColor: const Color(0xFF10242D),
+                      icon: const Icon(Icons.location_on, color: Color(0xFFFFD700), size: 18),
+                      style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                      onChanged: _changeCity,
+                      items: cities.map((String city) {
+                        return DropdownMenuItem<String>(
+                          value: city,
+                          child: Text('$city '),
+                        );
+                      }).toList(),
+                    ),
+                  ),
                 ),
               ],
             ),
             const SizedBox(height: 20),
 
-            // Hero Banner - Next Prayer
+            // Hero Progress Banner
             Container(
               width: double.infinity,
               padding: const EdgeInsets.all(20),
@@ -136,103 +225,86 @@ class DashboardScreen extends StatelessWidget {
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                 ),
-                borderRadius: BorderRadius.circular(20),
+                borderRadius: BorderRadius.circular(22),
                 boxShadow: [
-                  BoxShadow(color: Colors.black.withOpacity(0.3), blurRadius: 10, offset: const Offset(0, 5)),
+                  BoxShadow(color: const Color(0xFF047857).withOpacity(0.3), blurRadius: 15, offset: const Offset(0, 6)),
                 ],
+                border: Border.all(color: const Color(0xFFFFD700).withOpacity(0.3)),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Row(
+                  Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Text('DAILY TRACKER STATUS', style: TextStyle(color: Colors.white70, fontSize: 12, letterSpacing: 1.2)),
-                      Icon(Icons.query_builder, color: Color(0xFFFFD700)),
+                      Text('📍 LIVE TIMINGS: ${selectedCity.toUpperCase()}', style: const TextStyle(color: Color(0xFFFFD700), fontSize: 12, fontWeight: FontWeight.bold, letterSpacing: 1)),
+                      if (isLoading)
+                        const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                      else
+                        const Icon(Icons.cloud_done, color: Colors.white70, size: 18),
                     ],
                   ),
-                  const SizedBox(height: 8),
-                  Text('$completed of 5 Prayers Completed', style: const TextStyle(color: Colors.white, fontSize: 22, fontWeight: FontWeight.bold)),
-                  const SizedBox(height: 15),
+                  const SizedBox(height: 10),
+                  Text('$completed of 5 Prayers Offered', style: const TextStyle(color: Colors.white, fontSize: 22, fontWeight: FontWeight.bold)),
+                  const SizedBox(height: 6),
+                  Text(completed == 5 ? 'MashaAllah! Aaj ki saari namazein mukammal!' : 'Data phone mein auto-save ho raha hai', style: const TextStyle(color: Colors.white70, fontSize: 13)),
+                  const SizedBox(height: 14),
                   ClipRRect(
                     borderRadius: BorderRadius.circular(10),
                     child: LinearProgressIndicator(
                       value: progress,
                       minHeight: 10,
-                      backgroundColor: Colors.black26,
+                      backgroundColor: Colors.black38,
                       valueColor: const AlwaysStoppedAnimation<Color>(Color(0xFFFFD700)),
                     ),
                   ),
                 ],
               ),
             ),
-            const SizedBox(height: 20),
+            const SizedBox(height: 22),
 
-            // Ayah of the Day Card
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: const Color(0xFF122830),
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: Colors.white12),
-              ),
-              child: const Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Icon(Icons.auto_awesome, color: Color(0xFFFFD700), size: 18),
-                      SizedBox(width: 8),
-                      Text('Ayah of the Day', style: TextStyle(color: Color(0xFFFFD700), fontWeight: FontWeight.bold)),
-                    ],
-                  ),
-                  SizedBox(height: 12),
-                  Center(
-                    child: Text(
-                      'فَإِنَّ مَعَ الْعُسْرِ يُسْرًا',
-                      style: TextStyle(fontSize: 26, color: Colors.white, fontWeight: FontWeight.bold),
-                    ),
-                  ),
-                  SizedBox(height: 8),
-                  Center(
-                    child: Text(
-                      '"Beshak, har mushkil ke sath aasani hai." (Surah Ash-Sharh 94:5)',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(color: Colors.white70, fontSize: 13, fontStyle: FontStyle.italic),
-                    ),
-                  ),
-                ],
-              ),
+            // Prayer Tracker Header
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const Text('Aaj ki Namazein', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white)),
+                TextButton(
+                  onPressed: () async {
+                    for (var k in prayers.keys) {
+                      await _togglePrayer(k, false);
+                    }
+                  },
+                  child: const Text('Reset All', style: TextStyle(color: Color(0xFFFFD700), fontSize: 13)),
+                )
+              ],
             ),
-            const SizedBox(height: 24),
+            const SizedBox(height: 6),
 
-            // Prayer Tracker List
-            const Text('Aaj ki Namazein (Prayer Tracker)', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white)),
-            const SizedBox(height: 12),
+            // Prayer Cards
             ...prayers.keys.map((String key) {
               bool isDone = prayers[key]!['done'];
               return Container(
                 margin: const EdgeInsets.only(bottom: 10),
                 decoration: BoxDecoration(
-                  color: isDone ? const Color(0xFF064E3B).withOpacity(0.6) : const Color(0xFF122830),
-                  borderRadius: BorderRadius.circular(14),
+                  color: isDone ? const Color(0xFF064E3B).withOpacity(0.5) : const Color(0xFF10242D),
+                  borderRadius: BorderRadius.circular(16),
                   border: Border.all(color: isDone ? const Color(0xFF10B981) : Colors.white10),
                 ),
                 child: ListTile(
                   leading: CircleAvatar(
-                    backgroundColor: isDone ? const Color(0xFF10B981) : const Color(0xFF1E3A44),
+                    backgroundColor: isDone ? const Color(0xFF10B981) : const Color(0xFF16323F),
                     child: Icon(
                       isDone ? Icons.check : Icons.access_time,
                       color: isDone ? Colors.white : const Color(0xFFFFD700),
                     ),
                   ),
                   title: Text('$key (${prayers[key]!['hindi']})', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-                  subtitle: Text(prayers[key]!['time'], style: const TextStyle(color: Colors.white60)),
+                  subtitle: Text('Waqt: ${prayers[key]!['time']}', style: const TextStyle(color: Color(0xFFFFD700), fontWeight: FontWeight.w500)),
                   trailing: Switch(
                     activeColor: const Color(0xFFFFD700),
                     activeTrackColor: const Color(0xFF10B981),
                     value: isDone,
-                    onChanged: (val) => onToggle(key, val),
+                    onChanged: (val) => _togglePrayer(key, val),
                   ),
                 ),
               );
@@ -244,7 +316,98 @@ class DashboardScreen extends StatelessWidget {
   }
 }
 
-// ---------------- 2. TASBEEH COUNTER SCREEN ----------------
+// ---------------- 2. QURAN MINI READER SCREEN ----------------
+class QuranScreen extends StatelessWidget {
+  const QuranScreen({super.key});
+
+  final List<Map<String, String>> surahs = const [
+    {
+      'name': '1. Surah Al-Fatiha (सूरह अल-फ़ातिहा)',
+      'ayahs': 'بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ ۝ الْحَمْدُ لِلَّهِ رَبِّ الْعَالَمِينَ ۝ الرَّحْمَٰنِ الرَّحِيمِ ۝ مَالِكِ يَوْمِ الدِّينِ ۝ إِيَّاكَ نَعْبُدُ وَإِيَّاكَ نَسْتَعِينُ ۝ اهْدِنَا الصِّرَاطَ الْمُسْتَقِيمَ ۝ صِرَاطَ الَّذِينَ أَنْعَمْتَ عَلَيْهِمْ غَيْرِ الْمَغْضُوبِ عَلَيْهِمْ وَلَا الضَّالِّينَ ۝',
+      'translation': 'Shuru Allah ke naam se jo bada meherban nihayat reham wala hai. Sab tareef Allah Ta\'ala ke liye hai jo tamam jahanon ka palne wala hai. Bada meherban nihayat reham karne wala. Badle ke din (Qayamat) ka malik hai. Hum sirf teri hi ibadat karte hain aur sirf tujhi se madad chahte hain. Humein seedha rasta dikha. Un logon ka rasta jin par tu ne in\'aam kiya, un ka nahi jin par ghazab kiya gaya aur na gumrahon ka.'
+    },
+    {
+      'name': '2. Ayat-ul-Kursi (आयतुल कुर्सी)',
+      'ayahs': 'اللَّهُ لَا إِلَٰهَ إِلَّا هُوَ الْحَيُّ الْقَيُّومُ ۚ لَا تَأْخُذُهُ سِنَةٌ وَلَا نَوْمٌ ۚ لَهُ مَا فِي السَّمَاوَاتِ وَمَا فِي الْأَرْضِ ۗ مَنْ ذَا الَّذِي يَشْفَعُ عِنْدَهُ إِلَّا بِإِذْنِهِ ۚ يَعْلَمُ مَا بَيْنَ أَيْدِيهِمْ وَمَا خَلْفَهُمْ ۖ وَلَا يُحِيطُونَ بِشَيْءٍ مِنْ عِلْمِهِ إِلَّا بِمَا شَاءَ ۚ وَسِعَ كُرْسِيُّهُ السَّمَاوَاتِ وَالْأَرْضَ ۖ وَلَا يَئُودُهُ حِفْظُهُمَا ۚ وَهُوَ الْعَلِيُّ الْعَظِيمُ ۝',
+      'translation': 'Allah wo hai jiske siwa koi ma\'bood nahi, wo hamesha zinda rehne wala aur sab ko thamne wala hai. Use na oongh aati hai na neend. Jo kuch aasmano aur zameen mein hai sab usi ka hai...'
+    },
+    {
+      'name': '3. Surah Al-Ikhlas (सूरह अल-इख़लास)',
+      'ayahs': 'قُلْ هُوَ اللَّهُ أَحَدٌ ۝ اللَّهُ الصَّمَدُ ۝ لَمْ يَلِدْ وَلَمْ يُولَدْ ۝ وَلَمْ يَكُنْ لَهُ كُفُوًا أَحَدٌ ۝',
+      'translation': 'Keh dijiye ki wo Allah ek hai. Allah be-niyaz hai (sab uske mohtaj hain). Na uski koi aulad hai aur na wo kisi ki aulad hai. Aur na koi uske barabar ka hai.'
+    },
+    {
+      'name': '4. Surah Al-Falaq (सूरह अल-फ़लक़)',
+      'ayahs': 'قُلْ أَعُوذُ بِرَبِّ الْفَلَقِ ۝ مِنْ شَرِّ مَا خَلَقَ ۝ وَمِنْ شَرِّ غَاسِقٍ إِذَا وَقَبَ ۝ وَمِنْ شَرِّ النَّفَّاثَاتِ فِي الْعُقَدِ ۝ وَمِنْ شَرِّ حَاسِدٍ إِذَا حَسَدَ ۝',
+      'translation': 'Keh dijiye ki main subah ke Rab ki panah mein aata hoon. Har us cheez ke shar se jo usne paida ki. Aur andheri raat ki burai se jab uska andhera phail jaye. Aur girahon (knots) mein phoonkne waliyon ke shar se. Aur hasad (jalan) karne wale ke shar se jab wo hasad kare.'
+    },
+    {
+      'name': '5. Surah An-Nas (सूरह अन-नास)',
+      'ayahs': 'قُلْ أَعُوذُ بِرَبِّ النَّاسِ ۝ مَلِكِ النَّاسِ ۝ إِلَٰهِ النَّاسِ ۝ مِنْ شَرِّ الْوَسْوَاسِ الْخَنَّاسِ ۝ الَّذِي يُوَسْوِسُ فِي صُدُورِ النَّاسِ ۝ مِنَ الْجِنَّةِ وَالنَّاسِ ۝',
+      'translation': 'Keh dijiye ki main insano ke Rab ki panah mangta hoon. Insano ke Badshah ki. Insano ke Ma\'bood ki. Waswasa dalne wale peeche hat jane wale ke shar se. Jo logon ke seeno mein waswasa dalta hai. (Chahe wo) Jinnat mein se ho ya insano mein se.'
+    },
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    return SafeArea(
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text('📖 Al-Quran (Rozana Tilawat)', style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Color(0xFFFFD700))),
+            const SizedBox(height: 6),
+            const Text('Namaz aur hifazat ke liye zaroori Suratein', style: TextStyle(color: Colors.white60, fontSize: 13)),
+            const SizedBox(height: 16),
+            Expanded(
+              child: ListView.builder(
+                itemCount: surahs.length,
+                itemBuilder: (context, index) {
+                  return Container(
+                    margin: const EdgeInsets.only(bottom: 16),
+                    padding: const EdgeInsets.all(18),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF10242D),
+                      borderRadius: BorderRadius.circular(18),
+                      border: Border.all(color: const Color(0xFFFFD700).withOpacity(0.25)),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(surahs[index]['name']!, style: const TextStyle(color: Color(0xFF10B981), fontWeight: FontWeight.bold, fontSize: 16)),
+                        const Divider(color: Colors.white12, height: 24),
+                        Text(
+                          surahs[index]['ayahs']!,
+                          textAlign: TextAlign.right,
+                          style: const TextStyle(fontSize: 24, color: Colors.white, height: 1.8, fontWeight: FontWeight.w600),
+                        ),
+                        const SizedBox(height: 14),
+                        Container(
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: Colors.black26,
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: Text(
+                            surahs[index]['translation']!,
+                            style: const TextStyle(color: Colors.white70, fontSize: 13, height: 1.4),
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+                },
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// ---------------- 3. TASBEEH COUNTER (WITH MEMORY) ----------------
 class TasbeehScreen extends StatefulWidget {
   const TasbeehScreen({super.key});
 
@@ -254,6 +417,7 @@ class TasbeehScreen extends StatefulWidget {
 
 class _TasbeehScreenState extends State<TasbeehScreen> {
   int count = 0;
+  int totalAllTime = 0;
   int target = 33;
   int selectedZikr = 0;
 
@@ -262,7 +426,38 @@ class _TasbeehScreenState extends State<TasbeehScreen> {
     {'arabic': 'الْحَمْدُ لِلَّهِ', 'roman': 'Alhamdulillah', 'meaning': 'Sab tareef Allah ke liye hai'},
     {'arabic': 'اللَّهُ أَكْبَرُ', 'roman': 'Allahu Akbar', 'meaning': 'Allah sabse bada hai'},
     {'arabic': 'أَسْتَغْفِرُ اللَّهَ', 'roman': 'Astaghfirullah', 'meaning': 'Main Allah se maafi mangta hoon'},
+    {'arabic': 'صَلَّى اللَّهُ عَلَيْهِ وَسَلَّمَ', 'roman': 'Durood Shareef', 'meaning': 'Allah ki rehmat ho Nabi ﷺ par'},
   ];
+
+  @override
+  void initState() {
+    super.initState();
+    _loadTasbeeh();
+  }
+
+  Future<void> _loadTasbeeh() async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      count = prefs.getInt('tasbeeh_count') ?? 0;
+      totalAllTime = prefs.getInt('tasbeeh_total') ?? 0;
+    });
+  }
+
+  Future<void> _increment() async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      count++;
+      totalAllTime++;
+    });
+    await prefs.setInt('tasbeeh_count', count);
+    await prefs.setInt('tasbeeh_total', totalAllTime);
+  }
+
+  Future<void> _reset() async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() => count = 0);
+    await prefs.setInt('tasbeeh_count', 0);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -271,54 +466,61 @@ class _TasbeehScreenState extends State<TasbeehScreen> {
         padding: const EdgeInsets.all(20.0),
         child: Column(
           children: [
-            const Text('📿 Digital Tasbeeh', style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Color(0xFFFFD700))),
-            const SizedBox(height: 20),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const Text('📿 Digital Tasbeeh', style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Color(0xFFFFD700))),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  decoration: BoxDecoration(color: const Color(0xFF16323F), borderRadius: BorderRadius.circular(15)),
+                  child: Text('Total Zikr: $totalAllTime', style: const TextStyle(color: Color(0xFF10B981), fontWeight: FontWeight.bold, fontSize: 12)),
+                )
+              ],
+            ),
+            const SizedBox(height: 16),
 
             // Zikr Selector Chips
             SizedBox(
-              height: 45,
+              height: 42,
               child: ListView.builder(
                 scrollDirection: Axis.horizontal,
                 itemCount: azkar.length,
                 itemBuilder: (context, index) {
                   bool isSelected = selectedZikr == index;
                   return GestureDetector(
-                    onTap: () => setState(() {
-                      selectedZikr = index;
-                      count = 0;
-                    }),
+                    onTap: () => setState(() => selectedZikr = index),
                     child: Container(
                       margin: const EdgeInsets.only(right: 10),
                       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
                       decoration: BoxDecoration(
-                        color: isSelected ? const Color(0xFF10B981) : const Color(0xFF122830),
+                        color: isSelected ? const Color(0xFF10B981) : const Color(0xFF10242D),
                         borderRadius: BorderRadius.circular(25),
                         border: Border.all(color: isSelected ? const Color(0xFFFFD700) : Colors.white24),
                       ),
                       child: Text(azkar[index]['roman']!, style: const TextStyle(fontWeight: FontWeight.bold)),
-                    ),
+                      ),
                   );
                 },
               ),
             ),
-            const SizedBox(height: 30),
+            const SizedBox(height: 24),
 
             // Zikr Display Card
             Container(
               width: double.infinity,
-              padding: const EdgeInsets.all(24),
+              padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
-                color: const Color(0xFF122830),
+                color: const Color(0xFF10242D),
                 borderRadius: BorderRadius.circular(20),
                 border: Border.all(color: const Color(0xFFFFD700).withOpacity(0.3)),
               ),
               child: Column(
                 children: [
-                  Text(azkar[selectedZikr]['arabic']!, style: const TextStyle(fontSize: 36, color: Color(0xFFFFD700), fontWeight: FontWeight.bold)),
+                  Text(azkar[selectedZikr]['arabic']!, style: const TextStyle(fontSize: 32, color: Color(0xFFFFD700), fontWeight: FontWeight.bold)),
                   const SizedBox(height: 8),
                   Text(azkar[selectedZikr]['roman']!, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600)),
                   const SizedBox(height: 4),
-                  Text(azkar[selectedZikr]['meaning']!, style: const TextStyle(fontSize: 14, color: Colors.white60)),
+                  Text(azkar[selectedZikr]['meaning']!, style: const TextStyle(fontSize: 13, color: Colors.white60)),
                 ],
               ),
             ),
@@ -326,14 +528,10 @@ class _TasbeehScreenState extends State<TasbeehScreen> {
 
             // Giant Glowing Tap Button
             GestureDetector(
-              onTap: () {
-                setState(() {
-                  count++;
-                });
-              },
+              onTap: _increment,
               child: Container(
-                width: 210,
-                height: 210,
+                width: 200,
+                height: 200,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
                   gradient: const RadialGradient(
@@ -347,10 +545,10 @@ class _TasbeehScreenState extends State<TasbeehScreen> {
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Text('$count', style: const TextStyle(fontSize: 56, fontWeight: FontWeight.bold, color: Colors.white)),
+                    Text('$count', style: const TextStyle(fontSize: 54, fontWeight: FontWeight.bold, color: Colors.white)),
                     Text('Target: $target', style: const TextStyle(color: Colors.white70, fontSize: 14)),
                     const SizedBox(height: 6),
-                    const Text('TAP HERE', style: TextStyle(color: Color(0xFFFFD700), fontSize: 12, letterSpacing: 2, fontWeight: FontWeight.bold)),
+                    const Text('TAP TO COUNT', style: TextStyle(color: Color(0xFFFFD700), fontSize: 11, letterSpacing: 1.5, fontWeight: FontWeight.bold)),
                   ],
                 ),
               ),
@@ -362,13 +560,13 @@ class _TasbeehScreenState extends State<TasbeehScreen> {
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
                 ElevatedButton.icon(
-                  style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF1E3A44)),
-                  onPressed: () => setState(() => count = 0),
+                  style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF16323F)),
+                  onPressed: _reset,
                   icon: const Icon(Icons.refresh, color: Color(0xFFFFD700)),
-                  label: const Text('Reset', style: TextStyle(color: Colors.white)),
+                  label: const Text('Reset Counter', style: TextStyle(color: Colors.white)),
                 ),
                 ElevatedButton.icon(
-                  style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF1E3A44)),
+                  style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF16323F)),
                   onPressed: () => setState(() => target = target == 33 ? 99 : (target == 99 ? 1000 : 33)),
                   icon: const Icon(Icons.flag, color: Color(0xFFFFD700)),
                   label: Text('Goal: $target', style: const TextStyle(color: Colors.white)),
@@ -382,7 +580,7 @@ class _TasbeehScreenState extends State<TasbeehScreen> {
   }
 }
 
-// ---------------- 3. DAILY DUAS SCREEN ----------------
+// ---------------- 4. DAILY DUAS SCREEN ----------------
 class DuasScreen extends StatelessWidget {
   const DuasScreen({super.key});
 
@@ -418,8 +616,7 @@ class DuasScreen extends StatelessWidget {
       'meaning': 'Aye mere Rab! Un dono par reham farma jaisa ki unhone bachpan mein meri parwarish ki.'
     },
   ];
-
-  @override
+              @override
   Widget build(BuildContext context) {
     return SafeArea(
       child: Padding(
@@ -439,7 +636,7 @@ class DuasScreen extends StatelessWidget {
                     margin: const EdgeInsets.only(bottom: 14),
                     padding: const EdgeInsets.all(18),
                     decoration: BoxDecoration(
-                      color: const Color(0xFF122830),
+                      color: const Color(0xFF10242D),
                       borderRadius: BorderRadius.circular(16),
                       border: Border.all(color: Colors.white12),
                     ),
@@ -473,7 +670,7 @@ class DuasScreen extends StatelessWidget {
   }
 }
 
-// ---------------- 4. 99 NAMES OF ALLAH SCREEN ----------------
+// ---------------- 5. 99 NAMES OF ALLAH SCREEN ----------------
 class AsmaUlHusnaScreen extends StatelessWidget {
   const AsmaUlHusnaScreen({super.key});
 
@@ -518,12 +715,13 @@ class AsmaUlHusnaScreen extends StatelessWidget {
                     padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
                       gradient: const LinearGradient(
-                        colors: [Color(0xFF122830), Color(0xFF0D2128)],
+                        colors: [Color(0xFF10242D), Color(0xFF0A1920)],
                         begin: Alignment.topLeft,
                         end: Alignment.bottomRight,
                       ),
                       borderRadius: BorderRadius.circular(16),
-                      border: Border.all(color: const Color(0xFFFFD700).withOpacity(0.3)),
+                      border: Border.all(color: const 
+                                         Color(0xFFFFD700).withOpacity(0.3)),
                     ),
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
@@ -545,4 +743,3 @@ class AsmaUlHusnaScreen extends StatelessWidget {
     );
   }
 }
-   
