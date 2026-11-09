@@ -5,7 +5,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:geolocator/geolocator.dart';
 import 'package:audioplayers/audioplayers.dart';
 
 void main() {
@@ -46,11 +45,11 @@ class _MainNavigationState extends State<MainNavigation> {
   @override
   Widget build(BuildContext context) {
     final List<Widget> screens = [
-      const DashboardScreen(),        // 1. Live Prayer + Mood Cure + Sunnah Habits
-      const PrayerAnalyticsScreen(),  // 2. Analytics + Qaza-e-Umri Bank
+      const DashboardScreen(),        // 1. Cartoon Mosque + Countdown + Mood Cure + Sunnah
+      const PrayerAnalyticsScreen(),  // 2. Weekly/Monthly/Yearly + Qaza Bank
       const LiveQuranScreen(),        // 3. Full 114 Surahs + MP3 Audio Player
-      const QiblaCompassScreen(),     // 4. Interactive 3D Qibla Finder
-      const IslamicToolsHubScreen(),  // 5. Tasbeeh + Zakat Calculator
+      const QiblaCompassScreen(),     // 4. 3D Qibla Finder
+      const IslamicToolsHubScreen(),  // 5. Tasbeeh + Zakat Calculator + Duas
     ];
 
     return Scaffold(
@@ -92,6 +91,20 @@ int getPrayerStatus(SharedPreferences? prefs, DateTime date, String prayer) {
 }
 
 bool isPrayerOffered(int status) => status == 1 || status == 2 || status == 3;
+
+// Pure Math Distance Formula (Km)
+double calcDistanceKm(double lat1, double lon1, double lat2, double lon2) {
+  const double r = 6371.0;
+  double dLat = (lat2 - lat1) * math.pi / 180.0;
+  double dLon = (lon2 - lon1) * math.pi / 180.0;
+  double a = math.sin(dLat / 2) * math.sin(dLat / 2) +
+      math.cos(lat1 * math.pi / 180.0) *
+          math.cos(lat2 * math.pi / 180.0) *
+          math.sin(dLon / 2) *
+          math.sin(dLon / 2);
+  double c = 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a));
+  return r * c;
+}
 
 // ---------------- CARTOON MOSQUE ART PAINTER ----------------
 class CartoonMosquePainter extends CustomPainter {
@@ -189,7 +202,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
       'label': 'Gussa / Angry',
       'arabic': 'أَعُوذُ بِاللَّهِ مِنَ الشَّيْطَانِ الرَّجِيمِ',
       'ayah': 'Nabi ﷺ ne farmaya: "Jab kisi ko gussa aaye toh wo kahe: A\'udhu billahi minash-shaytanir-rajeem."',
-      'dua': 'Sunnah Tip: Agar khade ho toh baith jao, aur baitho ho toh let jao, ya wudu kar lo!'
+      'dua': 'Sunnah Tip: Agar khade ho toh baith jao, aur baitho ho toh let jao, ya thanda pani se wudu kar lo!'
     },
     {
       'emoji': '🤒',
@@ -282,33 +295,90 @@ class _DashboardScreenState extends State<DashboardScreen> {
     await _fetchTimings();
   }
 
-  Future<void> _detectGPS() async {
-    setState(() => isLoading = true);
-    try {
-      LocationPermission perm = await Geolocator.checkPermission();
-      if (perm == LocationPermission.denied) perm = await Geolocator.requestPermission();
-      Position pos = await Geolocator.getCurrentPosition(desiredAccuracy: LocationAccuracy.high);
-      lat = pos.latitude;
-      lon = pos.longitude;
-
-      final geoRes = await http.get(
-        Uri.parse('https://nominatim.openstreetmap.org/reverse?format=json&lat=$lat&lon=$lon&zoom=14'),
-        headers: {'User-Agent': 'NoorSuperApp/6.1'},
-      );
-      String place = 'GPS Location';
-      if (geoRes.statusCode == 200) {
-        final a = json.decode(geoRes.body)['address'];
-        place = a['town'] ?? a['village'] ?? a['city'] ?? a['county'] ?? 'GPS Location';
-      }
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.setString('loc_name', place);
-      await prefs.setDouble('lat', lat);
-      await prefs.setDouble('lon', lon);
-      setState(() => locationName = place);
-      await _fetchTimings();
-    } catch (_) {
-      setState(() => isLoading = false);
-    }
+  // Zero-Crash Location Picker + Auto IP Detector
+  void _openLocationPicker() {
+    TextEditingController ctrl = TextEditingController(text: locationName);
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: const Color(0xFF10242D),
+        title: const Text('📍 Select Your Location', style: TextStyle(color: Color(0xFFFFD700))),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ElevatedButton.icon(
+              style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF10B981)),
+              onPressed: () async {
+                Navigator.pop(ctx);
+                setState(() => isLoading = true);
+                try {
+                  final res = await http.get(Uri.parse('http://ip-api.com/json'));
+                  if (res.statusCode == 200) {
+                    final d = json.decode(res.body);
+                    String city = d['city'] ?? 'Rupahi';
+                    lat = (d['lat'] as num).toDouble();
+                    lon = (d['lon'] as num).toDouble();
+                    final prefs = await SharedPreferences.getInstance();
+                    await prefs.setString('loc_name', city);
+                    await prefs.setDouble('lat', lat);
+                    await prefs.setDouble('lon', lon);
+                    setState(() => locationName = city);
+                    await _fetchTimings();
+                  }
+                } catch (_) {
+                  setState(() => isLoading = false);
+                }
+              },
+              icon: const Icon(Icons.my_location, color: Colors.white),
+              label: const Text('Auto-Detect My Current Location', style: TextStyle(color: Colors.white)),
+            ),
+            const SizedBox(height: 14),
+            const Text('Ya apne Gaon / Sheher ka naam likhein:', style: TextStyle(fontSize: 12, color: Colors.white70)),
+            const SizedBox(height: 8),
+            TextField(
+              controller: ctrl,
+              decoration: const InputDecoration(
+                hintText: 'e.g. Rupahi, Nagaon, Guwahati, Delhi',
+                filled: true,
+                fillColor: Color(0xFF16323F),
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
+          ElevatedButton(
+            onPressed: () async {
+              String place = ctrl.text.trim();
+              Navigator.pop(ctx);
+              if (place.isNotEmpty) {
+                setState(() => isLoading = true);
+                try {
+                  final url = Uri.parse('https://nominatim.openstreetmap.org/search?q=$place&format=json&limit=1');
+                  final res = await http.get(url, headers: {'User-Agent': 'NoorSuperApp/7.0'});
+                  if (res.statusCode == 200) {
+                    final list = json.decode(res.body) as List;
+                    if (list.isNotEmpty) {
+                      lat = double.parse(list[0]['lat']);
+                      lon = double.parse(list[0]['lon']);
+                      final prefs = await SharedPreferences.getInstance();
+                      await prefs.setString('loc_name', place);
+                      await prefs.setDouble('lat', lat);
+                      await prefs.setDouble('lon', lon);
+                      setState(() => locationName = place);
+                      await _fetchTimings();
+                      return;
+                    }
+                  }
+                } catch (_) {}
+                setState(() => isLoading = false);
+              }
+            },
+            child: const Text('Search & Save'),
+          ),
+        ],
+      ),
+    );
   }
 
   Future<void> _fetchTimings() async {
@@ -457,7 +527,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 Row(
                   children: [
                     GestureDetector(
-                      onTap: _detectGPS,
+                      onTap: _openLocationPicker,
                       child: Container(
                         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
                         decoration: BoxDecoration(
@@ -466,7 +536,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         ),
                         child: Row(
                           children: [
-                            const Icon(Icons.my_location, size: 14, color: Colors.white),
+                            const Icon(Icons.location_on, size: 14, color: Colors.white),
                             const SizedBox(width: 5),
                             Text(locationName, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
                           ],
@@ -549,7 +619,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
             const SizedBox(height: 18),
 
             // ISLAMIC MOOD CURE
-            const Text('💖 Islamic Soul Care (Tap your current mood)',
+            const Text('💖 Islamic Soul Care (Aaj kaisa mehsoos kar rahe ho?)',
                 style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: Color(0xFFFFD700))),
             const SizedBox(height: 10),
             SizedBox(
@@ -1094,7 +1164,7 @@ class _SurahDetailAudioPageState extends State<SurahDetailAudioPage> {
   }
 }
 
-// ---------------- 4. CRASH-FREE INTERACTIVE 3D QIBLA FINDER ----------------
+// ---------------- 4. 3D QIBLA DIRECTION FINDER ----------------
 class QiblaCompassScreen extends StatefulWidget {
   const QiblaCompassScreen({super.key});
 
@@ -1125,7 +1195,7 @@ class _QiblaCompassScreenState extends State<QiblaCompassScreen> {
     setState(() {
       locationName = prefs.getString('loc_name') ?? 'Rupahi';
       qiblaAngle = ((math.atan2(y, x) * 180.0 / math.pi) + 360.0) % 360.0;
-      distanceKm = Geolocator.distanceBetween(lat, lon, 21.422487, 39.826206) / 1000.0;
+      distanceKm = calcDistanceKm(lat, lon, 21.422487, 39.826206);
     });
   }
 
