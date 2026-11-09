@@ -1,4 +1,4 @@
-name: Build Android APK
+name: Build APK and Source ZIP
 
 on:
   push:
@@ -8,37 +8,32 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-
     steps:
-      - name: Checkout Code
-        uses: actions/checkout@v4
-
-      - name: Setup Java
-        uses: actions/setup-java@v4
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
         with:
           distribution: 'zulu'
           java-version: '17'
-
-      - name: Setup Flutter
-        uses: subosito/flutter-action@v2
+      - uses: subosito/flutter-action@v2
         with:
           channel: 'stable'
 
-      - name: Generate Clean Android Project
+      - name: Build Project & Create ZIP
         run: |
-          cp -r lib lib_backup
-          cp pubspec.yaml pubspec_backup.yaml
+          cp lib/main.dart /tmp/main.dart
           flutter create . --project-name islamic_app
-          cp -r lib_backup/* lib/
-          cp pubspec_backup.yaml pubspec.yaml
+          cp /tmp/main.dart lib/main.dart
+          flutter pub add http shared_preferences audioplayers
+          zip -r source_code.zip lib pubspec.yaml
+          flutter build apk --release
 
-      - name: Get Packages
-        run: flutter pub get
+      - name: Download Source Code ZIP
+        uses: actions/upload-artifact@v4
+        with:
+          name: Islamic-App-Source-Code-ZIP
+          path: source_code.zip
 
-      - name: Build APK
-        run: flutter build apk --release
-
-      - name: Upload APK
+      - name: Download Android APK
         uses: actions/upload-artifact@v4
         with:
           name: Islamic-App-APK
