@@ -8,6 +8,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:flutter_compass/flutter_compass.dart';
 import 'package:home_widget/home_widget.dart';
+import 'package:audioplayers/audioplayers.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -21,7 +22,7 @@ class IslamicApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      title: 'Noor - Islamic Pro',
+      title: 'Noor Super App',
       theme: ThemeData(
         brightness: Brightness.dark,
         scaffoldBackgroundColor: const Color(0xFF061014),
@@ -47,11 +48,11 @@ class _MainNavigationState extends State<MainNavigation> {
   @override
   Widget build(BuildContext context) {
     final List<Widget> screens = [
-      const DashboardScreen(),
-      const PrayerAnalyticsScreen(),
-      const QiblaCompassScreen(), // NEW: 3D Cartoon Qibla Finder
-      const QuranScreen(),
-      const TasbeehScreen(),
+      const DashboardScreen(),        // 1. Live Prayer + Mood Cure + Sunnah Habits
+      const PrayerAnalyticsScreen(),  // 2. Analytics + Qaza-e-Umri Bank
+      const LiveQuranScreen(),        // 3. Full 114 Surahs + MP3 Audio Player
+      const QiblaCompassScreen(),     // 4. Live 3D Qibla Compass
+      const IslamicToolsHubScreen(),  // 5. Tasbeeh + Zakat Calculator + Duas
     ];
 
     return Scaffold(
@@ -67,14 +68,14 @@ class _MainNavigationState extends State<MainNavigation> {
           selectedItemColor: const Color(0xFFFFD700),
           unselectedItemColor: Colors.white54,
           type: BottomNavigationBarType.fixed,
-          selectedFontSize: 12,
-          unselectedFontSize: 11,
+          selectedFontSize: 11,
+          unselectedFontSize: 10,
           items: const [
-            BottomNavigationBarItem(icon: Icon(Icons.mosque), label: 'Prayer'),
+            BottomNavigationBarItem(icon: Icon(Icons.mosque), label: 'Home'),
             BottomNavigationBarItem(icon: Icon(Icons.bar_chart_rounded), label: 'Tracker'),
+            BottomNavigationBarItem(icon: Icon(Icons.headphones), label: 'Audio Quran'),
             BottomNavigationBarItem(icon: Icon(Icons.explore), label: 'Qibla'),
-            BottomNavigationBarItem(icon: Icon(Icons.auto_stories), label: 'Quran'),
-            BottomNavigationBarItem(icon: Icon(Icons.touch_app), label: 'Tasbeeh'),
+            BottomNavigationBarItem(icon: Icon(Icons.grid_view_rounded), label: 'Hub & Zakat'),
           ],
         ),
       ),
@@ -85,21 +86,15 @@ class _MainNavigationState extends State<MainNavigation> {
 String getDateKey(DateTime d) =>
     "${d.year}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}";
 
-// Prayer Status Helper (0=None, 1=Jamaat, 2=OnTime, 3=Qaza, 4=Missed)
 int getPrayerStatus(SharedPreferences? prefs, DateTime date, String prayer) {
   if (prefs == null) return 0;
   String k = 'status_${getDateKey(date)}_$prayer';
-  if (prefs.containsKey(k)) {
-    return prefs.getInt(k) ?? 0;
-  }
-  // Backward compatibility
-  bool old = prefs.getBool('track_${getDateKey(date)}_$prayer') ?? false;
-  return old ? 1 : 0;
+  if (prefs.containsKey(k)) return prefs.getInt(k) ?? 0;
+  return (prefs.getBool('track_${getDateKey(date)}_$prayer') ?? false) ? 1 : 0;
 }
 
 bool isPrayerOffered(int status) => status == 1 || status == 2 || status == 3;
 
-// Sync Data to Android Home Screen Widget
 Future<void> syncHomeScreenWidget({
   required String location,
   required String hijri,
@@ -112,15 +107,12 @@ Future<void> syncHomeScreenWidget({
     await HomeWidget.saveWidgetData<String>('wid_loc', '🌙 $hijri • 📍 $location');
     await HomeWidget.saveWidgetData<String>('wid_next', 'Next: $nextPrayer ($nextTime)');
     await HomeWidget.saveWidgetData<String>(
-        'wid_track', 'Today: $completedCount/5 Ada ($jamaatCount in Jamaat) ✅');
-    await HomeWidget.updateWidget(
-      name: 'PrayerWidgetProvider',
-      androidName: 'PrayerWidgetProvider',
-    );
+        'wid_track', 'Today: $completedCount/5 Ada ($jamaatCount Jamaat) ✅');
+    await HomeWidget.updateWidget(name: 'PrayerWidgetProvider', androidName: 'PrayerWidgetProvider');
   } catch (_) {}
 }
 
-// ---------------- CARTOON MOSQUE ILLUSTRATION PAINTER ----------------
+// ---------------- CARTOON MOSQUE ART PAINTER ----------------
 class CartoonMosquePainter extends CustomPainter {
   final bool isDayTime;
   CartoonMosquePainter({required this.isDayTime});
@@ -128,90 +120,52 @@ class CartoonMosquePainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final paint = Paint()..style = PaintingStyle.fill;
-
     if (!isDayTime) {
-      paint.color = Colors.white.withOpacity(0.7);
-      final stars = [
-        Offset(size.width * 0.12, size.height * 0.18),
-        Offset(size.width * 0.28, size.height * 0.10),
-        Offset(size.width * 0.48, size.height * 0.22),
-        Offset(size.width * 0.65, size.height * 0.12),
-        Offset(size.width * 0.88, size.height * 0.25),
-      ];
-      for (var s in stars) {
+      paint.color = Colors.white70;
+      for (var s in [
+        Offset(size.width * 0.15, size.height * 0.18),
+        Offset(size.width * 0.35, size.height * 0.12),
+        Offset(size.width * 0.55, size.height * 0.22),
+      ]) {
         canvas.drawCircle(s, 2.2, paint);
       }
       paint.color = const Color(0xFFFFE066);
-      canvas.drawCircle(Offset(size.width * 0.82, size.height * 0.24), 22, paint);
+      canvas.drawCircle(Offset(size.width * 0.82, size.height * 0.24), 20, paint);
       paint.color = const Color(0xFF1A1245);
-      canvas.drawCircle(Offset(size.width * 0.80, size.height * 0.21), 20, paint);
+      canvas.drawCircle(Offset(size.width * 0.80, size.height * 0.21), 18, paint);
     } else {
-      paint.color = const Color(0xFFFFD700).withOpacity(0.2);
-      canvas.drawCircle(Offset(size.width * 0.82, size.height * 0.26), 38, paint);
-      paint.color = const Color(0xFFFFD700).withOpacity(0.4);
-      canvas.drawCircle(Offset(size.width * 0.82, size.height * 0.26), 28, paint);
+      paint.color = const Color(0xFFFFD700).withOpacity(0.25);
+      canvas.drawCircle(Offset(size.width * 0.82, size.height * 0.26), 34, paint);
       paint.color = const Color(0xFFFFEA79);
       canvas.drawCircle(Offset(size.width * 0.82, size.height * 0.26), 20, paint);
     }
 
-    paint.color = isDayTime ? const Color(0xFF0A4D44).withOpacity(0.55) : const Color(0xFF121C36).withOpacity(0.7);
-    final hill1 = Path()
-      ..moveTo(0, size.height)
-      ..lineTo(0, size.height * 0.72)
-      ..quadraticBezierTo(size.width * 0.28, size.height * 0.54, size.width * 0.62, size.height * 0.76)
-      ..quadraticBezierTo(size.width * 0.85, size.height * 0.88, size.width, size.height * 0.68)
-      ..lineTo(size.width, size.height)
-      ..close();
-    canvas.drawPath(hill1, paint);
-
     paint.color = isDayTime ? const Color(0xFF06322D).withOpacity(0.85) : const Color(0xFF091224).withOpacity(0.92);
-    final hill2 = Path()
+    final hill = Path()
       ..moveTo(0, size.height)
-      ..lineTo(0, size.height * 0.84)
-      ..quadraticBezierTo(size.width * 0.42, size.height * 0.94, size.width * 0.72, size.height * 0.75)
+      ..lineTo(0, size.height * 0.82)
+      ..quadraticBezierTo(size.width * 0.45, size.height * 0.92, size.width * 0.72, size.height * 0.74)
       ..quadraticBezierTo(size.width * 0.90, size.height * 0.66, size.width, size.height * 0.78)
       ..lineTo(size.width, size.height)
       ..close();
-    canvas.drawPath(hill2, paint);
+    canvas.drawPath(hill, paint);
 
-    final mosqueColor = isDayTime ? const Color(0xFF04221F) : const Color(0xFF050A14);
-    paint.color = mosqueColor;
-
-    double mx = size.width * 0.74;
-    double my = size.height * 0.78;
-
-    canvas.drawRRect(
-      RRect.fromRectAndRadius(Rect.fromCenter(center: Offset(mx, my + 12), width: 78, height: 34), const Radius.circular(6)),
-      paint,
-    );
-
+    final mCol = isDayTime ? const Color(0xFF04221F) : const Color(0xFF050A14);
+    double mx = size.width * 0.75, my = size.height * 0.78;
+    paint.color = mCol;
+    canvas.drawRRect(RRect.fromRectAndRadius(Rect.fromCenter(center: Offset(mx, my + 12), width: 74, height: 32), const Radius.circular(6)), paint);
     paint.color = const Color(0xFFFFD700).withOpacity(0.85);
-    canvas.drawArc(Rect.fromCenter(center: Offset(mx, my - 4), width: 48, height: 44), 3.14159, 3.14159, true, paint);
-
-    paint.color = mosqueColor;
-    canvas.drawArc(Rect.fromCenter(center: Offset(mx - 24, my - 2), width: 22, height: 20), 3.14159, 3.14159, true, paint);
-    canvas.drawArc(Rect.fromCenter(center: Offset(mx + 24, my - 2), width: 22, height: 20), 3.14159, 3.14159, true, paint);
-
-    canvas.drawRect(Rect.fromLTWH(mx - 46, my - 52, 9, 78), paint);
-    paint.color = const Color(0xFFFFD700);
-    canvas.drawArc(Rect.fromLTWH(mx - 46, my - 58, 9, 12), 3.14159, 3.14159, true, paint);
-
-    paint.color = mosqueColor;
-    canvas.drawRect(Rect.fromLTWH(mx + 37, my - 52, 9, 78), paint);
-    paint.color = const Color(0xFFFFD700);
-    canvas.drawArc(Rect.fromLTWH(mx + 37, my - 58, 9, 12), 3.14159, 3.14159, true, paint);
-
-    paint.color = const Color(0xFFFFD700).withOpacity(0.9);
-    canvas.drawRRect(RRect.fromRectAndRadius(Rect.fromCenter(center: Offset(mx - 12, my + 8), width: 6, height: 12), const Radius.circular(4)), paint);
-    canvas.drawRRect(RRect.fromRectAndRadius(Rect.fromCenter(center: Offset(mx, my + 8), width: 8, height: 14), const Radius.circular(4)), paint);
-    canvas.drawRRect(RRect.fromRectAndRadius(Rect.fromCenter(center: Offset(mx + 12, my + 8), width: 6, height: 12), const Radius.circular(4)), paint);
+    canvas.drawArc(Rect.fromCenter(center: Offset(mx, my - 4), width: 44, height: 40), 3.14159, 3.14159, true, paint);
+    paint.color = mCol;
+    canvas.drawRect(Rect.fromLTWH(mx - 44, my - 48, 8, 74), paint);
+    canvas.drawRect(Rect.fromLTWH(mx + 36, my - 48, 8, 74), paint);
   }
 
   @override
   bool shouldRepaint(covariant CustomPainter oldDelegate) => true;
 }
 
-// ---------------- 1. ILLUSTRATED PRAYER & 4-STATUS TRACKER SCREEN ----------------
+// ---------------- 1. HOME: PRAYER + MOOD CURE + SUNNAH HABITS ----------------
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
 
@@ -221,57 +175,72 @@ class DashboardScreen extends StatefulWidget {
 
 class _DashboardScreenState extends State<DashboardScreen> {
   String locationName = 'Rupahi';
-  double lat = 26.4167;
-  double lon = 92.7333;
-  String hijriDate = '1448 AH';
-  String sunriseTime = '05:45';
-  String sunsetTime = '17:50';
-  String midnightTime = '23:45';
+  double lat = 26.4167, lon = 92.7333;
+  String hijriDate = '1448 AH', sunriseTime = '05:45', sunsetTime = '17:50';
   bool isLoading = true;
+  int asrSchool = 0; // 0 = Shafi, 1 = Hanafi
 
   Timer? _countdownTimer;
-  String nextPrayerName = 'Fajr';
-  String countdownText = '00 : 00 : 00';
+  String nextPrayerName = 'Fajr', countdownText = '00 : 00 : 00';
   double countdownProgress = 0.5;
 
-  bool autoSettings = false;
-  int calcMethod = 1;
-  int asrSchool = 0;
-  String manualCorrection = '0,0,0,0,0';
-  int highLatitudeRule = 1;
-  bool showMidnight = false;
-
   final List<String> prayerNames = ['Fajr', 'Dhuhr', 'Asr', 'Maghrib', 'Isha'];
-  final Map<String, String> hindiNames = {
-    'Fajr': 'फज्र',
-    'Dhuhr': 'ज़ुहर',
-    'Asr': 'अस्र',
-    'Maghrib': 'मग़रिब',
-    'Isha': 'ईशा',
-  };
+  final Map<String, String> hindiNames = {'Fajr': 'फज्र', 'Dhuhr': 'ज़ुहर', 'Asr': 'अस्र', 'Maghrib': 'मग़रिब', 'Isha': 'ईशा'};
+  Map<String, String> prayerTimes = {'Fajr': '04:45', 'Dhuhr': '12:05', 'Asr': '15:30', 'Maghrib': '17:50', 'Isha': '19:10'};
+  Map<String, int> todayStatus = {'Fajr': 0, 'Dhuhr': 0, 'Asr': 0, 'Maghrib': 0, 'Isha': 0};
 
-  Map<String, String> prayerTimes = {
-    'Fajr': '04:45',
-    'Dhuhr': '12:05',
-    'Asr': '15:30',
-    'Maghrib': '17:50',
-    'Isha': '19:10',
-  };
+  // Unique Feature 1: Islamic Mood Cure Data
+  final List<Map<String, String>> moods = [
+    {
+      'emoji': '😔',
+      'label': 'Pareshan / Sad',
+      'arabic': 'لَا تُحْزَنْ إِنَّ اللَّهَ مَعَنَا',
+      'ayah': '"Gham na karo, beshak Allah humare sath hai." (Quran 9:40)',
+      'dua': 'Dua: Yaa Hayyu Yaa Qayyum, birahmatika astagheeth (Aye Zinda aur Qayam rakhne wale, teri rehmat se madad mangta hoon).'
+    },
+    {
+      'emoji': '💸',
+      'label': 'Rizq / Tension',
+      'arabic': 'وَمَن يَتَّقِ اللَّهَ يَجْعَل لَّهُ مَخْرَجًا وَيَرْزُقْهُ مِنْ حَيْثُ لَا يَحْتَسِبُ',
+      'ayah': '"Jo Allah se darta hai, Allah uske liye rasta nikal deta hai aur wahan se Rizq deta hai jahan se guman bhi na ho." (Quran 65:2-3)',
+      'dua': 'Dua: Allahumma inni as\'aluka \'ilman nafi\'an, wa rizqan tayyiban, wa \'amalan mutaqabbalan.'
+    },
+    {
+      'emoji': '😠',
+      'label': 'Gussa / Angry',
+      'arabic': 'أَعُوذُ بِاللَّهِ مِنَ الشَّيْطَانِ الرَّجِيمِ',
+      'ayah': 'Nabi ﷺ ne farmaya: "Jab kisi ko gussa aaye toh wo khamosh ho jaye aur kahe: A\'udhu billahi minash-shaytanir-rajeem (aur thanda pani piye)."',
+      'dua': 'Sunnah Tip: Agar khade ho toh baith jao, aur baitho ho toh let jao, gussa turant chala jayega!'
+    },
+    {
+      'emoji': '🤒',
+      'label': 'Bimar / Sick',
+      'arabic': 'وَإِذَا مَرِضْتُ فَهُوَ يَشْفِينِ',
+      'ayah': '"Aur jab main bimar hota hoon toh Wahi (Allah) mujhe shifa deta hai." (Quran 26:80)',
+      'dua': 'Shifa Dua: Allahumma Rabban-naas, adh-hibil-ba\'s, ishfi Antash-Shafi (Aye insano ke Rab, takleef door kar aur shifa de).'
+    },
+    {
+      'emoji': '🥰',
+      'label': 'Shukr / Happy',
+      'arabic': 'لَئِن شَكَرْتُمْ لَأَزِيدَنَّكُمْ',
+      'ayah': '"Agar tum mera Shukr ada karoge, toh main tumhe aur zyada dunga!" (Quran 14:7)',
+      'dua': 'Zikr: Alhamdulillah \'ala kulli haal (Har haal mein Allah ka shukr hai).'
+    },
+  ];
 
-  // Status: 0=Pending, 1=Jamaat, 2=OnTime, 3=Qaza, 4=Missed
-  Map<String, int> todayStatus = {
-    'Fajr': 0,
-    'Dhuhr': 0,
-    'Asr': 0,
-    'Maghrib': 0,
-    'Isha': 0,
+  // Unique Feature 2: Daily Sunnah Habits
+  Map<String, bool> sunnahHabits = {
+    '🦷 Miswak / Brush before Wudu': false,
+    '📖 Read Ayat-ul-Kursi after Salah': false,
+    '😊 Smile & Salam to Family/Friends': false,
+    '🌙 Sleep in state of Wudu': false,
   };
 
   @override
   void initState() {
     super.initState();
-    _loadSettingsAndTimings();
-    _countdownTimer = Timer.periodic(const Duration(seconds: 1), (_) => _updateLiveCountdown());
+    _loadData();
+    _countdownTimer = Timer.periodic(const Duration(seconds: 1), (_) => _updateCountdown());
   }
 
   @override
@@ -280,386 +249,239 @@ class _DashboardScreenState extends State<DashboardScreen> {
     super.dispose();
   }
 
-  DateTime? _parseTimeToday(String timeStr, DateTime ref) {
-    if (!timeStr.contains(':')) return null;
+  DateTime? _parseTime(String t, DateTime ref) {
+    if (!t.contains(':')) return null;
     try {
-      final clean = timeStr.split(' ')[0];
-      final parts = clean.split(':');
-      return DateTime(ref.year, ref.month, ref.day, int.parse(parts[0]), int.parse(parts[1]));
+      final p = t.split(' ')[0].split(':');
+      return DateTime(ref.year, ref.month, ref.day, int.parse(p[0]), int.parse(p[1]));
     } catch (_) {
       return null;
     }
   }
 
-  void _updateLiveCountdown() {
+  void _updateCountdown() {
     final now = DateTime.now();
-    DateTime? nextTime;
-    DateTime? prevTime;
-    String foundNext = 'Fajr';
-
-    for (int i = 0; i < prayerNames.length; i++) {
-      String p = prayerNames[i];
-      DateTime? pt = _parseTimeToday(prayerTimes[p] ?? '', now);
+    DateTime? nextT;
+    String found = 'Fajr';
+    for (var p in prayerNames) {
+      DateTime? pt = _parseTime(prayerTimes[p] ?? '', now);
       if (pt != null && pt.isAfter(now)) {
-        nextTime = pt;
-        foundNext = p;
-        if (i > 0) {
-          prevTime = _parseTimeToday(prayerTimes[prayerNames[i - 1]] ?? '', now);
-        } else {
-          DateTime? ishaYesterday = _parseTimeToday(prayerTimes['Isha'] ?? '', now);
-          if (ishaYesterday != null) prevTime = ishaYesterday.subtract(const Duration(days: 1));
-        }
+        nextT = pt;
+        found = p;
         break;
       }
     }
-
-    if (nextTime == null) {
-      DateTime? fajrToday = _parseTimeToday(prayerTimes['Fajr'] ?? '', now);
-      if (fajrToday != null) {
-        nextTime = fajrToday.add(const Duration(days: 1));
-        foundNext = 'Fajr';
-        prevTime = _parseTimeToday(prayerTimes['Isha'] ?? '', now);
-      }
+    if (nextT == null) {
+      DateTime? ft = _parseTime(prayerTimes['Fajr'] ?? '', now);
+      if (ft != null) nextT = ft.add(const Duration(days: 1));
     }
-
-    if (nextTime != null) {
-      final diff = nextTime.difference(now);
-      final h = diff.inHours.toString().padLeft(2, '0');
-      final m = (diff.inMinutes % 60).toString().padLeft(2, '0');
-      final s = (diff.inSeconds % 60).toString().padLeft(2, '0');
-
-      double prog = 0.6;
-      if (prevTime != null) {
-        final totalWindow = nextTime.difference(prevTime).inSeconds;
-        final elapsed = now.difference(prevTime).inSeconds;
-        if (totalWindow > 0) {
-          prog = (elapsed / totalWindow).clamp(0.05, 0.98);
-        }
-      }
-
-      if (mounted) {
-        setState(() {
-          nextPrayerName = foundNext;
-          countdownText = '$h : $m : $s';
-          countdownProgress = prog;
-        });
-      }
+    if (nextT != null && mounted) {
+      final d = nextT.difference(now);
+      setState(() {
+        nextPrayerName = found;
+        countdownText =
+            '${d.inHours.toString().padLeft(2, '0')} : ${(d.inMinutes % 60).toString().padLeft(2, '0')} : ${(d.inSeconds % 60).toString().padLeft(2, '0')}';
+      });
     }
   }
 
-  Future<void> _loadSettingsAndTimings() async {
+  Future<void> _loadData() async {
     final prefs = await SharedPreferences.getInstance();
     final today = DateTime.now();
-
+    final tKey = getDateKey(today);
     setState(() {
       locationName = prefs.getString('loc_name') ?? 'Rupahi';
       lat = prefs.getDouble('lat') ?? 26.4167;
       lon = prefs.getDouble('lon') ?? 92.7333;
-      autoSettings = prefs.getBool('auto_settings') ?? false;
-      calcMethod = prefs.getInt('calc_method') ?? 1;
       asrSchool = prefs.getInt('asr_school') ?? 0;
-      manualCorrection = prefs.getString('manual_corr') ?? '0,0,0,0,0';
-      highLatitudeRule = prefs.getInt('high_lat') ?? 1;
-      showMidnight = prefs.getBool('show_midnight') ?? false;
-
       for (var p in prayerNames) {
         todayStatus[p] = getPrayerStatus(prefs, today, p);
       }
+      for (var h in sunnahHabits.keys.toList()) {
+        sunnahHabits[h] = prefs.getBool('sunnah_${tKey}_$h') ?? false;
+      }
     });
-
-    await _fetchPrayerTimes();
+    await _fetchTimings();
   }
 
-  Future<void> _pushToWidget() async {
-    int completed = todayStatus.values.where((s) => isPrayerOffered(s)).length;
-    int jamaat = todayStatus.values.where((s) => s == 1).length;
+  Future<void> _detectGPS() async {
+    setState(() => isLoading = true);
+    try {
+      LocationPermission perm = await Geolocator.checkPermission();
+      if (perm == LocationPermission.denied) perm = await Geolocator.requestPermission();
+      Position pos = await Geolocator.getCurrentPosition(desiredAccuracy: LocationAccuracy.high);
+      lat = pos.latitude;
+      lon = pos.longitude;
+
+      final geoRes = await http.get(
+        Uri.parse('https://nominatim.openstreetmap.org/reverse?format=json&lat=$lat&lon=$lon&zoom=14'),
+        headers: {'User-Agent': 'NoorSuperApp/6.0'},
+      );
+      String place = 'GPS Location';
+      if (geoRes.statusCode == 200) {
+        final a = json.decode(geoRes.body)['address'];
+        place = a['town'] ?? a['village'] ?? a['city'] ?? a['county'] ?? 'GPS Location';
+      }
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString('loc_name', place);
+      await prefs.setDouble('lat', lat);
+      await prefs.setDouble('lon', lon);
+      setState(() => locationName = place);
+      await _fetchTimings();
+    } catch (_) {
+      setState(() => isLoading = false);
+    }
+  }
+
+  Future<void> _fetchTimings() async {
+    setState(() => isLoading = true);
+    try {
+      final url = Uri.parse(
+          'https://api.aladhan.com/v1/timings?latitude=$lat&longitude=$lon&method=1&school=$asrSchool');
+      final res = await http.get(url);
+      if (res.statusCode == 200) {
+        final data = json.decode(res.body)['data'];
+        final t = data['timings'];
+        final h = data['date']['hijri'];
+        setState(() {
+          for (var p in prayerNames) {
+            prayerTimes[p] = t[p].toString().split(' ')[0];
+          }
+          sunriseTime = t['Sunrise'].toString().split(' ')[0];
+          sunsetTime = t['Sunset'].toString().split(' ')[0];
+          hijriDate = '${h['day']} ${h['month']['en']} ${h['year']}';
+          isLoading = false;
+        });
+        _updateCountdown();
+        _syncWidget();
+      }
+    } catch (_) {
+      setState(() => isLoading = false);
+    }
+  }
+
+  Future<void> _syncWidget() async {
+    int comp = todayStatus.values.where((s) => isPrayerOffered(s)).length;
+    int jam = todayStatus.values.where((s) => s == 1).length;
     await syncHomeScreenWidget(
       location: locationName,
       hijri: hijriDate,
       nextPrayer: nextPrayerName,
       nextTime: prayerTimes[nextPrayerName] ?? '--:--',
-      completedCount: completed,
-      jamaatCount: jamaat,
+      completedCount: comp,
+      jamaatCount: jam,
     );
-  }
-
-  Future<void> _detectGPSLocation() async {
-    setState(() => isLoading = true);
-    try {
-      bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
-      if (!serviceEnabled) {
-        _showSnack('Kripya apne phone ka GPS (Location) ON karein!');
-        setState(() => isLoading = false);
-        return;
-      }
-
-      LocationPermission permission = await Geolocator.checkPermission();
-      if (permission == LocationPermission.denied) {
-        permission = await Geolocator.requestPermission();
-        if (permission == LocationPermission.denied) {
-          _showSnack('Location permission deny kar di gayi!');
-          setState(() => isLoading = false);
-          return;
-        }
-      }
-
-      Position pos = await Geolocator.getCurrentPosition(desiredAccuracy: LocationAccuracy.high);
-      lat = pos.latitude;
-      lon = pos.longitude;
-
-      final geoUrl = Uri.parse(
-          'https://nominatim.openstreetmap.org/reverse?format=json&lat=$lat&lon=$lon&zoom=14');
-      final geoRes = await http.get(geoUrl, headers: {'User-Agent': 'NoorIslamicApp/5.0'});
-
-      String detectedPlace = 'My GPS Location';
-      if (geoRes.statusCode == 200) {
-        final addr = json.decode(geoRes.body)['address'];
-        detectedPlace = addr['town'] ??
-            addr['village'] ??
-            addr['suburb'] ??
-            addr['city'] ??
-            addr['county'] ??
-            addr['state_district'] ??
-            'GPS Location';
-      }
-
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.setString('loc_name', detectedPlace);
-      await prefs.setDouble('lat', lat);
-      await prefs.setDouble('lon', lon);
-
-      setState(() => locationName = detectedPlace);
-      _showSnack('📍 Location Updated: $detectedPlace');
-      await _fetchPrayerTimes();
-    } catch (e) {
-      _showSnack('GPS Error: Khule aasman ke neeche try karein.');
-      setState(() => isLoading = false);
-    }
-  }
-
-  Future<void> _fetchPrayerTimes() async {
-    setState(() => isLoading = true);
-    try {
-      List<String> parts = manualCorrection.split(',');
-      while (parts.length < 5) {
-        parts.add('0');
-      }
-      String tuneParam = '0,${parts[0]},0,${parts[1]},${parts[2]},${parts[3]},0,${parts[4]},0';
-
-      final url = Uri.parse(
-          'https://api.aladhan.com/v1/timings?latitude=$lat&longitude=$lon&method=$calcMethod&school=$asrSchool&latitudeAdjustmentMethod=$highLatitudeRule&tune=$tuneParam');
-      final response = await http.get(url);
-
-      if (response.statusCode == 200) {
-        final data = json.decode(response.body)['data'];
-        final timings = data['timings'];
-        final hijri = data['date']['hijri'];
-
-        setState(() {
-          for (var p in prayerNames) {
-            prayerTimes[p] = timings[p].toString().split(' ')[0];
-          }
-          sunriseTime = timings['Sunrise'].toString().split(' ')[0];
-          sunsetTime = timings['Sunset'].toString().split(' ')[0];
-          midnightTime = timings['Midnight'].toString().split(' ')[0];
-          hijriDate = '${hijri['day']} ${hijri['month']['en']} ${hijri['year']}';
-          isLoading = false;
-        });
-        _updateLiveCountdown();
-        _pushToWidget();
-      }
-    } catch (e) {
-      setState(() => isLoading = false);
-      _pushToWidget();
-    }
   }
 
   Future<void> _setPrayerStatus(String prayer, int status) async {
     final prefs = await SharedPreferences.getInstance();
-    final todayKey = getDateKey(DateTime.now());
-    await prefs.setInt('status_${todayKey}_$prayer', status);
-    await prefs.setBool('track_${todayKey}_$prayer', isPrayerOffered(status));
-    setState(() {
-      todayStatus[prayer] = status;
-    });
+    final tKey = getDateKey(DateTime.now());
+    await prefs.setInt('status_${tKey}_$prayer', status);
+    await prefs.setBool('track_${tKey}_$prayer', isPrayerOffered(status));
+    setState(() => todayStatus[prayer] = status);
     HapticFeedback.lightImpact();
-    _pushToWidget();
+    _syncWidget();
   }
 
-  void _showStatusPickerSheet(String prayer) {
-    int current = todayStatus[prayer] ?? 0;
+  void _showMoodCureModal(Map<String, String> mood) {
     showModalBottomSheet(
       context: context,
       backgroundColor: const Color(0xFF0D212A),
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-      ),
-      builder: (ctx) {
-        return Padding(
-          padding: const EdgeInsets.all(20.0),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text('🕌 $prayer (${hindiNames[prayer]}) Status',
-                      style: const TextStyle(fontSize: 19, fontWeight: FontWeight.bold, color: Color(0xFFFFD700))),
-                  Text(prayerTimes[prayer] ?? '', style: const TextStyle(color: Colors.white70)),
-                ],
-              ),
-              const SizedBox(height: 6),
-              const Text('Aapne aaj yeh namaz kaise ada ki?', style: TextStyle(color: Colors.white60, fontSize: 13)),
-              const SizedBox(height: 16),
-              _statusOptionTile(ctx, prayer, 1, '🟢 Jamaat ke sath (Masjid/Congregation)', '27x Sawab • Best Performance', const Color(0xFF10B981), current),
-              _statusOptionTile(ctx, prayer, 2, '🔵 Waqt par Akele (On Time Alone)', 'Farz Ada ho gaya', const Color(0xFF3B82F6), current),
-              _statusOptionTile(ctx, prayer, 3, '🟠 Qaza / Late Ada ki', 'Waqt nikalne ke baad padhi', const Color(0xFFF59E0B), current),
-              _statusOptionTile(ctx, prayer, 4, '🔴 Missed (Chhoot gayi / Qaza Baki)', 'Qaza counter mein jud jayegi', const Color(0xFFEF4444), current),
-              if (current != 0)
-                Center(
-                  child: TextButton(
-                    onPressed: () {
-                      _setPrayerStatus(prayer, 0);
-                      Navigator.pop(ctx);
-                    },
-                    child: const Text('Clear / Reset Status', style: TextStyle(color: Colors.white54)),
-                  ),
-                ),
-            ],
-          ),
-        );
-      },
-    );
-  }
-
-  Widget _statusOptionTile(BuildContext ctx, String prayer, int val, String title, String sub, Color col, int current) {
-    bool selected = current == val;
-    return GestureDetector(
-      onTap: () {
-        _setPrayerStatus(prayer, val);
-        Navigator.pop(ctx);
-      },
-      child: Container(
-        margin: const EdgeInsets.only(bottom: 10),
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-        decoration: BoxDecoration(
-          color: selected ? col.withOpacity(0.25) : const Color(0xFF142E3A),
-          borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: selected ? col : Colors.white12, width: selected ? 2 : 1),
-        ),
-        child: Row(
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
+      builder: (ctx) => Padding(
+        padding: const EdgeInsets.all(22.0),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
           children: [
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Colors.white)),
-                  const SizedBox(height: 2),
-                  Text(sub, style: const TextStyle(fontSize: 11, color: Colors.white60)),
-                ],
-              ),
+            Text('${mood['emoji']} ${mood['label']} - Allah ka Paigham',
+                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFFFFD700))),
+            const Divider(color: Colors.white12, height: 24),
+            Text(mood['arabic']!,
+                textAlign: TextAlign.center,
+                style: const TextStyle(fontSize: 26, color: Colors.white, fontWeight: FontWeight.bold)),
+            const SizedBox(height: 12),
+            Text(mood['ayah']!,
+                textAlign: TextAlign.center,
+                style: const TextStyle(fontSize: 14, color: Color(0xFF10B981), fontWeight: FontWeight.w600)),
+            const SizedBox(height: 14),
+            Container(
+              padding: const EdgeInsets.all(14),
+              decoration: BoxDecoration(color: Colors.black26, borderRadius: BorderRadius.circular(14)),
+              child: Text(mood['dua']!, textAlign: TextAlign.center, style: const TextStyle(fontSize: 13, color: Colors.white70)),
             ),
-            if (selected) Icon(Icons.check_circle, color: col),
+            const SizedBox(height: 14),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildStatusBadge(int status) {
-    switch (status) {
-      case 1:
-        return _pill('🟢 Jamaat', const Color(0xFF10B981));
-      case 2:
-        return _pill('🔵 On Time', const Color(0xFF3B82F6));
-      case 3:
-        return _pill('🟠 Qaza Ada', const Color(0xFFF59E0B));
-      case 4:
-        return _pill('🔴 Missed', const Color(0xFFEF4444));
-      default:
-        return _pill('Tap to Log ➕', Colors.white24);
-    }
-  }
-
-  Widget _pill(String text, Color c) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
-      decoration: BoxDecoration(
-        color: c.withOpacity(0.2),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: c, width: 1.2),
-      ),
-      child: Text(text, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.white)),
-    );
-  }
-
-  void _showSnack(String msg) {
-    if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(msg), backgroundColor: const Color(0xFF047857)),
-    );
-  }
-
-  void _openPrayerSettings() async {
-    await Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => PrayerSettingsPage(
-          locationName: locationName,
-          onDetectGPS: _detectGPSLocation,
+  void _showStatusPicker(String prayer) {
+    int curr = todayStatus[prayer] ?? 0;
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: const Color(0xFF0D212A),
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
+      builder: (ctx) => Padding(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text('🕌 $prayer (${hindiNames[prayer]}) Status',
+                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFFFFD700))),
+            const SizedBox(height: 14),
+            _statusBtn(ctx, prayer, 1, '🟢 Jamaat ke sath (27x Sawab)', const Color(0xFF10B981), curr),
+            _statusBtn(ctx, prayer, 2, '🔵 Waqt par Akele (On Time)', const Color(0xFF3B82F6), curr),
+            _statusBtn(ctx, prayer, 3, '🟠 Qaza / Late Ada ki', const Color(0xFFF59E0B), curr),
+            _statusBtn(ctx, prayer, 4, '🔴 Missed (Chhoot gayi)', const Color(0xFFEF4444), curr),
+          ],
         ),
       ),
     );
-    _loadSettingsAndTimings();
   }
 
-  Widget _buildCartoonPrayerAvatar(String prayer, int status, bool isNext) {
-    IconData icon = Icons.wb_twilight;
-    List<Color> grad = [const Color(0xFFFF8008), const Color(0xFFFFC837)];
-
-    if (prayer == 'Fajr') {
-      icon = Icons.wb_twilight;
-      grad = [const Color(0xFF6A11CB), const Color(0xFF2575FC)];
-    } else if (prayer == 'Dhuhr') {
-      icon = Icons.wb_sunny_rounded;
-      grad = [const Color(0xFFFF8008), const Color(0xFFFFC837)];
-    } else if (prayer == 'Asr') {
-      icon = Icons.cloud_queue_rounded;
-      grad = [const Color(0xFF11998E), const Color(0xFF38EF7D)];
-    } else if (prayer == 'Maghrib') {
-      icon = Icons.flare_rounded;
-      grad = [const Color(0xFFFF416C), const Color(0xFFFF4B2B)];
-    } else if (prayer == 'Isha') {
-      icon = Icons.nights_stay_rounded;
-      grad = [const Color(0xFF141E30), const Color(0xFF243B55)];
-    }
-
-    return Container(
-      width: 48,
-      height: 48,
-      decoration: BoxDecoration(
-        gradient: LinearGradient(colors: grad, begin: Alignment.topLeft, end: Alignment.bottomRight),
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: isNext ? const Color(0xFFFFD700) : Colors.white24, width: isNext ? 2 : 1),
+  Widget _statusBtn(BuildContext ctx, String p, int val, String label, Color col, int curr) {
+    return GestureDetector(
+      onTap: () {
+        _setPrayerStatus(p, val);
+        Navigator.pop(ctx);
+      },
+      child: Container(
+        width: double.infinity,
+        margin: const EdgeInsets.only(bottom: 10),
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          color: curr == val ? col.withOpacity(0.3) : const Color(0xFF142E3A),
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: col),
+        ),
+        child: Text(label, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
       ),
-      child: Icon(isPrayerOffered(status) ? Icons.check_circle_rounded : icon, color: Colors.white, size: 26),
+    );
+  }
+
+  Widget _statusBadge(int st) {
+    final labels = ['Log ➕', '🟢 Jamaat', '🔵 On Time', '🟠 Qaza', '🔴 Missed'];
+    final cols = [Colors.white24, const Color(0xFF10B981), const Color(0xFF3B82F6), const Color(0xFFF59E0B), const Color(0xFFEF4444)];
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(color: cols[st].withOpacity(0.2), borderRadius: BorderRadius.circular(16), border: Border.all(color: cols[st])),
+      child: Text(labels[st], style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
     );
   }
 
   @override
   Widget build(BuildContext context) {
-    int completed = todayStatus.values.where((s) => isPrayerOffered(s)).length;
-    int jamaatCount = todayStatus.values.where((s) => s == 1).length;
-    bool isDayScene = (nextPrayerName == 'Dhuhr' || nextPrayerName == 'Asr' || nextPrayerName == 'Maghrib');
+    bool isDay = (nextPrayerName == 'Dhuhr' || nextPrayerName == 'Asr' || nextPrayerName == 'Maghrib');
+    int sunnahDone = sunnahHabits.values.where((v) => v).length;
 
     return SafeArea(
       child: SingleChildScrollView(
-        padding: const EdgeInsets.all(16.0),
+        padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Top Bar
+            // Header
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
@@ -667,14 +489,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     const Text('Assalamu Alaikum 👋', style: TextStyle(color: Colors.white70, fontSize: 12)),
-                    const SizedBox(height: 2),
                     Text('🌙 $hijriDate', style: const TextStyle(color: Color(0xFFFFD700), fontSize: 16, fontWeight: FontWeight.bold)),
                   ],
                 ),
                 Row(
                   children: [
                     GestureDetector(
-                      onTap: _detectGPSLocation,
+                      onTap: _detectGPS,
                       child: Container(
                         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
                         decoration: BoxDecoration(
@@ -683,103 +504,76 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         ),
                         child: Row(
                           children: [
-                            const Icon(Icons.my_location, color: Colors.white, size: 15),
+                            const Icon(Icons.my_location, size: 14, color: Colors.white),
                             const SizedBox(width: 5),
-                            Text(locationName, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13)),
+                            Text(locationName, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
                           ],
                         ),
                       ),
                     ),
-                    const SizedBox(width: 8),
-                    IconButton(
-                      style: IconButton.styleFrom(backgroundColor: const Color(0xFF16323F)),
-                      onPressed: _openPrayerSettings,
-                      icon: const Icon(Icons.tune, color: Color(0xFFFFD700), size: 20),
+                    const SizedBox(width: 6),
+                    GestureDetector(
+                      onTap: () async {
+                        final prefs = await SharedPreferences.getInstance();
+                        setState(() => asrSchool = asrSchool == 0 ? 1 : 0);
+                        await prefs.setInt('asr_school', asrSchool);
+                        _fetchTimings();
+                      },
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+                        decoration: BoxDecoration(color: const Color(0xFF16323F), borderRadius: BorderRadius.circular(14)),
+                        child: Text(asrSchool == 0 ? 'SHAFI' : 'HANAFI',
+                            style: const TextStyle(color: Color(0xFFFFD700), fontWeight: FontWeight.bold, fontSize: 11)),
+                      ),
                     ),
                   ],
                 ),
               ],
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 14),
 
-            // Animated Cartoon Mosque & Countdown Hero Card
+            // Cartoon Mosque & Live Countdown Card
             ClipRRect(
-              borderRadius: BorderRadius.circular(26),
+              borderRadius: BorderRadius.circular(24),
               child: Container(
+                height: 225,
                 width: double.infinity,
-                height: 245,
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
-                    colors: isDayScene
-                        ? [const Color(0xFF0F766E), const Color(0xFF047857), const Color(0xFF064E3B)]
-                        : [const Color(0xFF1E1B4B), const Color(0xFF1E3A8A), const Color(0xFF0F172A)],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
+                    colors: isDay
+                        ? [const Color(0xFF0F766E), const Color(0xFF064E3B)]
+                        : [const Color(0xFF1E1B4B), const Color(0xFF0F172A)],
                   ),
-                  border: Border.all(color: const Color(0xFFFFD700).withOpacity(0.45), width: 1.5),
+                  border: Border.all(color: const Color(0xFFFFD700).withOpacity(0.45)),
                 ),
                 child: Stack(
                   children: [
-                    Positioned.fill(
-                      child: CustomPaint(painter: CartoonMosquePainter(isDayTime: isDayScene)),
-                    ),
+                    Positioned.fill(child: CustomPaint(painter: CartoonMosquePainter(isDayTime: isDay))),
                     Padding(
-                      padding: const EdgeInsets.all(20.0),
+                      padding: const EdgeInsets.all(18.0),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Container(
                             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                            decoration: BoxDecoration(
-                              color: Colors.black38,
-                              borderRadius: BorderRadius.circular(20),
-                              border: Border.all(color: const Color(0xFFFFD700).withOpacity(0.6)),
-                            ),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                const Icon(Icons.notifications_active, color: Color(0xFFFFD700), size: 14),
-                                const SizedBox(width: 6),
-                                Text(
-                                  'NEXT: ${nextPrayerName.toUpperCase()} (${prayerTimes[nextPrayerName]})',
-                                  style: const TextStyle(color: Color(0xFFFFD700), fontWeight: FontWeight.bold, fontSize: 11),
-                                ),
-                              ],
-                            ),
+                            decoration: BoxDecoration(color: Colors.black45, borderRadius: BorderRadius.circular(14)),
+                            child: Text('NEXT: ${nextPrayerName.toUpperCase()} (${prayerTimes[nextPrayerName]})',
+                                style: const TextStyle(color: Color(0xFFFFD700), fontWeight: FontWeight.bold, fontSize: 11)),
                           ),
-                          const SizedBox(height: 12),
+                          const SizedBox(height: 10),
                           const Text('Agli Namaz mein baqi waqt:', style: TextStyle(color: Colors.white70, fontSize: 12)),
-                          const SizedBox(height: 2),
-                          Text(
-                            '- $countdownText',
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 34,
-                              fontWeight: FontWeight.w900,
-                              letterSpacing: 1.5,
-                              shadows: [Shadow(color: Colors.black54, blurRadius: 10, offset: Offset(0, 3))],
-                            ),
-                          ),
+                          Text('- $countdownText',
+                              style: const TextStyle(fontSize: 32, fontWeight: FontWeight.w900, color: Colors.white)),
                           const Spacer(),
-                          ClipRRect(
-                            borderRadius: BorderRadius.circular(8),
-                            child: LinearProgressIndicator(
-                              value: countdownProgress,
-                              minHeight: 7,
-                              backgroundColor: Colors.white24,
-                              valueColor: const AlwaysStoppedAnimation<Color>(Color(0xFFFFD700)),
-                            ),
-                          ),
-                          const SizedBox(height: 12),
                           Container(
                             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                            decoration: BoxDecoration(color: Colors.black45, borderRadius: BorderRadius.circular(14)),
+                            decoration: BoxDecoration(color: Colors.black45, borderRadius: BorderRadius.circular(12)),
                             child: Row(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
-                                Text('🌅 Sunrise: $sunriseTime', style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600)),
-                                Text('🌇 Sunset: $sunsetTime', style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600)),
-                                Text(asrSchool == 0 ? 'SHAFI' : 'HANAFI', style: const TextStyle(color: Color(0xFF10B981), fontWeight: FontWeight.bold, fontSize: 11)),
+                                Text('🌅 Sunrise: $sunriseTime', style: const TextStyle(fontSize: 12)),
+                                Text('🌇 Sunset: $sunsetTime', style: const TextStyle(fontSize: 12)),
+                                if (isLoading) const SizedBox(width: 12, height: 12, child: CircularProgressIndicator(strokeWidth: 2)),
                               ],
                             ),
                           ),
@@ -790,298 +584,116 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 ),
               ),
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 18),
 
-            // Home Screen Widget Sync Info Banner
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-              decoration: BoxDecoration(
-                color: const Color(0xFF10242D),
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: const Color(0xFF10B981).withOpacity(0.4)),
-              ),
-              child: Row(
-                children: [
-                  const Icon(Icons.widgets_rounded, color: Color(0xFFFFD700), size: 22),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: Text(
-                      'Today: $completed/5 Ada ($jamaatCount Jamaat) • Home Widget Active 📱',
-                      style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.white),
+            // 🌟 UNIQUE FEATURE 1: ISLAMIC MOOD CURE 🌟
+            const Text('💖 Islamic Soul Care (Aaj kaisa mehsoos kar rahe ho?)',
+                style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: Color(0xFFFFD700))),
+            const SizedBox(height: 10),
+            SizedBox(
+              height: 76,
+              child: ListView.builder(
+                scrollDirection: Axis.horizontal,
+                itemCount: moods.length,
+                itemBuilder: (context, index) {
+                  return GestureDetector(
+                    onTap: () => _showMoodCureModal(moods[index]),
+                    child: Container(
+                      width: 105,
+                      margin: const EdgeInsets.only(right: 10),
+                      padding: const EdgeInsets.all(10),
+                      decoration: BoxDecoration(
+                        gradient: const LinearGradient(colors: [Color(0xFF16323F), Color(0xFF10242D)]),
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(color: const Color(0xFFFFD700).withOpacity(0.35)),
+                      ),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Text(moods[index]['emoji']!, style: const TextStyle(fontSize: 24)),
+                          const SizedBox(height: 4),
+                          Text(moods[index]['label']!,
+                              textAlign: TextAlign.center,
+                              style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.white)),
+                        ],
+                      ),
                     ),
-                  ),
-                  GestureDetector(
-                    onTap: () {
-                      _pushToWidget();
-                      _showSnack('📱 Phone Home Screen Widget Updated!');
-                    },
-                    child: const Text('Sync', style: TextStyle(color: Color(0xFFFFD700), fontWeight: FontWeight.bold, fontSize: 12)),
-                  ),
-                ],
+                  );
+                },
               ),
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 18),
 
-            // 5 Prayer Cards with 4-Status Picker
-            const Text('🕌 Aaj ki Namazein (Tap to set Jamaat / Qaza)', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white)),
+            // 5 Prayers List
+            const Text('🕌 Aaj ki Namazein (Tap to log Jamaat/Qaza)',
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
             const SizedBox(height: 10),
             ...prayerNames.map((String key) {
-              int status = todayStatus[key] ?? 0;
+              int st = todayStatus[key] ?? 0;
               bool isNext = (key == nextPrayerName);
-
               return GestureDetector(
-                onTap: () => _showStatusPickerSheet(key),
+                onTap: () => _showStatusPicker(key),
                 child: Container(
-                  margin: const EdgeInsets.only(bottom: 12),
+                  margin: const EdgeInsets.only(bottom: 10),
                   padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
                   decoration: BoxDecoration(
-                    gradient: isNext
-                        ? const LinearGradient(colors: [Color(0xFF163C35), Color(0xFF0D2329)])
-                        : const LinearGradient(colors: [Color(0xFF10242D), Color(0xFF0C1C24)]),
-                    borderRadius: BorderRadius.circular(20),
-                    border: Border.all(
-                      color: isNext ? const Color(0xFFFFD700) : (isPrayerOffered(status) ? const Color(0xFF10B981) : Colors.white10),
-                      width: isNext ? 1.8 : 1,
-                    ),
+                    color: isNext ? const Color(0xFF153832) : const Color(0xFF10242D),
+                    borderRadius: BorderRadius.circular(18),
+                    border: Border.all(color: isNext ? const Color(0xFFFFD700) : Colors.white10, width: isNext ? 1.5 : 1),
                   ),
                   child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      _buildCartoonPrayerAvatar(key, status, isNext),
-                      const SizedBox(width: 14),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Row(
-                              children: [
-                                Text('$key (${hindiNames[key]})', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-                                if (isNext) ...[
-                                  const SizedBox(width: 6),
-                                  Container(
-                                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                                    decoration: BoxDecoration(color: const Color(0xFFFFD700), borderRadius: BorderRadius.circular(8)),
-                                    child: const Text('NEXT', style: TextStyle(color: Colors.black, fontWeight: FontWeight.w900, fontSize: 9)),
-                                  ),
-                                ],
-                              ],
-                            ),
-                            const SizedBox(height: 4),
-                            Text('Azan: ${prayerTimes[key]}', style: TextStyle(color: isNext ? const Color(0xFFFFD700) : Colors.white70, fontSize: 13, fontWeight: FontWeight.w600)),
-                          ],
-                        ),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text('$key (${hindiNames[key]})', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                          Text('Azan: ${prayerTimes[key]}', style: const TextStyle(color: Color(0xFFFFD700), fontSize: 13)),
+                        ],
                       ),
-                      _buildStatusBadge(status),
+                      _statusBadge(st),
                     ],
                   ),
                 ),
               );
             }).toList(),
-          ],
-        ),
-      ),
-    );
-  }
-}
+            const SizedBox(height: 14),
 
-// ---------------- 2. LIVE 3D CARTOON QIBLA COMPASS SCREEN ----------------
-class QiblaCompassScreen extends StatefulWidget {
-  const QiblaCompassScreen({super.key});
-
-  @override
-  State<QiblaCompassScreen> createState() => _QiblaCompassScreenState();
-}
-
-class _QiblaCompassScreenState extends State<QiblaCompassScreen> {
-  double userLat = 26.4167;
-  double userLon = 92.7333;
-  String locationName = 'Rupahi';
-  double qiblaAngle = 277.0; // Default bearing from Assam to Makkah
-  double distanceKm = 5120.0;
-
-  @override
-  void initState() {
-    super.initState();
-    _loadLocationAndComputeQibla();
-  }
-
-  Future<void> _loadLocationAndComputeQibla() async {
-    final prefs = await SharedPreferences.getInstance();
-    setState(() {
-      locationName = prefs.getString('loc_name') ?? 'Rupahi';
-      userLat = prefs.getDouble('lat') ?? 26.4167;
-      userLon = prefs.getDouble('lon') ?? 92.7333;
-      qiblaAngle = _calculateQiblaBearing(userLat, userLon);
-      distanceKm = Geolocator.distanceBetween(userLat, userLon, 21.422487, 39.826206) / 1000.0;
-    });
-  }
-
-  // Exact Great-Circle Bearing Formula to Holy Kaaba (21.422487° N, 39.826206° E)
-  double _calculateQiblaBearing(double lat, double lon) {
-    const double kaabaLat = 21.422487 * math.pi / 180.0;
-    const double kaabaLon = 39.826206 * math.pi / 180.0;
-    double phi = lat * math.pi / 180.0;
-    double lam = lon * math.pi / 180.0;
-
-    double y = math.sin(kaabaLon - lam);
-    double x = math.cos(phi) * math.tan(kaabaLat) - math.sin(phi) * math.cos(kaabaLon - lam);
-    double bearing = math.atan2(y, x) * 180.0 / math.pi;
-    return (bearing + 360.0) % 360.0;
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return SafeArea(
-      child: Padding(
-        padding: const EdgeInsets.all(20.0),
-        child: Column(
-          children: [
-            const Text('🧭 Live Qibla Compass', style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Color(0xFFFFD700))),
-            const SizedBox(height: 6),
-            Text('📍 $locationName se Makkah: ${distanceKm.toStringAsFixed(0)} km', style: const TextStyle(color: Colors.white70, fontSize: 13)),
-            const SizedBox(height: 20),
-
-            Expanded(
-              child: StreamBuilder<CompassEvent>(
-                stream: FlutterCompass.events,
-                builder: (context, snapshot) {
-                  double? heading = snapshot.data?.heading;
-                  bool hasSensor = heading != null;
-                  double currentHeading = heading ?? 0.0;
-                  if (currentHeading < 0) currentHeading += 360.0;
-
-                  double diff = (qiblaAngle - currentHeading + 360.0) % 360.0;
-                  bool isAligned = diff < 8.0 || diff > 352.0;
-
-                  if (isAligned && hasSensor) {
-                    HapticFeedback.selectionClick();
-                  }
-
-                  return Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
+            // 🌟 UNIQUE FEATURE 2: DAILY SUNNAH HABITS 🌟
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: const Color(0xFF10242D),
+                borderRadius: BorderRadius.circular(18),
+                border: Border.all(color: const Color(0xFF10B981).withOpacity(0.4)),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      // Alignment Status Pill
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 8),
-                        decoration: BoxDecoration(
-                          color: isAligned ? const Color(0xFF10B981) : const Color(0xFF16323F),
-                          borderRadius: BorderRadius.circular(25),
-                          border: Border.all(color: const Color(0xFFFFD700)),
-                        ),
-                        child: Text(
-                          isAligned
-                              ? '🕋 PERFECT! Aapka Rukh Kaaba ki taraf hai!'
-                              : (hasSensor ? 'Phone ko seedha rakhein aur ghumayein' : 'Sensor Mode: Qibla Angle ${qiblaAngle.toStringAsFixed(1)}° W/NW'),
-                          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Colors.white),
-                        ),
-                      ),
-                      const SizedBox(height: 30),
-
-                      // Rotating 3D Cartoon Compass Dial
-                      Stack(
-                        alignment: Alignment.center,
-                        children: [
-                          // Outer Glow Ring
-                          Container(
-                            width: 280,
-                            height: 280,
-                            decoration: BoxDecoration(
-                              shape: BoxShape.circle,
-                              gradient: RadialGradient(
-                                colors: [
-                                  const Color(0xFF143340),
-                                  isAligned ? const Color(0xFF064E3B) : const Color(0xFF09171E),
-                                ],
-                              ),
-                              border: Border.all(
-                                color: isAligned ? const Color(0xFF10B981) : const Color(0xFFFFD700),
-                                width: isAligned ? 5 : 3,
-                              ),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: (isAligned ? const Color(0xFF10B981) : const Color(0xFFFFD700)).withOpacity(0.3),
-                                  blurRadius: 30,
-                                  spreadRadius: 4,
-                                ),
-                              ],
-                            ),
-                          ),
-
-                          // Rotating N-E-S-W Dial
-                          Transform.rotate(
-                            angle: -currentHeading * (math.pi / 180.0),
-                            child: SizedBox(
-                              width: 250,
-                              height: 250,
-                              child: Stack(
-                                alignment: Alignment.center,
-                                children: [
-                                  const Positioned(top: 10, child: Text('N', style: TextStyle(color: Colors.redAccent, fontWeight: FontWeight.w900, fontSize: 20))),
-                                  const Positioned(bottom: 10, child: Text('S', style: TextStyle(color: Colors.white70, fontWeight: FontWeight.bold, fontSize: 18))),
-                                  const Positioned(right: 12, child: Text('E', style: TextStyle(color: Colors.white70, fontWeight: FontWeight.bold, fontSize: 18))),
-                                  const Positioned(left: 12, child: Text('W', style: TextStyle(color: Colors.white70, fontWeight: FontWeight.bold, fontSize: 18))),
-                                ],
-                              ),
-                            ),
-                          ),
-
-                          // Rotating Golden Kaaba Pointer Needle
-                          Transform.rotate(
-                            angle: (qiblaAngle - currentHeading) * (math.pi / 180.0),
-                            child: Column(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                // Cartoon Kaaba Icon at Tip
-                                Container(
-                                  padding: const EdgeInsets.all(6),
-                                  decoration: BoxDecoration(
-                                    color: Colors.black,
-                                    borderRadius: BorderRadius.circular(8),
-                                    border: Border.all(color: const Color(0xFFFFD700), width: 2),
-                                  ),
-                                  child: const Text('🕋', style: TextStyle(fontSize: 22)),
-                                ),
-                                Container(
-                                  width: 6,
-                                  height: 75,
-                                  decoration: BoxDecoration(
-                                    gradient: const LinearGradient(
-                                      colors: [Color(0xFFFFD700), Color(0xFF10B981)],
-                                      begin: Alignment.topCenter,
-                                      end: Alignment.bottomCenter,
-                                    ),
-                                    borderRadius: BorderRadius.circular(4),
-                                  ),
-                                ),
-                                const SizedBox(height: 60),
-                              ],
-                            ),
-                          ),
-
-                          // Center Pivot Cap
-                          Container(
-                            width: 22,
-                            height: 22,
-                            decoration: BoxDecoration(
-                              color: const Color(0xFFFFD700),
-                              shape: BoxShape.circle,
-                              border: Border.all(color: Colors.black, width: 3),
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 30),
-
-                      // Degree Readout Cards
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                        children: [
-                          _infoBox('Qibla Angle', '${qiblaAngle.toStringAsFixed(1)}°'),
-                          _infoBox('Phone Heading', '${currentHeading.toStringAsFixed(0)}°'),
-                        ],
-                      ),
+                      const Text('🔥 Daily Sunnah Habits', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFFFFD700))),
+                      Text('$sunnahDone/4 Done', style: const TextStyle(color: Color(0xFF10B981), fontWeight: FontWeight.bold)),
                     ],
-                  );
-                },
+                  ),
+                  const SizedBox(height: 8),
+                  ...sunnahHabits.keys.map((String h) {
+                    return CheckboxListTile(
+                      contentPadding: EdgeInsets.zero,
+                      dense: true,
+                      activeColor: const Color(0xFF10B981),
+                      title: Text(h, style: const TextStyle(fontSize: 13)),
+                      value: sunnahHabits[h],
+                      onChanged: (val) async {
+                        final prefs = await SharedPreferences.getInstance();
+                        final tKey = getDateKey(DateTime.now());
+                        await prefs.setBool('sunnah_${tKey}_$h', val ?? false);
+                        setState(() => sunnahHabits[h] = val ?? false);
+                      },
+                    );
+                  }).toList(),
+                ],
               ),
             ),
           ],
@@ -1089,27 +701,9 @@ class _QiblaCompassScreenState extends State<QiblaCompassScreen> {
       ),
     );
   }
-
-  Widget _infoBox(String title, String val) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-      decoration: BoxDecoration(
-        color: const Color(0xFF10242D),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.white12),
-      ),
-      child: Column(
-        children: [
-          Text(title, style: const TextStyle(color: Colors.white60, fontSize: 12)),
-          const SizedBox(height: 4),
-          Text(val, style: const TextStyle(color: Color(0xFFFFD700), fontSize: 20, fontWeight: FontWeight.bold)),
-        ],
-      ),
-    );
-  }
 }
 
-// ---------------- 3. ANALYTICS TRACKER (WITH JAMAAT & QAZA STATS) ----------------
+// ---------------- 2. ANALYTICS + QAZA-E-UMRI BANK ----------------
 class PrayerAnalyticsScreen extends StatefulWidget {
   const PrayerAnalyticsScreen({super.key});
 
@@ -1118,19 +712,40 @@ class PrayerAnalyticsScreen extends StatefulWidget {
 }
 
 class _PrayerAnalyticsScreenState extends State<PrayerAnalyticsScreen> {
-  int selectedPeriod = 0;
-  DateTime selectedDate = DateTime.now();
   SharedPreferences? _prefs;
   final List<String> prayers = ['Fajr', 'Dhuhr', 'Asr', 'Maghrib', 'Isha'];
+  Map<String, int> qazaBank = {'Fajr': 0, 'Dhuhr': 0, 'Asr': 0, 'Maghrib': 0, 'Isha': 0};
 
   @override
   void initState() {
     super.initState();
-    _initPrefs();
+    _init();
   }
 
-  Future<void> _initPrefs() async {
+  Future<void> _init() async {
     _prefs = await SharedPreferences.getInstance();
+    setState(() {
+      for (var p in prayers) {
+        qazaBank[p] = _prefs!.getInt('qazabank_$p') ?? 0;
+      }
+    });
+  }
+
+  Future<void> _updateQazaBank(String prayer, int delta) async {
+    if (_prefs == null) return;
+    int next = math.max(0, (qazaBank[prayer] ?? 0) + delta);
+    await _prefs!.setInt('qazabank_$prayer', next);
+    setState(() => qazaBank[prayer] = next);
+  }
+
+  Future<void> _addMonthsToQazaBank(int months) async {
+    if (_prefs == null) return;
+    int days = months * 30;
+    for (var p in prayers) {
+      int next = (qazaBank[p] ?? 0) + days;
+      await _prefs!.setInt('qazabank_$p', next);
+      qazaBank[p] = next;
+    }
     setState(() {});
   }
 
@@ -1142,33 +757,20 @@ class _PrayerAnalyticsScreenState extends State<PrayerAnalyticsScreen> {
     return c;
   }
 
-  Future<void> _cycleStatusOnDate(DateTime date, String prayer) async {
-    if (_prefs == null) return;
-    int current = getPrayerStatus(_prefs, date, prayer);
-    int next = (current + 1) % 5; // Cycles 0 -> 1(Jamaat) -> 2(OnTime) -> 3(Qaza) -> 4(Missed) -> 0
-    String key = getDateKey(date);
-    await _prefs!.setInt('status_${key}_$prayer', next);
-    await _prefs!.setBool('track_${key}_$prayer', isPrayerOffered(next));
-    setState(() {});
-  }
-
   @override
   Widget build(BuildContext context) {
     DateTime now = DateTime.now();
     int daysInMonth = DateUtils.getDaysInMonth(now.year, now.month);
-    int monthlyOffered = 0;
-    int monthlyJamaat = 0;
-    int monthlyQazaOrMissed = 0;
-
+    int mAda = 0, mJamaat = 0;
     for (int d = 1; d <= daysInMonth; d++) {
       DateTime dt = DateTime(now.year, now.month, d);
       for (var p in prayers) {
         int st = getPrayerStatus(_prefs, dt, p);
-        if (isPrayerOffered(st)) monthlyOffered++;
-        if (st == 1) monthlyJamaat++;
-        if (st == 3 || st == 4) monthlyQazaOrMissed++;
+        if (isPrayerOffered(st)) mAda++;
+        if (st == 1) mJamaat++;
       }
     }
+    int totalQazaRemaining = qazaBank.values.fold(0, (a, b) => a + b);
 
     return SafeArea(
       child: SingleChildScrollView(
@@ -1176,87 +778,118 @@ class _PrayerAnalyticsScreenState extends State<PrayerAnalyticsScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text('📊 Advanced Namaz Report', style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Color(0xFFFFD700))),
-            const SizedBox(height: 12),
-
-            // 3 Breakdown Cards (Total Ada, Jamaat, Qaza/Missed)
+            const Text('📊 Namaz Analytics & Qaza Bank',
+                style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Color(0xFFFFD700))),
+            const SizedBox(height: 14),
             Row(
               children: [
-                Expanded(child: _miniStatCard('Total Ada', '$monthlyOffered', const Color(0xFF10B981))),
-                const SizedBox(width: 8),
-                Expanded(child: _miniStatCard('🟢 In Jamaat', '$monthlyJamaat', const Color(0xFFFFD700))),
-                const SizedBox(width: 8),
-                Expanded(child: _miniStatCard('🟠 Qaza/Miss', '$monthlyQazaOrMissed', const Color(0xFFF59E0B))),
+                Expanded(child: _statBox('This Month Ada', '$mAda / ${daysInMonth * 5}', const Color(0xFF10B981))),
+                const SizedBox(width: 10),
+                Expanded(child: _statBox('🟢 In Jamaat', '$mJamaat Prayers', const Color(0xFFFFD700))),
               ],
-            ),
-            const SizedBox(height: 16),
-
-            // Period Selector
-            Container(
-              padding: const EdgeInsets.all(4),
-              decoration: BoxDecoration(color: const Color(0xFF10242D), borderRadius: BorderRadius.circular(14)),
-              child: Row(
-                children: [
-                  _buildTabButton('Weekly (7D)', 0),
-                  _buildTabButton('Monthly', 1),
-                  _buildTabButton('Yearly (12M)', 2),
-                ],
-              ),
             ),
             const SizedBox(height: 18),
 
-            if (selectedPeriod == 0) _buildWeeklyChart(now),
-            if (selectedPeriod == 1) _buildMonthlyCalendar(now, daysInMonth),
-            if (selectedPeriod == 2) _buildYearlyReport(now),
-
+            // Monthly Heatmap Calendar
+            Container(
+              padding: const EdgeInsets.all(14),
+              decoration: BoxDecoration(color: const Color(0xFF10242D), borderRadius: BorderRadius.circular(18)),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('🗓️ Monthly Consistency (${now.month}/${now.year})',
+                      style: const TextStyle(fontWeight: FontWeight.bold, color: Color(0xFFFFD700))),
+                  const SizedBox(height: 12),
+                  GridView.builder(
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: 7, crossAxisSpacing: 6, mainAxisSpacing: 6),
+                    itemCount: daysInMonth,
+                    itemBuilder: (ctx, idx) {
+                      int c = _getCountForDate(DateTime(now.year, now.month, idx + 1));
+                      Color col = c == 5 ? const Color(0xFF10B981) : (c >= 1 ? const Color(0xFF047857) : const Color(0xFF16323F));
+                      return Container(
+                        decoration: BoxDecoration(color: col, borderRadius: BorderRadius.circular(8)),
+                        child: Center(child: Text('${idx + 1}', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12))),
+                      );
+                    },
+                  ),
+                ],
+              ),
+            ),
             const SizedBox(height: 20),
 
-            // Selected Date Multi-Status Editor
+            // 🌟 UNIQUE FEATURE 3: QAZA-E-UMRI BANK 🌟
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: const Color(0xFF10242D),
-                borderRadius: BorderRadius.circular(18),
-                border: Border.all(color: const Color(0xFFFFD700).withOpacity(0.35)),
+                gradient: const LinearGradient(colors: [Color(0xFF1A2639), Color(0xFF10242D)]),
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(color: const Color(0xFFFFD700).withOpacity(0.45)),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('📅 Edit Record: ${getDateKey(selectedDate)} (Tap to cycle status)',
-                      style: const TextStyle(color: Color(0xFFFFD700), fontWeight: FontWeight.bold, fontSize: 14)),
-                  const SizedBox(height: 12),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: prayers.map((p) {
-                      int st = getPrayerStatus(_prefs, selectedDate, p);
-                      Color col = const Color(0xFF16323F);
-                      String label = 'None';
-                      if (st == 1) { col = const Color(0xFF10B981); label = 'Jamaat'; }
-                      else if (st == 2) { col = const Color(0xFF3B82F6); label = 'OnTime'; }
-                      else if (st == 3) { col = const Color(0xFFF59E0B); label = 'Qaza'; }
-                      else if (st == 4) { col = const Color(0xFFEF4444); label = 'Missed'; }
-
-                      return GestureDetector(
-                        onTap: () => _cycleStatusOnDate(selectedDate, p),
-                        child: Container(
-                          width: 58,
-                          padding: const EdgeInsets.symmetric(vertical: 10),
-                          decoration: BoxDecoration(
-                            color: col,
-                            borderRadius: BorderRadius.circular(12),
-                            border: Border.all(color: Colors.white24),
-                          ),
-                          child: Column(
+                    children: [
+                      const Text('🏦 Qaza-e-Umri Bank',
+                          style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold, color: Color(0xFFFFD700))),
+                      Text('Pending: $totalQazaRemaining',
+                          style: const TextStyle(color: Colors.orangeAccent, fontWeight: FontWeight.bold)),
+                    ],
+                  ),
+                  const SizedBox(height: 6),
+                  const Text('Purani chhooti hui namazon ka hisab rakhein aur roz ada karke kam karein:',
+                      style: TextStyle(color: Colors.white60, fontSize: 12)),
+                  const SizedBox(height: 12),
+                  Row(
+                    children: [
+                      ElevatedButton(
+                        style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF16323F)),
+                        onPressed: () => _addMonthsToQazaBank(1),
+                        child: const Text('+1 Month Qaza', style: TextStyle(fontSize: 11, color: Colors.white)),
+                      ),
+                      const SizedBox(width: 8),
+                      ElevatedButton(
+                        style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF16323F)),
+                        onPressed: () => _addMonthsToQazaBank(12),
+                        child: const Text('+1 Year Qaza', style: TextStyle(fontSize: 11, color: Colors.white)),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  ...prayers.map((p) {
+                    return Padding(
+                      padding: const EdgeInsets.only(bottom: 8.0),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text('$p Qaza Remaining:', style: const TextStyle(fontWeight: FontWeight.bold)),
+                          Row(
                             children: [
-                              Text(p, style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
-                              const SizedBox(height: 4),
-                              Text(label, style: const TextStyle(fontSize: 9, color: Colors.white70)),
+                              Text('${qazaBank[p]}',
+                                  style: const TextStyle(color: Color(0xFFFFD700), fontWeight: FontWeight.bold, fontSize: 16)),
+                              const SizedBox(width: 10),
+                              ElevatedButton(
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: const Color(0xFF10B981),
+                                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                                ),
+                                onPressed: () => _updateQazaBank(p, -1),
+                                child: const Text('-1 Paid ✅', style: TextStyle(fontSize: 11, color: Colors.white)),
+                              ),
+                              const SizedBox(width: 6),
+                              IconButton(
+                                icon: const Icon(Icons.add_circle_outline, color: Colors.white54, size: 20),
+                                onPressed: () => _updateQazaBank(p, 1),
+                              ),
                             ],
                           ),
-                        ),
-                      );
-                    }).toList(),
-                  ),
+                        ],
+                      ),
+                    );
+                  }).toList(),
                 ],
               ),
             ),
@@ -1266,267 +899,328 @@ class _PrayerAnalyticsScreenState extends State<PrayerAnalyticsScreen> {
     );
   }
 
-  Widget _miniStatCard(String label, String val, Color col) {
+  Widget _statBox(String label, String val, Color col) {
     return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: const Color(0xFF10242D),
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: col.withOpacity(0.4)),
-      ),
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(color: const Color(0xFF10242D), borderRadius: BorderRadius.circular(16), border: Border.all(color: col.withOpacity(0.4))),
       child: Column(
         children: [
           Text(val, style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: col)),
           const SizedBox(height: 4),
-          Text(label, style: const TextStyle(fontSize: 11, color: Colors.white70)),
+          Text(label, style: const TextStyle(fontSize: 12, color: Colors.white70)),
         ],
       ),
     );
   }
-
-  Widget _buildTabButton(String title, int index) {
-    bool active = selectedPeriod == index;
-    return Expanded(
-      child: GestureDetector(
-        onTap: () => setState(() => selectedPeriod = index),
-        child: Container(
-          padding: const EdgeInsets.symmetric(vertical: 10),
-          decoration: BoxDecoration(color: active ? const Color(0xFF10B981) : Colors.transparent, borderRadius: BorderRadius.circular(10)),
-          child: Center(child: Text(title, style: TextStyle(color: active ? Colors.white : Colors.white60, fontWeight: FontWeight.bold, fontSize: 12))),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildWeeklyChart(DateTime now) {
-    final List<String> weekDays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-    return Container(
-      padding: const EdgeInsets.all(18),
-      decoration: BoxDecoration(color: const Color(0xFF10242D), borderRadius: BorderRadius.circular(18)),
-      child: SizedBox(
-        height: 150,
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceAround,
-          crossAxisAlignment: CrossAxisAlignment.end,
-          children: List.generate(7, (index) {
-            DateTime day = now.subtract(Duration(days: 6 - index));
-            int count = _getCountForDate(day);
-            bool isSelected = getDateKey(day) == getDateKey(selectedDate);
-            double barHeight = (count / 5.0) * 100;
-            if (barHeight < 8) barHeight = 8;
-
-            return GestureDetector(
-              onTap: () => setState(() => selectedDate = day),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.end,
-                children: [
-                  Text('$count/5', style: const TextStyle(fontSize: 11, color: Colors.white70)),
-                  const SizedBox(height: 6),
-                  Container(
-                    width: 28,
-                    height: barHeight,
-                    decoration: BoxDecoration(
-                      color: count == 5 ? const Color(0xFFFFD700) : const Color(0xFF10B981),
-                      borderRadius: BorderRadius.circular(8),
-                      border: isSelected ? Border.all(color: Colors.white, width: 2) : null,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(weekDays[day.weekday - 1], style: const TextStyle(fontSize: 12, color: Colors.white70)),
-                ],
-              ),
-            );
-          }),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildMonthlyCalendar(DateTime now, int daysInMonth) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(color: const Color(0xFF10242D), borderRadius: BorderRadius.circular(18)),
-      child: GridView.builder(
-        shrinkWrap: true,
-        physics: const NeverScrollableScrollPhysics(),
-        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: 7, crossAxisSpacing: 8, mainAxisSpacing: 8),
-        itemCount: daysInMonth,
-        itemBuilder: (context, index) {
-          DateTime d = DateTime(now.year, now.month, index + 1);
-          int c = _getCountForDate(d);
-          bool isSelected = getDateKey(d) == getDateKey(selectedDate);
-          Color bgColor = c == 5 ? const Color(0xFF10B981) : (c >= 1 ? const Color(0xFF047857) : const Color(0xFF16323F));
-
-          return GestureDetector(
-            onTap: () => setState(() => selectedDate = d),
-            child: Container(
-              decoration: BoxDecoration(
-                color: bgColor,
-                borderRadius: BorderRadius.circular(10),
-                border: Border.all(color: isSelected ? const Color(0xFFFFD700) : Colors.white12, width: isSelected ? 2 : 1),
-              ),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Text('${index + 1}', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
-                  Text('$c/5', style: const TextStyle(fontSize: 9, color: Colors.white70)),
-                ],
-              ),
-            ),
-          );
-        },
-      ),
-    );
-  }
-
-  Widget _buildYearlyReport(DateTime now) {
-    final List<String> monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(color: const Color(0xFF10242D), borderRadius: BorderRadius.circular(18)),
-      child: GridView.builder(
-        shrinkWrap: true,
-        physics: const NeverScrollableScrollPhysics(),
-        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: 3, crossAxisSpacing: 10, mainAxisSpacing: 10, childAspectRatio: 1.5),
-        itemCount: 12,
-        itemBuilder: (context, mIdx) {
-          int m = mIdx + 1;
-          int days = DateUtils.getDaysInMonth(now.year, m);
-          int total = 0;
-          for (int d = 1; d <= days; d++) {
-            total += _getCountForDate(DateTime(now.year, m, d));
-          }
-          return Container(
-            decoration: BoxDecoration(color: const Color(0xFF16323F), borderRadius: BorderRadius.circular(12)),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Text(monthNames[mIdx], style: const TextStyle(fontWeight: FontWeight.bold, color: Color(0xFFFFD700))),
-                Text('$total / ${days * 5}', style: const TextStyle(fontSize: 12)),
-              ],
-            ),
-          );
-        },
-      ),
-    );
-  }
 }
 
-// ---------------- SETTINGS, QURAN & TASBEEH SCREENS ----------------
-class PrayerSettingsPage extends StatefulWidget {
-  final String locationName;
-  final VoidCallback onDetectGPS;
-
-  const PrayerSettingsPage({super.key, required this.locationName, required this.onDetectGPS});
+// ---------------- 3. LIVE 114 SURAH QURAN + MP3 AUDIO PLAYER ----------------
+class LiveQuranScreen extends StatefulWidget {
+  const LiveQuranScreen({super.key});
 
   @override
-  State<PrayerSettingsPage> createState() => _PrayerSettingsPageState();
+  State<LiveQuranScreen> createState() => _LiveQuranScreenState();
 }
 
-class _PrayerSettingsPageState extends State<PrayerSettingsPage> {
-  late String locName;
-  int calcMethod = 1;
-  int asrSchool = 0;
-  String manualCorrection = '0,0,0,0,0';
+class _LiveQuranScreenState extends State<LiveQuranScreen> {
+  List<dynamic> surahList = [];
+  bool isLoading = true;
+  String searchQuery = '';
 
   @override
   void initState() {
     super.initState();
-    locName = widget.locationName;
-    _loadPrefs();
+    _fetchAll114Surahs();
   }
 
-  Future<void> _loadPrefs() async {
-    final prefs = await SharedPreferences.getInstance();
-    setState(() {
-      locName = prefs.getString('loc_name') ?? widget.locationName;
-      calcMethod = prefs.getInt('calc_method') ?? 1;
-      asrSchool = prefs.getInt('asr_school') ?? 0;
-      manualCorrection = prefs.getString('manual_corr') ?? '0,0,0,0,0';
+  Future<void> _fetchAll114Surahs() async {
+    try {
+      final res = await http.get(Uri.parse('https://api.alquran.cloud/v1/surah'));
+      if (res.statusCode == 200) {
+        setState(() {
+          surahList = json.decode(res.body)['data'];
+          isLoading = false;
+        });
+      }
+    } catch (_) {
+      setState(() => isLoading = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final filtered = surahList.where((s) {
+      final name = s['englishName'].toString().toLowerCase();
+      return name.contains(searchQuery.toLowerCase());
+    }).toList();
+
+    return SafeArea(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text('🎧 Complete 114 Surah Audio Quran',
+                style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Color(0xFFFFD700))),
+            const SizedBox(height: 10),
+            TextField(
+              onChanged: (v) => setState(() => searchQuery = v),
+              decoration: InputDecoration(
+                hintText: 'Search Surah (e.g. Yaseen, Mulk, Kahf)...',
+                prefixIcon: const Icon(Icons.search, color: Color(0xFFFFD700)),
+                filled: true,
+                fillColor: const Color(0xFF10242D),
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
+              ),
+            ),
+            const SizedBox(height: 12),
+            Expanded(
+              child: isLoading
+                  ? const Center(child: CircularProgressIndicator(color: Color(0xFFFFD700)))
+                  : ListView.builder(
+                      itemCount: filtered.length,
+                      itemBuilder: (ctx, idx) {
+                        final s = filtered[idx];
+                        return Container(
+                          margin: const EdgeInsets.only(bottom: 10),
+                          decoration: BoxDecoration(color: const Color(0xFF10242D), borderRadius: BorderRadius.circular(16)),
+                          child: ListTile(
+                            leading: CircleAvatar(
+                              backgroundColor: const Color(0xFF16323F),
+                              child: Text('${s['number']}', style: const TextStyle(color: Color(0xFFFFD700), fontWeight: FontWeight.bold)),
+                            ),
+                            title: Text(s['englishName'], style: const TextStyle(fontWeight: FontWeight.bold)),
+                            subtitle: Text('${s['englishNameTranslation']} • ${s['numberOfAyahs']} Ayahs',
+                                style: const TextStyle(color: Colors.white60, fontSize: 12)),
+                            trailing: Text(s['name'], style: const TextStyle(fontSize: 20, color: Color(0xFFFFD700), fontWeight: FontWeight.bold)),
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (_) => SurahDetailAudioPage(
+                                    surahNumber: s['number'],
+                                    surahName: s['englishName'],
+                                  ),
+                                ),
+                              );
+                            },
+                          ),
+                        );
+                      },
+                    ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class SurahDetailAudioPage extends StatefulWidget {
+  final int surahNumber;
+  final String surahName;
+
+  const SurahDetailAudioPage({super.key, required this.surahNumber, required this.surahName});
+
+  @override
+  State<SurahDetailAudioPage> createState() => _SurahDetailAudioPageState();
+}
+
+class _SurahDetailAudioPageState extends State<SurahDetailAudioPage> {
+  List<dynamic> arabicAyahs = [];
+  List<dynamic> transAyahs = [];
+  bool isLoading = true;
+  final AudioPlayer _audioPlayer = AudioPlayer();
+  int? playingIndex;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadSurahContent();
+    _audioPlayer.onPlayerComplete.listen((_) {
+      if (mounted) setState(() => playingIndex = null);
     });
   }
 
-  Future<void> _savePref(String key, dynamic val) async {
-    final prefs = await SharedPreferences.getInstance();
-    if (val is int) await prefs.setInt(key, val);
-    if (val is String) await prefs.setString(key, val);
+  @override
+  void dispose() {
+    _audioPlayer.dispose();
+    super.dispose();
+  }
+
+  Future<void> _loadSurahContent() async {
+    try {
+      final url = Uri.parse(
+          'https://api.alquran.cloud/v1/surah/${widget.surahNumber}/editions/ar.alafasy,en.asad');
+      final res = await http.get(url);
+      if (res.statusCode == 200) {
+        final data = json.decode(res.body)['data'];
+        setState(() {
+          arabicAyahs = data[0]['ayahs'];
+          transAyahs = data[1]['ayahs'];
+          isLoading = false;
+        });
+      }
+    } catch (_) {
+      setState(() => isLoading = false);
+    }
+  }
+
+  Future<void> _playAyahAudio(int index, String audioUrl) async {
+    if (playingIndex == index) {
+      await _audioPlayer.stop();
+      setState(() => playingIndex = null);
+    } else {
+      setState(() => playingIndex = index);
+      await _audioPlayer.play(UrlSource(audioUrl));
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Prayer Settings'), backgroundColor: const Color(0xFF047857)),
-      body: ListView(
-        padding: const EdgeInsets.all(14),
-        children: [
-          ListTile(
-            tileColor: const Color(0xFF10242D),
-            title: const Text('Location (Tap to Auto-Detect GPS)'),
-            subtitle: Text(locName, style: const TextStyle(color: Color(0xFFFFD700))),
-            trailing: const Icon(Icons.my_location, color: Color(0xFFFFD700)),
-            onTap: () {
-              widget.onDetectGPS();
-              Navigator.pop(context);
-            },
-          ),
-          const SizedBox(height: 10),
-          ListTile(
-            tileColor: const Color(0xFF10242D),
-            title: const Text('Asr Calculation (Tap to switch)'),
-            subtitle: Text(asrSchool == 0 ? 'SHAFI' : 'HANAFI', style: const TextStyle(color: Color(0xFF10B981))),
-            onTap: () {
-              setState(() => asrSchool = asrSchool == 0 ? 1 : 0);
-              _savePref('asr_school', asrSchool);
-            },
-          ),
-        ],
+      appBar: AppBar(
+        title: Text('Surah ${widget.surahName}'),
+        backgroundColor: const Color(0xFF047857),
       ),
+      body: isLoading
+          ? const Center(child: CircularProgressIndicator(color: Color(0xFFFFD700)))
+          : ListView.builder(
+              padding: const EdgeInsets.all(16),
+              itemCount: arabicAyahs.length,
+              itemBuilder: (ctx, i) {
+                final ar = arabicAyahs[i];
+                final tr = transAyahs[i];
+                bool isPlaying = (playingIndex == i);
+
+                return Container(
+                  margin: const EdgeInsets.only(bottom: 14),
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF10242D),
+                    borderRadius: BorderRadius.circular(18),
+                    border: Border.all(color: isPlaying ? const Color(0xFFFFD700) : Colors.white12),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          CircleAvatar(
+                            radius: 14,
+                            backgroundColor: const Color(0xFF16323F),
+                            child: Text('${ar['numberInSurah']}', style: const TextStyle(fontSize: 11, color: Color(0xFFFFD700))),
+                          ),
+                          ElevatedButton.icon(
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: isPlaying ? const Color(0xFFFFD700) : const Color(0xFF10B981),
+                            ),
+                            onPressed: () => _playAyahAudio(i, ar['audio']),
+                            icon: Icon(isPlaying ? Icons.stop : Icons.play_arrow, color: Colors.black, size: 18),
+                            label: Text(isPlaying ? 'Stop' : 'Listen Tilawat',
+                                style: const TextStyle(color: Colors.black, fontWeight: FontWeight.bold, fontSize: 12)),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 12),
+                      Text(ar['text'],
+                          textAlign: TextAlign.right,
+                          style: const TextStyle(fontSize: 25, color: Colors.white, height: 1.8, fontWeight: FontWeight.bold)),
+                      const SizedBox(height: 10),
+                      Text(tr['text'], style: const TextStyle(color: Colors.white70, fontSize: 13, height: 1.4)),
+                    ],
+                  ),
+                );
+              },
+            ),
     );
   }
 }
 
-class QuranScreen extends StatelessWidget {
-  const QuranScreen({super.key});
+// ---------------- 4. LIVE QIBLA COMPASS SCREEN ----------------
+class QiblaCompassScreen extends StatefulWidget {
+  const QiblaCompassScreen({super.key});
 
-  final List<Map<String, String>> surahs = const [
-    {
-      'name': '1. Surah Al-Fatiha',
-      'ayahs': 'بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ ۝ الْحَمْدُ لِلَّهِ رَبِّ الْعَالَمِينَ ۝ الرَّحْمَٰنِ الرَّحِيمِ ۝ مَالِكِ يَوْمِ الدِّينِ ۝ إِيَّاكَ نَعْبُدُ وَإِيَّاكَ نَسْتَعِينُ ۝ اهْدِنَا الصِّرَاطَ الْمُسْتَقِيمَ ۝',
-      'translation': 'Sab tareef Allah Ta\'ala ke liye hai jo tamam jahanon ka palne wala hai...'
-    },
-    {
-      'name': '2. Ayat-ul-Kursi',
-      'ayahs': 'اللَّهُ لَا إِلَٰهَ إِلَّا هُوَ الْحَيُّ الْقَيُّومُ ۚ لَا تَأْخُذُهُ سِنَةٌ وَلَا نَوْمٌ...',
-      'translation': 'Allah wo hai jiske siwa koi ma\'bood nahi, wo hamesha zinda rehne wala hai...'
-    },
-    {
-      'name': '3. Surah Al-Ikhlas',
-      'ayahs': 'قُلْ هُوَ اللَّهُ أَحَدٌ ۝ اللَّهُ الصَّمَدُ ۝ لَمْ يَلِدْ وَلَمْ يُولَدْ ۝ وَلَمْ يَكُنْ لَهُ كُفُوًا أَحَدٌ ۝',
-      'translation': 'Keh dijiye ki wo Allah ek hai. Allah be-niyaz hai...'
-    },
-  ];
+  @override
+  State<QiblaCompassScreen> createState() => _QiblaCompassScreenState();
+}
+
+class _QiblaCompassScreenState extends State<QiblaCompassScreen> {
+  double qiblaAngle = 277.0, distanceKm = 5120.0;
+  String locationName = 'Rupahi';
+
+  @override
+  void initState() {
+    super.initState();
+    _initQibla();
+  }
+
+  Future<void> _initQibla() async {
+    final prefs = await SharedPreferences.getInstance();
+    double lat = prefs.getDouble('lat') ?? 26.4167;
+    double lon = prefs.getDouble('lon') ?? 92.7333;
+    const double kLat = 21.422487 * math.pi / 180.0;
+    const double kLon = 39.826206 * math.pi / 180.0;
+    double phi = lat * math.pi / 180.0, lam = lon * math.pi / 180.0;
+    double y = math.sin(kLon - lam);
+    double x = math.cos(phi) * math.tan(kLat) - math.sin(phi) * math.cos(kLon - lam);
+    setState(() {
+      locationName = prefs.getString('loc_name') ?? 'Rupahi';
+      qiblaAngle = ((math.atan2(y, x) * 180.0 / math.pi) + 360.0) % 360.0;
+      distanceKm = Geolocator.distanceBetween(lat, lon, 21.422487, 39.826206) / 1000.0;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
     return SafeArea(
-      child: ListView.builder(
-        padding: const EdgeInsets.all(16),
-        itemCount: surahs.length,
-        itemBuilder: (context, index) {
-          return Container(
-            margin: const EdgeInsets.only(bottom: 16),
-            padding: const EdgeInsets.all(18),
-            decoration: BoxDecoration(color: const Color(0xFF10242D), borderRadius: BorderRadius.circular(18)),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(surahs[index]['name']!, style: const TextStyle(color: Color(0xFFFFD700), fontWeight: FontWeight.bold, fontSize: 16)),
-                const SizedBox(height: 12),
-                Text(surahs[index]['ayahs']!, textAlign: TextAlign.right, style: const TextStyle(fontSize: 24, color: Colors.white, height: 1.8)),
-                const SizedBox(height: 10),
-                Text(surahs[index]['translation']!, style: const TextStyle(color: Colors.white70, fontSize: 13)),
-              ],
-            ),
+      child: StreamBuilder<CompassEvent>(
+        stream: FlutterCompass.events,
+        builder: (context, snapshot) {
+          double heading = snapshot.data?.heading ?? 0.0;
+          if (heading < 0) heading += 360.0;
+          double diff = (qiblaAngle - heading + 360.0) % 360.0;
+          bool aligned = diff < 8.0 || diff > 352.0;
+
+          return Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Text('🧭 Live 3D Qibla Finder',
+                  style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Color(0xFFFFD700))),
+              const SizedBox(height: 6),
+              Text('📍 $locationName to Holy Kaaba: ${distanceKm.toStringAsFixed(0)} km',
+                  style: const TextStyle(color: Colors.white70)),
+              const SizedBox(height: 30),
+              Stack(
+                alignment: Alignment.center,
+                children: [
+                  Container(
+                    width: 260,
+                    height: 260,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: aligned ? const Color(0xFF064E3B) : const Color(0xFF10242D),
+                      border: Border.all(color: aligned ? const Color(0xFF10B981) : const Color(0xFFFFD700), width: 4),
+                    ),
+                  ),
+                  Transform.rotate(
+                    angle: (qiblaAngle - heading) * (math.pi / 180.0),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Text('🕋', style: TextStyle(fontSize: 34)),
+                        Container(width: 6, height: 85, color: const Color(0xFFFFD700)),
+                        const SizedBox(height: 55),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 25),
+              Text(aligned ? '✅ PERFECT! Facing Holy Kaaba!' : 'Rotate phone until Kaaba points straight up',
+                  style: const TextStyle(color: Color(0xFF10B981), fontWeight: FontWeight.bold)),
+            ],
           );
         },
       ),
@@ -1534,42 +1228,121 @@ class QuranScreen extends StatelessWidget {
   }
 }
 
-class TasbeehScreen extends StatefulWidget {
-  const TasbeehScreen({super.key});
+// ---------------- 5. ISLAMIC HUB: TASBEEH + ZAKAT CALCULATOR ----------------
+class IslamicToolsHubScreen extends StatefulWidget {
+  const IslamicToolsHubScreen({super.key});
 
   @override
-  State<TasbeehScreen> createState() => _TasbeehScreenState();
+  State<IslamicToolsHubScreen> createState() => _IslamicToolsHubScreenState();
 }
 
-class _TasbeehScreenState extends State<TasbeehScreen> {
-  int count = 0;
+class _IslamicToolsHubScreenState extends State<IslamicToolsHubScreen> {
+  int tasbeehCount = 0;
+  final TextEditingController goldCtrl = TextEditingController();
+  final TextEditingController silverCtrl = TextEditingController();
+  final TextEditingController cashCtrl = TextEditingController();
+  double calculatedZakat = 0.0;
+
+  void _calculateZakat() {
+    double g = double.tryParse(goldCtrl.text) ?? 0;
+    double s = double.tryParse(silverCtrl.text) ?? 0;
+    double c = double.tryParse(cashCtrl.text) ?? 0;
+    setState(() {
+      calculatedZakat = (g + s + c) * 0.025; // 2.5% Zakat Formula
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
     return SafeArea(
-      child: Center(
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.all(16),
         child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text('📿 Digital Tasbeeh', style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Color(0xFFFFD700))),
-            const SizedBox(height: 40),
-            GestureDetector(
-              onTap: () => setState(() => count++),
-              child: Container(
-                width: 210,
-                height: 210,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  gradient: const RadialGradient(colors: [Color(0xFF10B981), Color(0xFF047857)]),
-                  border: Border.all(color: const Color(0xFFFFD700), width: 4),
-                ),
-                child: Center(child: Text('$count', style: const TextStyle(fontSize: 54, fontWeight: FontWeight.bold))),
+            const Text('✨ Islamic Hub (Tasbeeh & Zakat)',
+                style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Color(0xFFFFD700))),
+            const SizedBox(height: 16),
+
+            // Digital Tasbeeh Card
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(color: const Color(0xFF10242D), borderRadius: BorderRadius.circular(20)),
+              child: Column(
+                children: [
+                  const Text('📿 Quick Digital Tasbeeh', style: TextStyle(fontWeight: FontWeight.bold, color: Color(0xFFFFD700))),
+                  const SizedBox(height: 14),
+                  GestureDetector(
+                    onTap: () {
+                      HapticFeedback.lightImpact();
+                      setState(() => tasbeehCount++);
+                    },
+                    child: CircleAvatar(
+                      radius: 65,
+                      backgroundColor: const Color(0xFF10B981),
+                      child: Text('$tasbeehCount', style: const TextStyle(fontSize: 40, fontWeight: FontWeight.bold, color: Colors.white)),
+                    ),
+                  ),
+                  TextButton(onPressed: () => setState(() => tasbeehCount = 0), child: const Text('Reset Counter')),
+                ],
               ),
             ),
-            const SizedBox(height: 30),
-            ElevatedButton(onPressed: () => setState(() => count = 0), child: const Text('Reset')),
+            const SizedBox(height: 20),
+
+            // 🌟 UNIQUE FEATURE 5: SMART ZAKAT CALCULATOR 🌟
+            Container(
+              padding: const EdgeInsets.all(18),
+              decoration: BoxDecoration(
+                color: const Color(0xFF10242D),
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(color: const Color(0xFFFFD700).withOpacity(0.4)),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text('🧮 Smart Zakat Calculator (2.5%)',
+                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFFFFD700))),
+                  const SizedBox(height: 12),
+                  _zakatInput(goldCtrl, 'Gold Value (₹)'),
+                  const SizedBox(height: 10),
+                  _zakatInput(silverCtrl, 'Silver Value (₹)'),
+                  const SizedBox(height: 10),
+                  _zakatInput(cashCtrl, 'Cash / Bank Savings / Business (₹)'),
+                  const SizedBox(height: 14),
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF10B981)),
+                      onPressed: _calculateZakat,
+                      child: const Text('Calculate Zakat', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  Center(
+                    child: Text(
+                      'Total Payable Zakat: ₹ ${calculatedZakat.toStringAsFixed(2)}',
+                      style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFFFFD700)),
+                    ),
+                  ),
+                ],
+              ),
+            ),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _zakatInput(TextEditingController ctrl, String label) {
+    return TextField(
+      controller: ctrl,
+      keyboardType: TextInputType.number,
+      decoration: InputDecoration(
+        labelText: label,
+        filled: true,
+        fillColor: const Color(0xFF16323F),
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
       ),
     );
   }
