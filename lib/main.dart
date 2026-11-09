@@ -6,8 +6,6 @@ import 'package:flutter/services.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:geolocator/geolocator.dart';
-import 'package:flutter_compass/flutter_compass.dart';
-import 'package:home_widget/home_widget.dart';
 import 'package:audioplayers/audioplayers.dart';
 
 void main() {
@@ -51,8 +49,8 @@ class _MainNavigationState extends State<MainNavigation> {
       const DashboardScreen(),        // 1. Live Prayer + Mood Cure + Sunnah Habits
       const PrayerAnalyticsScreen(),  // 2. Analytics + Qaza-e-Umri Bank
       const LiveQuranScreen(),        // 3. Full 114 Surahs + MP3 Audio Player
-      const QiblaCompassScreen(),     // 4. Live 3D Qibla Compass
-      const IslamicToolsHubScreen(),  // 5. Tasbeeh + Zakat Calculator + Duas
+      const QiblaCompassScreen(),     // 4. Interactive 3D Qibla Finder
+      const IslamicToolsHubScreen(),  // 5. Tasbeeh + Zakat Calculator
     ];
 
     return Scaffold(
@@ -94,23 +92,6 @@ int getPrayerStatus(SharedPreferences? prefs, DateTime date, String prayer) {
 }
 
 bool isPrayerOffered(int status) => status == 1 || status == 2 || status == 3;
-
-Future<void> syncHomeScreenWidget({
-  required String location,
-  required String hijri,
-  required String nextPrayer,
-  required String nextTime,
-  required int completedCount,
-  required int jamaatCount,
-}) async {
-  try {
-    await HomeWidget.saveWidgetData<String>('wid_loc', '🌙 $hijri • 📍 $location');
-    await HomeWidget.saveWidgetData<String>('wid_next', 'Next: $nextPrayer ($nextTime)');
-    await HomeWidget.saveWidgetData<String>(
-        'wid_track', 'Today: $completedCount/5 Ada ($jamaatCount Jamaat) ✅');
-    await HomeWidget.updateWidget(name: 'PrayerWidgetProvider', androidName: 'PrayerWidgetProvider');
-  } catch (_) {}
-}
 
 // ---------------- CARTOON MOSQUE ART PAINTER ----------------
 class CartoonMosquePainter extends CustomPainter {
@@ -178,18 +159,16 @@ class _DashboardScreenState extends State<DashboardScreen> {
   double lat = 26.4167, lon = 92.7333;
   String hijriDate = '1448 AH', sunriseTime = '05:45', sunsetTime = '17:50';
   bool isLoading = true;
-  int asrSchool = 0; // 0 = Shafi, 1 = Hanafi
+  int asrSchool = 0;
 
   Timer? _countdownTimer;
   String nextPrayerName = 'Fajr', countdownText = '00 : 00 : 00';
-  double countdownProgress = 0.5;
 
   final List<String> prayerNames = ['Fajr', 'Dhuhr', 'Asr', 'Maghrib', 'Isha'];
   final Map<String, String> hindiNames = {'Fajr': 'फज्र', 'Dhuhr': 'ज़ुहर', 'Asr': 'अस्र', 'Maghrib': 'मग़रिब', 'Isha': 'ईशा'};
   Map<String, String> prayerTimes = {'Fajr': '04:45', 'Dhuhr': '12:05', 'Asr': '15:30', 'Maghrib': '17:50', 'Isha': '19:10'};
   Map<String, int> todayStatus = {'Fajr': 0, 'Dhuhr': 0, 'Asr': 0, 'Maghrib': 0, 'Isha': 0};
 
-  // Unique Feature 1: Islamic Mood Cure Data
   final List<Map<String, String>> moods = [
     {
       'emoji': '😔',
@@ -209,15 +188,15 @@ class _DashboardScreenState extends State<DashboardScreen> {
       'emoji': '😠',
       'label': 'Gussa / Angry',
       'arabic': 'أَعُوذُ بِاللَّهِ مِنَ الشَّيْطَانِ الرَّجِيمِ',
-      'ayah': 'Nabi ﷺ ne farmaya: "Jab kisi ko gussa aaye toh wo khamosh ho jaye aur kahe: A\'udhu billahi minash-shaytanir-rajeem (aur thanda pani piye)."',
-      'dua': 'Sunnah Tip: Agar khade ho toh baith jao, aur baitho ho toh let jao, gussa turant chala jayega!'
+      'ayah': 'Nabi ﷺ ne farmaya: "Jab kisi ko gussa aaye toh wo kahe: A\'udhu billahi minash-shaytanir-rajeem."',
+      'dua': 'Sunnah Tip: Agar khade ho toh baith jao, aur baitho ho toh let jao, ya wudu kar lo!'
     },
     {
       'emoji': '🤒',
       'label': 'Bimar / Sick',
       'arabic': 'وَإِذَا مَرِضْتُ فَهُوَ يَشْفِينِ',
       'ayah': '"Aur jab main bimar hota hoon toh Wahi (Allah) mujhe shifa deta hai." (Quran 26:80)',
-      'dua': 'Shifa Dua: Allahumma Rabban-naas, adh-hibil-ba\'s, ishfi Antash-Shafi (Aye insano ke Rab, takleef door kar aur shifa de).'
+      'dua': 'Shifa Dua: Allahumma Rabban-naas, adh-hibil-ba\'s, ishfi Antash-Shafi.'
     },
     {
       'emoji': '🥰',
@@ -228,7 +207,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
     },
   ];
 
-  // Unique Feature 2: Daily Sunnah Habits
   Map<String, bool> sunnahHabits = {
     '🦷 Miswak / Brush before Wudu': false,
     '📖 Read Ayat-ul-Kursi after Salah': false,
@@ -315,7 +293,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
       final geoRes = await http.get(
         Uri.parse('https://nominatim.openstreetmap.org/reverse?format=json&lat=$lat&lon=$lon&zoom=14'),
-        headers: {'User-Agent': 'NoorSuperApp/6.0'},
+        headers: {'User-Agent': 'NoorSuperApp/6.1'},
       );
       String place = 'GPS Location';
       if (geoRes.statusCode == 200) {
@@ -353,24 +331,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
           isLoading = false;
         });
         _updateCountdown();
-        _syncWidget();
       }
     } catch (_) {
       setState(() => isLoading = false);
     }
-  }
-
-  Future<void> _syncWidget() async {
-    int comp = todayStatus.values.where((s) => isPrayerOffered(s)).length;
-    int jam = todayStatus.values.where((s) => s == 1).length;
-    await syncHomeScreenWidget(
-      location: locationName,
-      hijri: hijriDate,
-      nextPrayer: nextPrayerName,
-      nextTime: prayerTimes[nextPrayerName] ?? '--:--',
-      completedCount: comp,
-      jamaatCount: jam,
-    );
   }
 
   Future<void> _setPrayerStatus(String prayer, int status) async {
@@ -380,7 +344,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
     await prefs.setBool('track_${tKey}_$prayer', isPrayerOffered(status));
     setState(() => todayStatus[prayer] = status);
     HapticFeedback.lightImpact();
-    _syncWidget();
   }
 
   void _showMoodCureModal(Map<String, String> mood) {
@@ -481,7 +444,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Header
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
@@ -536,7 +498,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
             ClipRRect(
               borderRadius: BorderRadius.circular(24),
               child: Container(
-                height: 225,
+                height: 220,
                 width: double.infinity,
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
@@ -586,8 +548,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
             ),
             const SizedBox(height: 18),
 
-            // 🌟 UNIQUE FEATURE 1: ISLAMIC MOOD CURE 🌟
-            const Text('💖 Islamic Soul Care (Aaj kaisa mehsoos kar rahe ho?)',
+            // ISLAMIC MOOD CURE
+            const Text('💖 Islamic Soul Care (Tap your current mood)',
                 style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: Color(0xFFFFD700))),
             const SizedBox(height: 10),
             SizedBox(
@@ -624,7 +586,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
             ),
             const SizedBox(height: 18),
 
-            // 5 Prayers List
             const Text('🕌 Aaj ki Namazein (Tap to log Jamaat/Qaza)',
                 style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
             const SizedBox(height: 10),
@@ -659,7 +620,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
             }).toList(),
             const SizedBox(height: 14),
 
-            // 🌟 UNIQUE FEATURE 2: DAILY SUNNAH HABITS 🌟
+            // DAILY SUNNAH HABITS
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
@@ -790,7 +751,6 @@ class _PrayerAnalyticsScreenState extends State<PrayerAnalyticsScreen> {
             ),
             const SizedBox(height: 18),
 
-            // Monthly Heatmap Calendar
             Container(
               padding: const EdgeInsets.all(14),
               decoration: BoxDecoration(color: const Color(0xFF10242D), borderRadius: BorderRadius.circular(18)),
@@ -819,7 +779,7 @@ class _PrayerAnalyticsScreenState extends State<PrayerAnalyticsScreen> {
             ),
             const SizedBox(height: 20),
 
-            // 🌟 UNIQUE FEATURE 3: QAZA-E-UMRI BANK 🌟
+            // QAZA-E-UMRI BANK
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
@@ -865,7 +825,7 @@ class _PrayerAnalyticsScreenState extends State<PrayerAnalyticsScreen> {
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          Text('$p Qaza Remaining:', style: const TextStyle(fontWeight: FontWeight.bold)),
+                          Text('$p Qaza:', style: const TextStyle(fontWeight: FontWeight.bold)),
                           Row(
                             children: [
                               Text('${qazaBank[p]}',
@@ -879,7 +839,6 @@ class _PrayerAnalyticsScreenState extends State<PrayerAnalyticsScreen> {
                                 onPressed: () => _updateQazaBank(p, -1),
                                 child: const Text('-1 Paid ✅', style: TextStyle(fontSize: 11, color: Colors.white)),
                               ),
-                              const SizedBox(width: 6),
                               IconButton(
                                 icon: const Icon(Icons.add_circle_outline, color: Colors.white54, size: 20),
                                 onPressed: () => _updateQazaBank(p, 1),
@@ -1079,10 +1038,7 @@ class _SurahDetailAudioPageState extends State<SurahDetailAudioPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text('Surah ${widget.surahName}'),
-        backgroundColor: const Color(0xFF047857),
-      ),
+      appBar: AppBar(title: Text('Surah ${widget.surahName}'), backgroundColor: const Color(0xFF047857)),
       body: isLoading
           ? const Center(child: CircularProgressIndicator(color: Color(0xFFFFD700)))
           : ListView.builder(
@@ -1138,7 +1094,7 @@ class _SurahDetailAudioPageState extends State<SurahDetailAudioPage> {
   }
 }
 
-// ---------------- 4. LIVE QIBLA COMPASS SCREEN ----------------
+// ---------------- 4. CRASH-FREE INTERACTIVE 3D QIBLA FINDER ----------------
 class QiblaCompassScreen extends StatefulWidget {
   const QiblaCompassScreen({super.key});
 
@@ -1148,6 +1104,7 @@ class QiblaCompassScreen extends StatefulWidget {
 
 class _QiblaCompassScreenState extends State<QiblaCompassScreen> {
   double qiblaAngle = 277.0, distanceKm = 5120.0;
+  double manualRotation = 0.0;
   String locationName = 'Rupahi';
 
   @override
@@ -1174,55 +1131,76 @@ class _QiblaCompassScreenState extends State<QiblaCompassScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return SafeArea(
-      child: StreamBuilder<CompassEvent>(
-        stream: FlutterCompass.events,
-        builder: (context, snapshot) {
-          double heading = snapshot.data?.heading ?? 0.0;
-          if (heading < 0) heading += 360.0;
-          double diff = (qiblaAngle - heading + 360.0) % 360.0;
-          bool aligned = diff < 8.0 || diff > 352.0;
+    double diff = (qiblaAngle - manualRotation + 360.0) % 360.0;
+    bool aligned = diff < 10.0 || diff > 350.0;
 
-          return Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              const Text('🧭 Live 3D Qibla Finder',
-                  style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Color(0xFFFFD700))),
-              const SizedBox(height: 6),
-              Text('📍 $locationName to Holy Kaaba: ${distanceKm.toStringAsFixed(0)} km',
-                  style: const TextStyle(color: Colors.white70)),
-              const SizedBox(height: 30),
-              Stack(
-                alignment: Alignment.center,
-                children: [
-                  Container(
-                    width: 260,
-                    height: 260,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: aligned ? const Color(0xFF064E3B) : const Color(0xFF10242D),
-                      border: Border.all(color: aligned ? const Color(0xFF10B981) : const Color(0xFFFFD700), width: 4),
-                    ),
+    return SafeArea(
+      child: Padding(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Text('🧭 3D Qibla Direction Finder',
+                style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Color(0xFFFFD700))),
+            const SizedBox(height: 6),
+            Text('📍 $locationName to Holy Kaaba: ${distanceKm.toStringAsFixed(0)} km',
+                style: const TextStyle(color: Colors.white70)),
+            const SizedBox(height: 8),
+            Text('Exact Qibla Bearing: ${qiblaAngle.toStringAsFixed(1)}° (West-Northwest)',
+                style: const TextStyle(color: Color(0xFF10B981), fontWeight: FontWeight.bold)),
+            const SizedBox(height: 25),
+            Stack(
+              alignment: Alignment.center,
+              children: [
+                Container(
+                  width: 250,
+                  height: 250,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: aligned ? const Color(0xFF064E3B) : const Color(0xFF10242D),
+                    border: Border.all(color: aligned ? const Color(0xFF10B981) : const Color(0xFFFFD700), width: 4),
                   ),
-                  Transform.rotate(
-                    angle: (qiblaAngle - heading) * (math.pi / 180.0),
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
+                ),
+                Transform.rotate(
+                  angle: -manualRotation * (math.pi / 180.0),
+                  child: const SizedBox(
+                    width: 220,
+                    height: 220,
+                    child: Stack(
+                      alignment: Alignment.center,
                       children: [
-                        const Text('🕋', style: TextStyle(fontSize: 34)),
-                        Container(width: 6, height: 85, color: const Color(0xFFFFD700)),
-                        const SizedBox(height: 55),
+                        Positioned(top: 8, child: Text('N', style: TextStyle(color: Colors.redAccent, fontWeight: FontWeight.w900, fontSize: 18))),
+                        Positioned(bottom: 8, child: Text('S', style: TextStyle(color: Colors.white70, fontWeight: FontWeight.bold))),
+                        Positioned(right: 8, child: Text('E', style: TextStyle(color: Colors.white70, fontWeight: FontWeight.bold))),
+                        Positioned(left: 8, child: Text('W', style: TextStyle(color: Colors.white70, fontWeight: FontWeight.bold))),
                       ],
                     ),
                   ),
-                ],
-              ),
-              const SizedBox(height: 25),
-              Text(aligned ? '✅ PERFECT! Facing Holy Kaaba!' : 'Rotate phone until Kaaba points straight up',
-                  style: const TextStyle(color: Color(0xFF10B981), fontWeight: FontWeight.bold)),
-            ],
-          );
-        },
+                ),
+                Transform.rotate(
+                  angle: (qiblaAngle - manualRotation) * (math.pi / 180.0),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Text('🕋', style: TextStyle(fontSize: 34)),
+                      Container(width: 6, height: 80, color: const Color(0xFFFFD700)),
+                      const SizedBox(height: 55),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 25),
+            const Text('Slider ghuma kar North (N) ko apne samne milayein:', style: TextStyle(fontSize: 12, color: Colors.white60)),
+            Slider(
+              activeColor: const Color(0xFFFFD700),
+              min: 0,
+              max: 360,
+              value: manualRotation,
+              onChanged: (v) => setState(() => manualRotation = v),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -1248,7 +1226,7 @@ class _IslamicToolsHubScreenState extends State<IslamicToolsHubScreen> {
     double s = double.tryParse(silverCtrl.text) ?? 0;
     double c = double.tryParse(cashCtrl.text) ?? 0;
     setState(() {
-      calculatedZakat = (g + s + c) * 0.025; // 2.5% Zakat Formula
+      calculatedZakat = (g + s + c) * 0.025;
     });
   }
 
@@ -1264,7 +1242,6 @@ class _IslamicToolsHubScreenState extends State<IslamicToolsHubScreen> {
                 style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Color(0xFFFFD700))),
             const SizedBox(height: 16),
 
-            // Digital Tasbeeh Card
             Container(
               width: double.infinity,
               padding: const EdgeInsets.all(20),
@@ -1290,7 +1267,6 @@ class _IslamicToolsHubScreenState extends State<IslamicToolsHubScreen> {
             ),
             const SizedBox(height: 20),
 
-            // 🌟 UNIQUE FEATURE 5: SMART ZAKAT CALCULATOR 🌟
             Container(
               padding: const EdgeInsets.all(18),
               decoration: BoxDecoration(
@@ -1308,7 +1284,7 @@ class _IslamicToolsHubScreenState extends State<IslamicToolsHubScreen> {
                   const SizedBox(height: 10),
                   _zakatInput(silverCtrl, 'Silver Value (₹)'),
                   const SizedBox(height: 10),
-                  _zakatInput(cashCtrl, 'Cash / Bank Savings / Business (₹)'),
+                  _zakatInput(cashCtrl, 'Cash / Bank Savings (₹)'),
                   const SizedBox(height: 14),
                   SizedBox(
                     width: double.infinity,
