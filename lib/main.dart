@@ -268,7 +268,6 @@ class _HomeTabState extends State<HomeTab> {
               ),
               Row(
                 children: [
-                  // Language Switch
                   PopupMenuButton<String>(
                     color: const Color(0xFF10242D),
                     onSelected: (v) async {
@@ -290,7 +289,6 @@ class _HomeTabState extends State<HomeTab> {
                     ),
                   ),
                   const SizedBox(width: 6),
-                  // 12H / 24H Switch
                   GestureDetector(
                     onTap: () async {
                       final prefs = await SharedPreferences.getInstance();
@@ -309,7 +307,6 @@ class _HomeTabState extends State<HomeTab> {
           ),
           const SizedBox(height: 14),
 
-          // Cartoon Mosque Hero Card
           ClipRRect(
             borderRadius: BorderRadius.circular(22),
             child: Container(
@@ -378,7 +375,6 @@ class _HomeTabState extends State<HomeTab> {
           ),
           const SizedBox(height: 16),
 
-          // Daily Quranic Wisdom
           Container(
             padding: const EdgeInsets.all(14),
             decoration: BoxDecoration(color: const Color(0xFF10242D), borderRadius: BorderRadius.circular(16), border: Border.all(color: Colors.white12)),
@@ -506,7 +502,6 @@ class _TrackerTabState extends State<TrackerTab> {
       child: ListView(
         padding: const EdgeInsets.all(16),
         children: [
-          // Iman Score Hero Ring
           Container(
             padding: const EdgeInsets.all(18),
             decoration: BoxDecoration(
@@ -544,7 +539,6 @@ class _TrackerTabState extends State<TrackerTab> {
           ),
           const SizedBox(height: 14),
 
-          // View Switcher
           Row(
             children: [
               for (int i = 0; i < 3; i++)
@@ -641,7 +635,6 @@ class _TrackerTabState extends State<TrackerTab> {
 
           const SizedBox(height: 16),
 
-          // Selected Date Editor
           Container(
             padding: const EdgeInsets.all(14),
             decoration: BoxDecoration(color: const Color(0xFF10242D), borderRadius: BorderRadius.circular(16), border: Border.all(color: const Color(0xFFFFD700).withOpacity(0.4))),
@@ -675,7 +668,6 @@ class _TrackerTabState extends State<TrackerTab> {
           ),
           const SizedBox(height: 16),
 
-          // Qaza Bank
           Container(
             padding: const EdgeInsets.all(14),
             decoration: BoxDecoration(color: const Color(0xFF10242D), borderRadius: BorderRadius.circular(16)),
@@ -735,22 +727,55 @@ class _QuranHadithTabState extends State<QuranHadithTab> {
   int sec = 0;
   List surahs = [];
   List hadiths = [];
+  bool loadingQuran = true;
+  bool loadingHadith = false;
   String book = 'bukhari';
   int chap = 1;
+
+  // Built-in instant Hadiths so screen is never empty even if offline!
+  final List<Map<String, String>> instantHadiths = const [
+    {'hadithnumber': '1', 'arab': 'إِنَّمَا الأَعْمَالُ بِالنِّيَّاتِ', 'text': 'Sahih Bukhari #1: Actions are judged only by intentions, and every person will have only what they intended.'},
+    {'hadithnumber': '5027', 'arab': 'خَيْرُكُمْ مَنْ تَعَلَّمَ الْقُرْآنَ وَعَلَّمَهُ', 'text': 'Sahih Bukhari #5027: The best among you are those who learn the Qur\'an and teach it to others.'},
+    {'hadithnumber': '223', 'arab': 'الطُّهُورُ شَطْرُ الإِيمَانِ', 'text': 'Sahih Muslim #223: Cleanliness (Wudu/Purity) is half of faith (Iman), and Alhamdulillah fills the scale.'},
+    {'hadithnumber': '601', 'arab': 'تَبَسُّمُكَ فِي وَجْهِ أَخِيكَ لَكَ صَدَقَةٌ', 'text': 'Jami At-Tirmidhi: Your smiling in the face of your brother is a charity (Sadaqah) for you.'},
+  ];
 
   @override
   void initState() {
     super.initState();
-    http.get(Uri.parse('https://api.alquran.cloud/v1/surah')).then((r) {
-      if (r.statusCode == 200 && mounted) setState(() => surahs = json.decode(r.body)['data']);
-    });
+    hadiths = instantHadiths;
+    _loadSurahs();
     _loadHadiths();
   }
 
+  void _loadSurahs() async {
+    setState(() => loadingQuran = true);
+    try {
+      final r = await http.get(Uri.parse('https://api.alquran.cloud/v1/surah'));
+      if (r.statusCode == 200 && mounted) {
+        setState(() {
+          surahs = json.decode(r.body)['data'];
+          loadingQuran = false;
+        });
+      }
+    } catch (_) {
+      if (mounted) setState(() => loadingQuran = false);
+    }
+  }
+
   void _loadHadiths() async {
-    String lang = appLang == 'ur' ? 'urd' : 'eng';
-    final r = await http.get(Uri.parse('https://cdn.jsdelivr.net/gh/fawazahmed0/hadith-api@1/editions/$lang-$book/sections/$chap.json'));
-    if (r.statusCode == 200 && mounted) setState(() => hadiths = json.decode(r.body)['hadiths'] ?? []);
+    setState(() => loadingHadith = true);
+    try {
+      String lang = appLang == 'ur' ? 'urd' : 'eng';
+      final r = await http.get(Uri.parse('https://cdn.jsdelivr.net/gh/fawazahmed0/hadith-api@1/editions/$lang-$book/sections/$chap.json'));
+      if (r.statusCode == 200 && mounted) {
+        List fetched = json.decode(r.body)['hadiths'] ?? [];
+        if (fetched.isNotEmpty) {
+          setState(() => hadiths = fetched);
+        }
+      }
+    } catch (_) {}
+    if (mounted) setState(() => loadingHadith = false);
   }
 
   @override
@@ -774,7 +799,7 @@ class _QuranHadithTabState extends State<QuranHadithTab> {
                   child: ElevatedButton(
                     style: ElevatedButton.styleFrom(backgroundColor: sec == 1 ? const Color(0xFF10B981) : const Color(0xFF10242D)),
                     onPressed: () => setState(() => sec = 1),
-                    child: const Text('📜 Live Hadith Cloud'),
+                    child: const Text('📜 Sahih Hadiths'),
                   ),
                 ),
               ],
@@ -782,22 +807,35 @@ class _QuranHadithTabState extends State<QuranHadithTab> {
             const SizedBox(height: 10),
             Expanded(
               child: sec == 0
-                  ? ListView.builder(
-                      itemCount: surahs.length,
-                      itemBuilder: (ctx, i) {
-                        final s = surahs[i];
-                        return Card(
-                          color: const Color(0xFF10242D),
-                          child: ListTile(
-                            leading: CircleAvatar(child: Text('${s['number']}')),
-                            title: Text(s['englishName'], style: const TextStyle(fontWeight: FontWeight.bold)),
-                            subtitle: Text('${s['numberOfAyahs']} Ayahs'),
-                            trailing: Text(s['name'], style: const TextStyle(color: Color(0xFFFFD700), fontSize: 18)),
-                            onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => SurahAudioPage(num: s['number'], name: s['englishName']))),
-                          ),
-                        );
-                      },
-                    )
+                  ? (loadingQuran
+                      ? const Center(child: CircularProgressIndicator(color: Color(0xFFFFD700)))
+                      : (surahs.isEmpty
+                          ? Center(
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  const Text('Check internet connection to load 114 Surahs'),
+                                  const SizedBox(height: 10),
+                                  ElevatedButton(onPressed: _loadSurahs, child: const Text('🔄 Retry Loading Quran')),
+                                ],
+                              ),
+                            )
+                          : ListView.builder(
+                              itemCount: surahs.length,
+                              itemBuilder: (ctx, i) {
+                                final s = surahs[i];
+                                return Card(
+                                  color: const Color(0xFF10242D),
+                                  child: ListTile(
+                                    leading: CircleAvatar(backgroundColor: const Color(0xFF16323F), child: Text('${s['number']}', style: const TextStyle(color: Color(0xFFFFD700)))),
+                                    title: Text(s['englishName'], style: const TextStyle(fontWeight: FontWeight.bold)),
+                                    subtitle: Text('${s['englishNameTranslation']} • ${s['numberOfAyahs']} Ayahs'),
+                                    trailing: Text(s['name'], style: const TextStyle(color: Color(0xFFFFD700), fontSize: 18)),
+                                    onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => SurahAudioPage(num: s['number'], name: s['englishName']))),
+                                  ),
+                                );
+                              },
+                            )))
                   : Column(
                       children: [
                         Row(
@@ -822,6 +860,7 @@ class _QuranHadithTabState extends State<QuranHadithTab> {
                             ),
                             Row(
                               children: [
+                                if (loadingHadith) const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2)),
                                 IconButton(
                                   icon: const Icon(Icons.chevron_left),
                                   onPressed: chap > 1 ? () { setState(() => chap--); _loadHadiths(); } : null,
@@ -844,13 +883,17 @@ class _QuranHadithTabState extends State<QuranHadithTab> {
                               return Container(
                                 margin: const EdgeInsets.only(bottom: 10),
                                 padding: const EdgeInsets.all(14),
-                                decoration: BoxDecoration(color: const Color(0xFF10242D), borderRadius: BorderRadius.circular(14)),
+                                decoration: BoxDecoration(color: const Color(0xFF10242D), borderRadius: BorderRadius.circular(14), border: Border.all(color: Colors.white12)),
                                 child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  crossAxisAlignment: CrossAxisAlignment.stretch,
                                   children: [
-                                    Text('Hadith #${h['hadithnumber']}', style: const TextStyle(color: Color(0xFFFFD700), fontWeight: FontWeight.bold)),
-                                    const SizedBox(height: 6),
-                                    Text(h['text'].toString(), style: const TextStyle(fontSize: 14, height: 1.4)),
+                                    Text('📜 Hadith #${h['hadithnumber']}', style: const TextStyle(color: Color(0xFFFFD700), fontWeight: FontWeight.bold)),
+                                    if (h['arab'] != null) ...[
+                                      const SizedBox(height: 8),
+                                      Text(h['arab']!, textAlign: TextAlign.right, style: const TextStyle(fontSize: 22, color: Colors.white, fontWeight: FontWeight.bold)),
+                                    ],
+                                    const SizedBox(height: 8),
+                                    Text(h['text'].toString(), style: const TextStyle(fontSize: 14, height: 1.4, color: Color(0xFF10B981))),
                                   ],
                                 ),
                               );
@@ -877,6 +920,7 @@ class SurahAudioPage extends StatefulWidget {
 
 class _SurahAudioPageState extends State<SurahAudioPage> {
   List ar = [], tr = [];
+  bool loading = true;
   String ed = 'en.asad';
   final player = AudioPlayer();
   int? playingIdx;
@@ -904,13 +948,19 @@ class _SurahAudioPageState extends State<SurahAudioPage> {
   }
 
   void _load() async {
-    final r = await http.get(Uri.parse('https://api.alquran.cloud/v1/surah/${widget.num}/editions/ar.alafasy,$ed'));
-    if (r.statusCode == 200 && mounted) {
-      final d = json.decode(r.body)['data'];
-      setState(() {
-        ar = d[0]['ayahs'];
-        tr = d[1]['ayahs'];
-      });
+    setState(() => loading = true);
+    try {
+      final r = await http.get(Uri.parse('https://api.alquran.cloud/v1/surah/${widget.num}/editions/ar.alafasy,$ed'));
+      if (r.statusCode == 200 && mounted) {
+        final d = json.decode(r.body)['data'];
+        setState(() {
+          ar = d[0]['ayahs'];
+          tr = d[1]['ayahs'];
+          loading = false;
+        });
+      }
+    } catch (_) {
+      if (mounted) setState(() => loading = false);
     }
   }
 
@@ -927,71 +977,73 @@ class _SurahAudioPageState extends State<SurahAudioPage> {
                 setState(() => ed = e['c']!);
                 _load();
               },
-              child: Text(e['l']!, style: TextStyle(color: ed == e['c'] ? const Color(0xFFFFD700) : Colors.white)),
+              child: Text(e['l']!, style: TextStyle(color: ed == e['c'] ? const Color(0xFFFFD700) : Colors.white, fontWeight: FontWeight.bold)),
             ),
         ],
       ),
-      body: Column(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(12),
-            color: const Color(0xFF064E3B),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      body: loading
+          ? const Center(child: CircularProgressIndicator(color: Color(0xFFFFD700)))
+          : Column(
               children: [
-                Text(playingIdx != null ? 'Playing Ayah ${playingIdx! + 1}/${ar.length}' : '🎧 Non-Stop Full Surah Audio', style: const TextStyle(color: Color(0xFFFFD700), fontWeight: FontWeight.bold)),
-                ElevatedButton(
-                  onPressed: () {
-                    if (playingIdx != null) {
-                      player.stop();
-                      setState(() => playingIdx = null);
-                    } else if (ar.isNotEmpty) {
-                      setState(() => playingIdx = 0);
-                      player.play(UrlSource(ar[0]['audio']));
-                    }
-                  },
-                  child: Text(playingIdx != null ? 'Stop' : '▶️ Play Surah'),
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  color: const Color(0xFF064E3B),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(playingIdx != null ? 'Playing Ayah ${playingIdx! + 1}/${ar.length}' : '🎧 Non-Stop Full Surah Audio', style: const TextStyle(color: Color(0xFFFFD700), fontWeight: FontWeight.bold)),
+                      ElevatedButton(
+                        onPressed: () {
+                          if (playingIdx != null) {
+                            player.stop();
+                            setState(() => playingIdx = null);
+                          } else if (ar.isNotEmpty) {
+                            setState(() => playingIdx = 0);
+                            player.play(UrlSource(ar[0]['audio']));
+                          }
+                        },
+                        child: Text(playingIdx != null ? 'Stop' : '▶️ Play Surah'),
+                      ),
+                    ],
+                  ),
+                ),
+                Expanded(
+                  child: ListView.builder(
+                    padding: const EdgeInsets.all(14),
+                    itemCount: ar.length,
+                    itemBuilder: (_, i) => Container(
+                      margin: const EdgeInsets.only(bottom: 12),
+                      padding: const EdgeInsets.all(14),
+                      decoration: BoxDecoration(
+                        color: playingIdx == i ? const Color(0xFF153832) : const Color(0xFF10242D),
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text('Ayah ${ar[i]['numberInSurah']}', style: const TextStyle(color: Color(0xFFFFD700))),
+                              IconButton(
+                                icon: Icon(playingIdx == i ? Icons.stop_circle : Icons.play_circle, color: const Color(0xFF10B981)),
+                                onPressed: () {
+                                  setState(() => playingIdx = i);
+                                  player.play(UrlSource(ar[i]['audio']));
+                                },
+                              ),
+                            ],
+                          ),
+                          Text(ar[i]['text'], textAlign: TextAlign.right, style: const TextStyle(fontSize: 23, fontWeight: FontWeight.bold)),
+                          const SizedBox(height: 8),
+                          Text(tr[i]['text'], style: const TextStyle(color: Colors.white70)),
+                        ],
+                      ),
+                    ),
+                  ),
                 ),
               ],
             ),
-          ),
-          Expanded(
-            child: ListView.builder(
-              padding: const EdgeInsets.all(14),
-              itemCount: ar.length,
-              itemBuilder: (_, i) => Container(
-                margin: const EdgeInsets.only(bottom: 12),
-                padding: const EdgeInsets.all(14),
-                decoration: BoxDecoration(
-                  color: playingIdx == i ? const Color(0xFF153832) : const Color(0xFF10242D),
-                  borderRadius: BorderRadius.circular(14),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text('Ayah ${ar[i]['numberInSurah']}', style: const TextStyle(color: Color(0xFFFFD700))),
-                        IconButton(
-                          icon: Icon(playingIdx == i ? Icons.stop_circle : Icons.play_circle, color: const Color(0xFF10B981)),
-                          onPressed: () {
-                            setState(() => playingIdx = i);
-                            player.play(UrlSource(ar[i]['audio']));
-                          },
-                        ),
-                      ],
-                    ),
-                    Text(ar[i]['text'], textAlign: TextAlign.right, style: const TextStyle(fontSize: 23, fontWeight: FontWeight.bold)),
-                    const SizedBox(height: 8),
-                    Text(tr[i]['text'], style: const TextStyle(color: Colors.white70)),
-                  ],
-                ),
-              ),
-            ),
-          ),
-        ],
-      ),
     );
   }
 }
