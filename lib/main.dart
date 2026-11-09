@@ -655,7 +655,7 @@ class _CelestialHomeTabState extends State<CelestialHomeTab> {
                             ),
                             child: Center(
                               child: st == 0
-                                  ? Icon(Icons.NotificationsNone, size: 14, color: isNext ? const Color(0xFFD4AF37) : Colors.white54)
+                                  ? Icon(Icons.notifications_none, size: 14, color: isNext ? const Color(0xFFD4AF37) : Colors.white54)
                                   : Icon(
                                       st == 4 ? Icons.close : Icons.check,
                                       size: 15,
