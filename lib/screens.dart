@@ -108,7 +108,6 @@ class _PrayerAnalyticsScreenState extends State<PrayerAnalyticsScreen> {
       }
     }
 
-    // Calculate Iman Score (0 - 100%)
     int passedDays = math.max(1, now.day);
     double imanScore = ((mAda / (passedDays * 5)) * 100).clamp(0.0, 100.0);
     int streak = _calculateActiveStreak();
@@ -123,7 +122,6 @@ class _PrayerAnalyticsScreenState extends State<PrayerAnalyticsScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // 🌟 HERO IMAN SCORE & STREAK CARD 🌟
             Container(
               padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
@@ -186,7 +184,6 @@ class _PrayerAnalyticsScreenState extends State<PrayerAnalyticsScreen> {
             ),
             const SizedBox(height: 18),
 
-            // Segmented Period Selector (Weekly / Monthly / Yearly)
             Container(
               padding: const EdgeInsets.all(4),
               decoration: BoxDecoration(color: const Color(0xFF10242D), borderRadius: BorderRadius.circular(14)),
@@ -206,7 +203,6 @@ class _PrayerAnalyticsScreenState extends State<PrayerAnalyticsScreen> {
 
             const SizedBox(height: 18),
 
-            // 📅 Selected Date Interactive Status Editor
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
@@ -258,7 +254,6 @@ class _PrayerAnalyticsScreenState extends State<PrayerAnalyticsScreen> {
             ),
             const SizedBox(height: 18),
 
-            // 📊 Prayer-wise Strength Breakdown (Fajr vs Isha consistency)
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(color: const Color(0xFF10242D), borderRadius: BorderRadius.circular(18)),
@@ -302,7 +297,6 @@ class _PrayerAnalyticsScreenState extends State<PrayerAnalyticsScreen> {
             ),
             const SizedBox(height: 18),
 
-            // 🏦 Qaza-e-Umri Bank
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
@@ -521,7 +515,7 @@ class _PrayerAnalyticsScreenState extends State<PrayerAnalyticsScreen> {
   }
 }
 
-// ---------------- 3. LIVE 114 SURAH AUDIO QURAN ----------------
+// ---------------- 3. QURAN (114 SURAHS + HINDI/URDU/EN) & HADITH BOOKS ----------------
 class LiveQuranScreen extends StatefulWidget {
   const LiveQuranScreen({super.key});
 
@@ -530,9 +524,94 @@ class LiveQuranScreen extends StatefulWidget {
 }
 
 class _LiveQuranScreenState extends State<LiveQuranScreen> {
+  int mainSection = 0; // 0 = Al-Quran (114 Surahs), 1 = Sahih Hadith Books
   List<dynamic> surahList = [];
   bool isLoading = true;
   String searchQuery = '';
+  int selectedHadithCategory = 0;
+
+  final List<String> hadithCategories = [
+    '📚 All Sahih Hadiths',
+    '📗 Sahih Al-Bukhari',
+    '📘 Sahih Muslim',
+    '🌟 40 Hadith Nawawi',
+    '💖 Riyad-us-Saliheen (Manners)',
+  ];
+
+  final List<Map<String, String>> hadithCollection = const [
+    {
+      'book': 'Sahih Al-Bukhari • Hadith 1',
+      'cat': '1',
+      'arabic': 'إِنَّمَا الأَعْمَالُ بِالنِّيَّاتِ، وَإِنَّمَا لِكُلِّ امْرِئٍ مَا نَوَى',
+      'en': 'Narrated Umar bin Al-Khattab (RA): The Prophet ﷺ said, "Actions are judged only by intentions, and every person will have only what they intended."',
+      'hi': 'हज़रत उमर बिन ख़त्ताब (रज़ि.) से रिवायत है कि नबी करीम ﷺ ने फ़रमाया: "तमाम आमाल का दारोमदार नीयतों पर है, और हर इंसान को वही मिलेगा जिसकी उसने नीयत की।"',
+      'ur': 'امیر المومنین عمر بن خطاب رضی اللہ عنہ سے روایت ہے کہ نبی کریم ﷺ نے فرمایا: ”اعمال کا دارومدار نیتوں پر ہے اور ہر شخص کے لیے وہی ہے جس کی اس نے نیت کی۔“',
+      'ro': 'Nabi Kareem ﷺ ne farmaya: "Aamaal ka daromadar niyaton par hai, aur har insaan ko wahi milega jiski usne niyat ki."'
+    },
+    {
+      'book': 'Sahih Al-Bukhari • Hadith 5027',
+      'cat': '1',
+      'arabic': 'خَيْرُكُمْ مَنْ تَعَلَّمَ الْقُرْآنَ وَعَلَّمَهُ',
+      'en': 'Narrated Uthman (RA): The Prophet ﷺ said, "The best among you (Muslims) are those who learn the Qur\'an and teach it to others."',
+      'hi': 'हज़रत उस्मान (रज़ि.) से रिवायत है कि रसूलुल्लाह ﷺ ने फ़रमाया: "तुम में सबसे बेहतरीन इंसान वह है जो क़ुरआन सीखे और दूसरों को सिखाए।"',
+      'ur': 'حضرت عثمان رضی اللہ عنہ سے روایت ہے کہ نبی اکرم ﷺ نے فرمایا: ”تم میں سب سے بہترین شخص وہ ہے جو قرآن سیکھے اور سکھائے۔“',
+      'ro': 'Rasoolullah ﷺ ne farmaya: "Tum mein sabse behtareen wo hai jo Quran seekhe aur doosron ko sikhaye."'
+    },
+    {
+      'book': 'Sahih Muslim • Hadith 223',
+      'cat': '2',
+      'arabic': 'الطُّهُورُ شَطْرُ الإِيمَانِ وَالْحَمْدُ لِلَّهِ تَمْلأُ الْمِيزَانَ',
+      'en': 'The Messenger of Allah ﷺ said: "Cleanliness (Purity/Wudu) is half of faith (Iman), and saying Alhamdulillah fills the scale of good deeds."',
+      'hi': 'रसूलुल्लाह ﷺ ने फ़रमाया: "पाकीज़गी (वुज़ू/सफ़ाई) आधा ईमान है, और अलहम्दुलिल्लाह कहना नेकियों के तराज़ू को भर देता है।"',
+      'ur': 'رسول اللہ ﷺ نے فرمایا: ”پاکیزگی نصف ایمان ہے اور الحمد للہ میزان (اعمال کے ترازو) کو بھر دیتا ہے۔“',
+      'ro': 'Rasoolullah ﷺ ne farmaya: "Pakeezgi (Wudu/Safai) aadha Iman hai, aur Alhamdulillah kehna Mizan (tarazu) ko bhar deta hai."'
+    },
+    {
+      'book': 'Sahih Muslim • Hadith 2564',
+      'cat': '2',
+      'arabic': 'إِنَّ اللَّهَ لاَ يَنْظُرُ إِلَى صُوَرِكُمْ وَأَمْوََالِكُمْ وَلَكِنْ يَنْظُرُ إِلَى قُلُوبِكُمْ وَأَعْمَالِكُمْ',
+      'en': 'The Prophet ﷺ said: "Verily, Allah does not look at your appearances or your wealth, rather He looks at your hearts and your deeds."',
+      'hi': 'नबी करीम ﷺ ने फ़रमाया: "बेशक अल्लाह तुम्हारी सूरतों और तुम्हारे माल को नहीं देखता, बल्कि वह तुम्हारे दिलों और तुम्हारे आमाल (कर्मों) को देखता है।"',
+      'ur': 'نبی کریم ﷺ نے فرمایا: ”بے شک اللہ تمہاری صورتوں اور تمہارے مالوں کو نہیں دیکھتا، بلکہ وہ تمہارے دلوں اور تمہارے اعمال کو دیکھتا ہے۔“',
+      'ro': 'Nabi ﷺ ne farmaya: "Beshak Allah tumhari soorton aur maal ko nahi dekhta, balki tumhare dilon aur aamaal ko dekhta hai."'
+    },
+    {
+      'book': '40 Hadith Nawawi • Hadith 13',
+      'cat': '3',
+      'arabic': 'لاَ يُؤْمِنُ أَحَدُكُمْ حَتَّى يُحِبَّ لأَخِيهِ مَا يُحِبُّ لِنَفْسِهِ',
+      'en': 'Anas (RA) reported that the Prophet ﷺ said: "None of you truly believes until he loves for his brother what he loves for himself."',
+      'hi': 'हज़रत अनस (रज़ि.) से रिवायत है कि नबी ﷺ ने फ़रमाया: "तुम में से कोई शख़्स उस वक़्त तक कामिल मोमिन नहीं हो सकता जब तक वह अपने भाई के लिए भी वही पसंद न करे जो अपने लिए पसंद करता है।"',
+      'ur': 'نبی اکرم ﷺ نے فرمایا: ”تم میں سے کوئی شخص اس وقت تک کامل مومن نہیں ہو سکتا جب تک کہ وہ اپنے بھائی کے لیے وہی پسند نہ کرے جو اپنے نفس کے لیے پسند کرتا ہے۔“',
+      'ro': 'Nabi ﷺ ne farmaya: "Tum mein se koi us waqt tak kamil Momin nahi ho sakta jab tak apne bhai ke liye wahi pasand na kare jo apne liye karta hai."'
+    },
+    {
+      'book': '40 Hadith Nawawi • Hadith 18',
+      'cat': '3',
+      'arabic': 'اتَّقِ اللَّهَ حَيْثُمَا كُنْتَ، وَأَتْبِعِ السَّيِّئَةَ الْحَسَنَةَ تَمْحُهَا',
+      'en': 'The Prophet ﷺ said: "Fear Allah wherever you are, follow up a bad deed with a good deed and it will wipe it out, and behave with people with good character."',
+      'hi': 'नबी ﷺ ने फ़रमाया: "तुम जहाँ कहीं भी हो अल्लाह से डरो, और अगर कोई गुनाह हो जाए तो उसके बाद नेकी कर लो, वह नेकी उस गुनाह को मिटा देगी।"',
+      'ur': 'نبی ﷺ نے فرمایا: ”تم جہاں کہیں بھی ہو اللہ سے ڈرو، اور برائی کے بعد نیکی کرو وہ اس کو مٹا دے گی، اور لوگوں کے ساتھ اچھے اخلاق سے پیش آؤ۔“',
+      'ro': 'Nabi ﷺ ne farmaya: "Jahan kahin bhi ho Allah se daro, aur burai ke baad neki kar lo, wo neki us burai ko mita degi."'
+    },
+    {
+      'book': 'Riyad-us-Saliheen • Hadith 601',
+      'cat': '4',
+      'arabic': 'تَبَسُّمُكَ فِي وَجْهِ أَخِيكَ لَكَ صَدَقَةٌ',
+      'en': 'Messenger of Allah ﷺ said: "Your smiling in the face of your brother is a charity (Sadaqah) for you." (Jami at-Tirmidhi)',
+      'hi': 'रसूलुल्लाह ﷺ ने फ़रमाया: "अपने भाई से मुस्कुरा कर मिलना भी तुम्हारे लिए सदक़ा (नेकी) है।"',
+      'ur': 'رسول اللہ ﷺ نے فرمایا: ”تمہارا اپنے بھائی کے سامنے مسکرانا بھی تمہارے لیے صدقہ ہے۔“',
+      'ro': 'Rasoolullah ﷺ ne farmaya: "Apne bhai se muskura kar milna bhi tumhare liye Sadqah hai."'
+    },
+    {
+      'book': 'Riyad-us-Saliheen • Hadith 1388',
+      'cat': '4',
+      'arabic': 'مَنْ صَلَّى الْبَرْدَيْنِ دَخَلَ الْجَنَّةَ',
+      'en': 'Abu Musa (RA) reported: The Messenger of Allah ﷺ said, "Whoever prays the two cool prayers (Fajr and Asr on time) will enter Paradise (Jannah)."',
+      'hi': 'रसूलुल्लाह ﷺ ने फ़रमाया: "जो शख़्स दो ठंडी नमाज़ें (यानी फ़ज्र और अस्र वक़्त पर) पढ़ता है, वह जन्नत में दाख़िल होगा।"',
+      'ur': 'رسول اللہ ﷺ نے فرمایا: ”جو شخص دو ٹھنڈی نمازیں (فجر اور عصر) پابندی سے پڑھے گا وہ جنت میں داخل ہوگا۔“',
+      'ro': 'Rasoolullah ﷺ ne farmaya: "Jo shaks Fajr aur Asr ki namaz pabandi se padhega, wo Jannat mein dakhil hoga."'
+    },
+  ];
 
   @override
   void initState() {
@@ -556,62 +635,215 @@ class _LiveQuranScreenState extends State<LiveQuranScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final filtered = surahList.where((s) => s['englishName'].toString().toLowerCase().contains(searchQuery.toLowerCase())).toList();
     return SafeArea(
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text('🎧 Complete 114 Surah Audio Quran',
-                style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Color(0xFFFFD700))),
-            const SizedBox(height: 10),
-            TextField(
-              onChanged: (v) => setState(() => searchQuery = v),
-              decoration: InputDecoration(
-                hintText: 'Search Surah (e.g. Yaseen, Mulk, Kahf)...',
-                prefixIcon: const Icon(Icons.search, color: Color(0xFFFFD700)),
-                filled: true,
-                fillColor: const Color(0xFF10242D),
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
+            // Top Switcher: Al-Quran vs Sahih Hadith Books
+            Container(
+              padding: const EdgeInsets.all(5),
+              decoration: BoxDecoration(
+                color: const Color(0xFF10242D),
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: const Color(0xFFFFD700).withOpacity(0.4)),
+              ),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: GestureDetector(
+                      onTap: () => setState(() => mainSection = 0),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        decoration: BoxDecoration(
+                          gradient: mainSection == 0 ? const LinearGradient(colors: [Color(0xFF10B981), Color(0xFF047857)]) : null,
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: const Center(
+                          child: Text('📖 Al-Quran (114)', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Colors.white)),
+                        ),
+                      ),
+                    ),
+                  ),
+                  Expanded(
+                    child: GestureDetector(
+                      onTap: () => setState(() => mainSection = 1),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        decoration: BoxDecoration(
+                          gradient: mainSection == 1 ? const LinearGradient(colors: [Color(0xFF10B981), Color(0xFF047857)]) : null,
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: const Center(
+                          child: Text('📜 Sahih Hadith', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Colors.white)),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: 14),
+
             Expanded(
-              child: isLoading
-                  ? const Center(child: CircularProgressIndicator(color: Color(0xFFFFD700)))
-                  : ListView.builder(
-                      itemCount: filtered.length,
-                      itemBuilder: (ctx, idx) {
-                        final s = filtered[idx];
-                        return Container(
-                          margin: const EdgeInsets.only(bottom: 10),
-                          decoration: BoxDecoration(color: const Color(0xFF10242D), borderRadius: BorderRadius.circular(16)),
-                          child: ListTile(
-                            leading: CircleAvatar(
-                              backgroundColor: const Color(0xFF16323F),
-                              child: Text('${s['number']}', style: const TextStyle(color: Color(0xFFFFD700), fontWeight: FontWeight.bold)),
-                            ),
-                            title: Text(s['englishName'], style: const TextStyle(fontWeight: FontWeight.bold)),
-                            subtitle: Text('${s['englishNameTranslation']} • ${s['numberOfAyahs']} Ayahs',
-                                style: const TextStyle(color: Colors.white60, fontSize: 12)),
-                            trailing: Text(s['name'], style: const TextStyle(fontSize: 20, color: Color(0xFFFFD700), fontWeight: FontWeight.bold)),
-                            onTap: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (_) => SurahDetailAudioPage(surahNumber: s['number'], surahName: s['englishName']),
-                                ),
-                              );
-                            },
-                          ),
-                        );
-                      },
-                    ),
+              child: mainSection == 0 ? _buildQuranSection() : _buildHadithSection(),
             ),
           ],
         ),
       ),
+    );
+  }
+
+  Widget _buildQuranSection() {
+    final filtered = surahList.where((s) => s['englishName'].toString().toLowerCase().contains(searchQuery.toLowerCase())).toList();
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        TextField(
+          onChanged: (v) => setState(() => searchQuery = v),
+          decoration: InputDecoration(
+            hintText: 'Search 114 Surahs (e.g. Yaseen, Mulk, Kahf, Baqarah)...',
+            prefixIcon: const Icon(Icons.search, color: Color(0xFFFFD700)),
+            filled: true,
+            fillColor: const Color(0xFF10242D),
+            border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
+          ),
+        ),
+        const SizedBox(height: 12),
+        Expanded(
+          child: isLoading
+              ? const Center(child: CircularProgressIndicator(color: Color(0xFFFFD700)))
+              : ListView.builder(
+                  itemCount: filtered.length,
+                  itemBuilder: (ctx, idx) {
+                    final s = filtered[idx];
+                    return Container(
+                      margin: const EdgeInsets.only(bottom: 10),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF10242D),
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(color: Colors.white10),
+                      ),
+                      child: ListTile(
+                        leading: CircleAvatar(
+                          backgroundColor: const Color(0xFF16323F),
+                          child: Text('${s['number']}', style: const TextStyle(color: Color(0xFFFFD700), fontWeight: FontWeight.bold)),
+                        ),
+                        title: Text(s['englishName'], style: const TextStyle(fontWeight: FontWeight.bold)),
+                        subtitle: Text('${s['englishNameTranslation']} • ${s['numberOfAyahs']} Ayahs (${s['revelationType']})',
+                            style: const TextStyle(color: Colors.white60, fontSize: 12)),
+                        trailing: Text(s['name'], style: const TextStyle(fontSize: 20, color: Color(0xFFFFD700), fontWeight: FontWeight.bold)),
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => SurahDetailAudioPage(surahNumber: s['number'], surahName: s['englishName']),
+                            ),
+                          );
+                        },
+                      ),
+                    );
+                  },
+                ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildHadithSection() {
+    final filteredHadiths = hadithCollection.where((h) {
+      if (selectedHadithCategory == 0) return true;
+      return h['cat'] == selectedHadithCategory.toString();
+    }).toList();
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Hadith Book Filter Chips
+        SizedBox(
+          height: 40,
+          child: ListView.builder(
+            scrollDirection: Axis.horizontal,
+            itemCount: hadithCategories.length,
+            itemBuilder: (ctx, idx) {
+              bool sel = selectedHadithCategory == idx;
+              return GestureDetector(
+                onTap: () => setState(() => selectedHadithCategory = idx),
+                child: Container(
+                  margin: const EdgeInsets.only(right: 8),
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                  decoration: BoxDecoration(
+                    color: sel ? const Color(0xFFFFD700) : const Color(0xFF10242D),
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Text(
+                    hadithCategories[idx],
+                    style: TextStyle(color: sel ? Colors.black : Colors.white, fontWeight: FontWeight.bold, fontSize: 12),
+                  ),
+                ),
+              );
+            },
+          ),
+        ),
+        const SizedBox(height: 12),
+
+        Expanded(
+          child: ListView.builder(
+            itemCount: filteredHadiths.length,
+            itemBuilder: (ctx, i) {
+              final h = filteredHadiths[i];
+              String transText = h[appLang] ?? h['en']!;
+
+              return Container(
+                margin: const EdgeInsets.only(bottom: 14),
+                padding: const EdgeInsets.all(18),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF10242D),
+                  borderRadius: BorderRadius.circular(18),
+                  border: Border.all(color: const Color(0xFFFFD700).withOpacity(0.3)),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                          decoration: BoxDecoration(color: const Color(0xFF16323F), borderRadius: BorderRadius.circular(10)),
+                          child: Text('📜 ${h['book']}',
+                              style: const TextStyle(color: Color(0xFFFFD700), fontWeight: FontWeight.bold, fontSize: 12)),
+                        ),
+                        IconButton(
+                          icon: const Icon(Icons.copy, size: 18, color: Color(0xFF10B981)),
+                          onPressed: () {
+                            Clipboard.setData(ClipboardData(text: '${h['arabic']}\n\n$transText\n(${h['book']})'));
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(content: Text('✅ Hadith copied to share on WhatsApp!')),
+                            );
+                          },
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                    Text(
+                      h['arabic']!,
+                      textAlign: TextAlign.right,
+                      style: const TextStyle(fontSize: 23, color: Colors.white, height: 1.7, fontWeight: FontWeight.bold),
+                    ),
+                    const Divider(color: Colors.white12, height: 22),
+                    Text(
+                      transText,
+                      style: const TextStyle(color: Color(0xFF10B981), fontSize: 14, height: 1.5, fontWeight: FontWeight.w500),
+                    ),
+                  ],
+                ),
+              );
+            },
+          ),
+        ),
+      ],
     );
   }
 }
@@ -629,12 +861,15 @@ class _SurahDetailAudioPageState extends State<SurahDetailAudioPage> {
   List<dynamic> arabicAyahs = [];
   List<dynamic> transAyahs = [];
   bool isLoading = true;
+  String quranEdition = 'en.asad'; // 'en.asad'=English, 'hi.hindi'=Hindi, 'ur.jalandhry'=Urdu
   final AudioPlayer _audioPlayer = AudioPlayer();
   int? playingIndex;
 
   @override
   void initState() {
     super.initState();
+    if (appLang == 'hi') quranEdition = 'hi.hindi';
+    if (appLang == 'ur') quranEdition = 'ur.jalandhry';
     _loadSurahContent();
     _audioPlayer.onPlayerComplete.listen((_) {
       if (mounted) setState(() => playingIndex = null);
@@ -648,8 +883,9 @@ class _SurahDetailAudioPageState extends State<SurahDetailAudioPage> {
   }
 
   Future<void> _loadSurahContent() async {
+    setState(() => isLoading = true);
     try {
-      final url = Uri.parse('https://api.alquran.cloud/v1/surah/${widget.surahNumber}/editions/ar.alafasy,en.asad');
+      final url = Uri.parse('https://api.alquran.cloud/v1/surah/${widget.surahNumber}/editions/ar.alafasy,$quranEdition');
       final res = await http.get(url);
       if (res.statusCode == 200) {
         final data = json.decode(res.body)['data'];
@@ -674,10 +910,38 @@ class _SurahDetailAudioPageState extends State<SurahDetailAudioPage> {
     }
   }
 
+  Widget _langBtn(String label, String editionCode) {
+    bool sel = quranEdition == editionCode;
+    return GestureDetector(
+      onTap: () {
+        setState(() => quranEdition = editionCode);
+        _loadSurahContent();
+      },
+      child: Container(
+        margin: const EdgeInsets.only(left: 6),
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+        decoration: BoxDecoration(
+          color: sel ? const Color(0xFFFFD700) : const Color(0xFF0A1920),
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Text(label, style: TextStyle(color: sel ? Colors.black : Colors.white, fontWeight: FontWeight.bold, fontSize: 11)),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text('Surah ${widget.surahName}'), backgroundColor: const Color(0xFF047857)),
+      appBar: AppBar(
+        title: Text('Surah ${widget.surahName}', style: const TextStyle(fontSize: 17)),
+        backgroundColor: const Color(0xFF047857),
+        actions: [
+          Center(child: _langBtn('EN', 'en.asad')),
+          Center(child: _langBtn('हिंदी', 'hi.hindi')),
+          Center(child: _langBtn('اردو', 'ur.jalandhry')),
+          const SizedBox(width: 8),
+        ],
+      ),
       body: isLoading
           ? const Center(child: CircularProgressIndicator(color: Color(0xFFFFD700)))
           : ListView.builder(
@@ -720,7 +984,7 @@ class _SurahDetailAudioPageState extends State<SurahDetailAudioPage> {
                           textAlign: TextAlign.right,
                           style: const TextStyle(fontSize: 25, color: Colors.white, height: 1.8, fontWeight: FontWeight.bold)),
                       const SizedBox(height: 10),
-                      Text(tr['text'], style: const TextStyle(color: Colors.white70, fontSize: 13, height: 1.4)),
+                      Text(tr['text'], style: const TextStyle(color: Colors.white70, fontSize: 14, height: 1.5)),
                     ],
                   ),
                 );
@@ -838,7 +1102,7 @@ class _QiblaCompassScreenState extends State<QiblaCompassScreen> {
   }
 }
 
-// ---------------- 5. ISLAMIC HUB: TASBEEH + ZAKAT ----------------
+// ---------------- 5. ISLAMIC HUB: TASBEEH + DUAS + 99 NAMES + ZAKAT ----------------
 class IslamicToolsHubScreen extends StatefulWidget {
   const IslamicToolsHubScreen({super.key});
 
@@ -852,6 +1116,29 @@ class _IslamicToolsHubScreenState extends State<IslamicToolsHubScreen> {
   final TextEditingController silverCtrl = TextEditingController();
   final TextEditingController cashCtrl = TextEditingController();
   double calculatedZakat = 0.0;
+
+  final List<Map<String, String>> dailyDuas = const [
+    {
+      'title': '1. Dua Before Sleeping (सोने से पहले की दुआ)',
+      'arabic': 'بِاسْمِكَ اللَّهُمَّ أَمُوتُ وَأَحْيَا',
+      'trans': 'In Your name O Allah, I die (sleep) and I live (wake up).'
+    },
+    {
+      'title': '2. Dua Leaving Home (घर से निकलने की दुआ)',
+      'arabic': 'بِسْمِ اللَّهِ تَوَكَّلْتُ عَلَى اللَّهِ، لَا حَوْلَ وَلَا قُوَّةَ إِلَّا بِاللَّهِ',
+      'trans': 'In the name of Allah, I place my trust in Allah; there is no power and no strength except with Allah.'
+    },
+    {
+      'title': '3. Dua for Parents (वालिदैन के लिए दुआ)',
+      'arabic': 'رَّبِّ ارْحَمْهُمَا كَمَا رَبَّيَانِي صَغِيرًا',
+      'trans': 'My Lord! Have mercy upon them as they brought me up when I was small. (Quran 17:24)'
+    },
+    {
+      'title': '4. Dua for Knowledge (इल्म में इज़ाफ़े की दुआ)',
+      'arabic': 'رَبِّ زِدْنِي عِلْمًا',
+      'trans': 'My Lord, increase me in knowledge. (Quran 20:114)'
+    },
+  ];
 
   void _calculateZakat() {
     double g = double.tryParse(goldCtrl.text) ?? 0;
@@ -868,9 +1155,11 @@ class _IslamicToolsHubScreenState extends State<IslamicToolsHubScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text('✨ Islamic Hub (Tasbeeh & Zakat)',
+            const Text('✨ Islamic Hub (Tasbeeh, Duas & Zakat)',
                 style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Color(0xFFFFD700))),
             const SizedBox(height: 16),
+
+            // Digital Tasbeeh
             Container(
               width: double.infinity,
               padding: const EdgeInsets.all(20),
@@ -885,9 +1174,9 @@ class _IslamicToolsHubScreenState extends State<IslamicToolsHubScreen> {
                       setState(() => tasbeehCount++);
                     },
                     child: CircleAvatar(
-                      radius: 65,
+                      radius: 60,
                       backgroundColor: const Color(0xFF10B981),
-                      child: Text('$tasbeehCount', style: const TextStyle(fontSize: 40, fontWeight: FontWeight.bold, color: Colors.white)),
+                      child: Text('$tasbeehCount', style: const TextStyle(fontSize: 38, fontWeight: FontWeight.bold, color: Colors.white)),
                     ),
                   ),
                   TextButton(onPressed: () => setState(() => tasbeehCount = 0), child: const Text('Reset Counter')),
@@ -895,6 +1184,31 @@ class _IslamicToolsHubScreenState extends State<IslamicToolsHubScreen> {
               ),
             ),
             const SizedBox(height: 20),
+
+            // Masnoon Duas Section
+            const Text('🤲 Essential Masnoon Duas (Hisnul Muslim)',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFFFFD700))),
+            const SizedBox(height: 10),
+            ...dailyDuas.map((d) {
+              return Container(
+                margin: const EdgeInsets.only(bottom: 10),
+                padding: const EdgeInsets.all(14),
+                decoration: BoxDecoration(color: const Color(0xFF10242D), borderRadius: BorderRadius.circular(16)),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Text(d['title']!, style: const TextStyle(color: Color(0xFF10B981), fontWeight: FontWeight.bold, fontSize: 13)),
+                    const SizedBox(height: 8),
+                    Text(d['arabic']!, textAlign: TextAlign.right, style: const TextStyle(fontSize: 22, color: Color(0xFFFFD700), fontWeight: FontWeight.bold)),
+                    const SizedBox(height: 6),
+                    Text(d['trans']!, style: const TextStyle(fontSize: 12, color: Colors.white70)),
+                  ],
+                ),
+              );
+            }).toList(),
+            const SizedBox(height: 16),
+
+            // Zakat Calculator
             Container(
               padding: const EdgeInsets.all(18),
               decoration: BoxDecoration(
