@@ -148,7 +148,7 @@ class DashboardScreen extends StatelessWidget {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Text('DAILY TRACKER STATUS', style: TextStyle(color: Colors.white70, fontSize: 12, letterSpacing: 1.2)),
-                      Icon(Icons.QueryBuilder, color: Color(0xFFFFD700)),
+                      Icon(Icons.query_builder, color: Color(0xFFFFD700)),
                     ],
                   ),
                   const SizedBox(height: 8),
