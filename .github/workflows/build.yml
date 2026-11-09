@@ -1,4 +1,4 @@
-name: Build APK and Source ZIP
+name: Build Android APK
 
 on:
   push:
@@ -18,22 +18,17 @@ jobs:
         with:
           channel: 'stable'
 
-      - name: Build Project & Create ZIP
+      - name: Build Project with Internet Permission
         run: |
           cp lib/main.dart /tmp/main.dart
+          rm -rf lib pubspec.yaml
           flutter create . --project-name islamic_app
           cp /tmp/main.dart lib/main.dart
+          sed -i '/<manifest/a <uses-permission android:name="android.permission.INTERNET"/>' android/app/src/main/AndroidManifest.xml
           flutter pub add http shared_preferences audioplayers
-          zip -r source_code.zip lib pubspec.yaml
           flutter build apk --release
 
-      - name: Download Source Code ZIP
-        uses: actions/upload-artifact@v4
-        with:
-          name: Islamic-App-Source-Code-ZIP
-          path: source_code.zip
-
-      - name: Download Android APK
+      - name: Upload Android APK
         uses: actions/upload-artifact@v4
         with:
           name: Islamic-App-APK
