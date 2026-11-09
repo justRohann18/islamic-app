@@ -24,13 +24,14 @@ jobs:
         with:
           channel: 'stable'
 
-      - name: Generate Android Folder
+      - name: Generate Android Folder & Inject GPS Permissions
         run: |
           mv lib/main.dart main_backup.dart
           mv pubspec.yaml pubspec_backup.yaml
           flutter create . --project-name islamic_app
           mv main_backup.dart lib/main.dart
           mv pubspec_backup.yaml pubspec.yaml
+          sed -i 's/<application/<uses-permission android:name="android.permission.INTERNET"\/><uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"\/><uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"\/><application/g' android/app/src/main/AndroidManifest.xml
 
       - name: Get Packages
         run: flutter pub get
