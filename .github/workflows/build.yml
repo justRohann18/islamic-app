@@ -18,7 +18,7 @@ jobs:
         with:
           channel: 'stable'
 
-      - name: Build Project with Luxury Split-Pane Widgets
+      - name: Build Project with New Ticket & Frame Widgets
         run: |
           cp lib/main.dart /tmp/main.dart
           rm -rf lib pubspec.yaml
@@ -29,21 +29,21 @@ jobs:
           mkdir -p android/app/src/main/res/xml
           mkdir -p android/app/src/main/res/drawable
 
-          cat << 'EOF' > android/app/src/main/res/drawable/bg_noor_card.xml
+          cat << 'EOF' > android/app/src/main/res/drawable/bg_ticket_widget.xml
           <?xml version="1.0" encoding="utf-8"?>
           <shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="rectangle">
-              <gradient android:startColor="#0D2B26" android:centerColor="#081C1A" android:endColor="#051014" android:angle="135"/>
-              <corners android:radius="26dp"/>
-              <stroke android:width="1.5dp" android:color="#4DD4AF37"/>
+              <gradient android:startColor="#1E140C" android:centerColor="#0E1714" android:endColor="#070B0A" android:angle="135"/>
+              <corners android:radius="28dp"/>
+              <stroke android:width="1.8dp" android:color="#F59E0B"/>
           </shape>
           EOF
 
-          cat << 'EOF' > android/app/src/main/res/drawable/bg_noor_pill.xml
+          cat << 'EOF' > android/app/src/main/res/drawable/bg_badge_amber.xml
           <?xml version="1.0" encoding="utf-8"?>
           <shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="rectangle">
-              <solid android:color="#163D37"/>
-              <corners android:radius="16dp"/>
-              <stroke android:width="1dp" android:color="#6610B981"/>
+              <solid android:color="#291D12"/>
+              <corners android:radius="14dp"/>
+              <stroke android:width="1dp" android:color="#F59E0B"/>
           </shape>
           EOF
 
@@ -52,118 +52,72 @@ jobs:
           <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
               android:layout_width="match_parent"
               android:layout_height="match_parent"
-              android:orientation="horizontal"
+              android:orientation="vertical"
               android:padding="16dp"
-              android:background="@drawable/bg_noor_card">
-
+              android:gravity="center_vertical"
+              android:background="@drawable/bg_ticket_widget">
               <LinearLayout
-                  android:layout_width="0dp"
-                  android:layout_height="match_parent"
-                  android:layout_weight="5"
-                  android:orientation="vertical">
-                  <LinearLayout
-                      android:layout_width="match_parent"
+                  android:layout_width="match_parent"
+                  android:layout_height="wrap_content"
+                  android:orientation="horizontal">
+                  <TextView
+                      android:id="@+id/wp_loc"
+                      android:layout_width="0dp"
                       android:layout_height="wrap_content"
-                      android:orientation="horizontal">
-                      <TextView
-                          android:id="@+id/wp_loc"
-                          android:layout_width="0dp"
-                          android:layout_height="wrap_content"
-                          android:layout_weight="1"
-                          android:text="🕌 NOOR"
-                          android:textColor="#FFFFFF"
-                          android:textSize="11sp"
-                          android:textStyle="bold" />
-                      <TextView
-                          android:id="@+id/wp_curr_badge"
-                          android:layout_width="wrap_content"
-                          android:layout_height="wrap_content"
-                          android:background="@drawable/bg_noor_pill"
-                          android:paddingLeft="8dp"
-                          android:paddingRight="8dp"
-                          android:paddingTop="2dp"
-                          android:paddingBottom="2dp"
-                          android:text="FAJR • ACTIVE"
-                          android:textColor="#FFD700"
-                          android:textSize="9sp"
-                          android:textStyle="bold" />
-                  </LinearLayout>
-
+                      android:layout_weight="1"
+                      android:text="🕌 NOOR • BARPAKA"
+                      android:textColor="#F59E0B"
+                      android:textSize="11sp"
+                      android:textStyle="bold" />
                   <TextView
                       android:layout_width="wrap_content"
                       android:layout_height="wrap_content"
-                      android:layout_marginTop="8dp"
-                      android:text="UPCOMING SALAH"
-                      android:textColor="#94A3B8"
+                      android:background="@drawable/bg_badge_amber"
+                      android:paddingLeft="8dp"
+                      android:paddingRight="8dp"
+                      android:paddingTop="2dp"
+                      android:paddingBottom="2dp"
+                      android:text="● LIVE SALAH PASS"
+                      android:textColor="#2DD4BF"
                       android:textSize="9sp"
                       android:textStyle="bold" />
-
+              </LinearLayout>
+              <LinearLayout
+                  android:layout_width="match_parent"
+                  android:layout_height="wrap_content"
+                  android:layout_marginTop="8dp"
+                  android:orientation="horizontal"
+                  android:gravity="bottom">
                   <TextView
                       android:id="@+id/wp_next_name"
-                      android:layout_width="wrap_content"
+                      android:layout_width="0dp"
                       android:layout_height="wrap_content"
+                      android:layout_weight="1"
                       android:text="Dhuhr"
                       android:textColor="#FFFFFF"
-                      android:textSize="24sp"
+                      android:textSize="26sp"
                       android:textStyle="bold" />
-
                   <TextView
                       android:id="@+id/wp_next"
                       android:layout_width="wrap_content"
                       android:layout_height="wrap_content"
-                      android:fontFamily="serif"
-                      android:text="12:30 PM"
-                      android:textColor="#FFD700"
+                      android:text="12:15 PM"
+                      android:textColor="#F59E0B"
                       android:textSize="22sp"
                       android:textStyle="bold" />
-
-                  <TextView
-                      android:id="@+id/wp_rem_pill"
-                      android:layout_width="match_parent"
-                      android:layout_height="wrap_content"
-                      android:layout_marginTop="8dp"
-                      android:background="@drawable/bg_noor_pill"
-                      android:padding="7dp"
-                      android:text="● NEXT IN   -04:18:00"
-                      android:textColor="#2DD4BF"
-                      android:textSize="11sp"
-                      android:textStyle="bold" />
               </LinearLayout>
-
-              <LinearLayout
-                  android:layout_width="0dp"
-                  android:layout_height="match_parent"
-                  android:layout_weight="4"
-                  android:paddingLeft="12dp"
-                  android:gravity="center_vertical"
-                  android:orientation="vertical">
-                  <TextView
-                      android:id="@+id/wp_t1"
-                      android:layout_width="match_parent"
-                      android:layout_height="wrap_content"
-                      android:text="🌅 Fajr        04:15 AM"
-                      android:textColor="#CBD5E1"
-                      android:textSize="11sp" />
-                  <TextView
-                      android:id="@+id/wp_t2"
-                      android:layout_width="match_parent"
-                      android:layout_height="wrap_content"
-                      android:layout_marginTop="8dp"
-                      android:layout_marginBottom="8dp"
-                      android:background="@drawable/bg_noor_pill"
-                      android:padding="8dp"
-                      android:text="☀️ Dhuhr     12:30 PM"
-                      android:textColor="#2DD4BF"
-                      android:textSize="11sp"
-                      android:textStyle="bold" />
-                  <TextView
-                      android:id="@+id/wp_t3"
-                      android:layout_width="match_parent"
-                      android:layout_height="wrap_content"
-                      android:text="⛅ Asr          02:59 PM"
-                      android:textColor="#CBD5E1"
-                      android:textSize="11sp" />
-              </LinearLayout>
+              <TextView
+                  android:id="@+id/wp_strip"
+                  android:layout_width="match_parent"
+                  android:layout_height="wrap_content"
+                  android:layout_marginTop="10dp"
+                  android:background="@drawable/bg_badge_amber"
+                  android:padding="8dp"
+                  android:gravity="center"
+                  android:text="Fajr ✓  •  Dhuhr 12:15  •  Asr 03:25  •  Mag 04:45  •  Isha 06:15"
+                  android:textColor="#FFFFFF"
+                  android:textSize="10.5sp"
+                  android:textStyle="bold" />
           </LinearLayout>
           EOF
 
@@ -174,19 +128,19 @@ jobs:
               android:layout_height="match_parent"
               android:orientation="vertical"
               android:padding="16dp"
-              android:gravity="center_vertical"
-              android:background="@drawable/bg_noor_card">
+              android:gravity="center"
+              android:background="@drawable/bg_ticket_widget">
               <TextView
                   android:id="@+id/wq_ref"
                   android:layout_width="wrap_content"
                   android:layout_height="wrap_content"
-                  android:background="@drawable/bg_noor_pill"
+                  android:background="@drawable/bg_badge_amber"
                   android:paddingLeft="10dp"
                   android:paddingRight="10dp"
                   android:paddingTop="3dp"
                   android:paddingBottom="3dp"
-                  android:text="✨ NOOR QURAN • 94:5"
-                  android:textColor="#FFD700"
+                  android:text="✨ DAILY AYAH • 94:5"
+                  android:textColor="#F59E0B"
                   android:textSize="10sp"
                   android:textStyle="bold" />
               <TextView
@@ -194,7 +148,7 @@ jobs:
                   android:layout_width="match_parent"
                   android:layout_height="wrap_content"
                   android:layout_marginTop="8dp"
-                  android:gravity="right"
+                  android:gravity="center"
                   android:text="فَإِنَّ مَعَ الْعُسْرِ يُسْرًا"
                   android:textColor="#FFFFFF"
                   android:textSize="24sp"
@@ -204,11 +158,11 @@ jobs:
                   android:layout_width="match_parent"
                   android:layout_height="wrap_content"
                   android:layout_marginTop="6dp"
-                  android:fontFamily="serif"
+                  android:gravity="center"
                   android:text="Beshak, har mushkil ke sath aasani hai."
                   android:textColor="#2DD4BF"
-                  android:textSize="13sp"
-                  android:textStyle="italic" />
+                  android:textSize="12.5sp"
+                  android:textStyle="bold" />
           </LinearLayout>
           EOF
 
@@ -227,7 +181,7 @@ jobs:
           <?xml version="1.0" encoding="utf-8"?>
           <appwidget-provider xmlns:android="http://schemas.android.com/apk/res/android"
               android:minWidth="280dp"
-              android:minHeight="120dp"
+              android:minHeight="110dp"
               android:updatePeriodMillis="1800000"
               android:initialLayout="@layout/widget_prayer"
               android:resizeMode="horizontal|vertical"
@@ -247,7 +201,7 @@ jobs:
           class QuranWidget : AppWidgetProvider() {
               override fun onUpdate(context: Context, manager: AppWidgetManager, ids: IntArray) {
                   val prefs = context.getSharedPreferences("FlutterSharedPreferences", Context.MODE_PRIVATE)
-                  val ref = prefs.getString("flutter.wq_ref", "✨ NOOR QURAN • 94:5")
+                  val ref = prefs.getString("flutter.wq_ref", "✨ DAILY AYAH • 94:5")
                   val arab = prefs.getString("flutter.wq_arab", "فَإِنَّ مَعَ الْعُسْرِ يُسْرًا")
                   val hing = prefs.getString("flutter.wq_hing", "Beshak, har mushkil ke sath aasani hai.")
                   for (id in ids) {
@@ -271,14 +225,16 @@ jobs:
           class PrayerWidget : AppWidgetProvider() {
               override fun onUpdate(context: Context, manager: AppWidgetManager, ids: IntArray) {
                   val prefs = context.getSharedPreferences("FlutterSharedPreferences", Context.MODE_PRIVATE)
-                  val loc = prefs.getString("flutter.wp_loc", "🕌 NOOR")
+                  val loc = prefs.getString("flutter.wp_loc", "🕌 NOOR • BARPAKA")
                   val nextName = prefs.getString("flutter.wp_next_name", "Dhuhr")
-                  val nextTime = prefs.getString("flutter.wp_next", "12:30 PM")
+                  val nextTime = prefs.getString("flutter.wp_next", "12:15 PM")
+                  val strip = prefs.getString("flutter.wp_strip", "Fajr ✓ • Dhuhr 12:15 • Asr 03:25 • Mag 04:45 • Isha 06:15")
                   for (id in ids) {
                       val v = RemoteViews(context.packageName, R.layout.widget_prayer)
                       v.setTextViewText(R.id.wp_loc, loc)
                       v.setTextViewText(R.id.wp_next_name, nextName)
                       v.setTextViewText(R.id.wp_next, nextTime)
+                      v.setTextViewText(R.id.wp_strip, strip)
                       manager.updateAppWidget(id, v)
                   }
               }
@@ -286,9 +242,9 @@ jobs:
           EOF
 
           sed -i '/<manifest/a <uses-permission android:name="android.permission.INTERNET"/>' android/app/src/main/AndroidManifest.xml
-          sed -i 's/<\/application>/<receiver android:name=".QuranWidget" android:label="Noor Quran Verse Widget" android:exported="true"><intent-filter><action android:name="android.appwidget.action.APPWIDGET_UPDATE"\/><\/intent-filter><meta-data android:name="android.appwidget.provider" android:resource="@xml\/info_quran"\/><\/receiver><receiver android:name=".PrayerWidget" android:label="Noor Horizon Prayer Widget" android:exported="true"><intent-filter><action android:name="android.appwidget.action.APPWIDGET_UPDATE"\/><\/intent-filter><meta-data android:name="android.appwidget.provider" android:resource="@xml\/info_prayer"\/><\/receiver><\/application>/g' android/app/src/main/AndroidManifest.xml
+          sed -i 's/<\/application>/<receiver android:name=".QuranWidget" android:label="Noor Verse Frame Widget" android:exported="true"><intent-filter><action android:name="android.appwidget.action.APPWIDGET_UPDATE"\/><\/intent-filter><meta-data android:name="android.appwidget.provider" android:resource="@xml\/info_quran"\/><\/receiver><receiver android:name=".PrayerWidget" android:label="Noor Salah Pass Widget" android:exported="true"><intent-filter><action android:name="android.appwidget.action.APPWIDGET_UPDATE"\/><\/intent-filter><meta-data android:name="android.appwidget.provider" android:resource="@xml\/info_prayer"\/><\/receiver><\/application>/g' android/app/src/main/AndroidManifest.xml
 
-          flutter pub add http shared_preferences audioplayers sensors_plus
+          flutter pub add http shared_preferences audioplayers
           flutter build apk --release
 
       - name: Upload Android APK
