@@ -19,6 +19,8 @@ int accentIndex = 0;
 String appLang = 'en';
 bool use12Hour = true;
 String globalUserName = 'Mumin';
+int widgetThemeIdx = 0;
+int widgetAyahSize = 22;
 
 String adminPinCode = '7860';
 bool adminShowBanner = true;
@@ -64,7 +66,6 @@ String liveDuaRef = 'Quranic Dua • 2:201';
 String liveDuaArab = 'رَبَّنَا آتِنَا فِي الدُّنْيَا حَسَنَةً وَفِي الْآخِرَةِ حَسَنَةً وَقِنَا عَذَابَ النَّارِ';
 String liveDuaTrans = '"Our Lord, grant us good in this world and good in the Hereafter."';
 
-// Authentic Vector Instagram & Facebook Brand Logo Painter (ZERO EMOJIS!)
 class SocialLogoPainter extends CustomPainter {
   final bool isInstagram;
   final Color color;
@@ -113,6 +114,10 @@ String getDateKey(DateTime d) => "${d.year}-${d.month.toString().padLeft(2, '0')
 
 Future<void> triggerNativeWidgetBroadcast() async {
   try { await _widgetChannel.invokeMethod('refreshWidgets'); } catch (_) {}
+}
+
+Future<void> scheduleNativePrayerNotifications(Map<String, String> times) async {
+  try { await _widgetChannel.invokeMethod('scheduleAlarms', times); } catch (_) {}
 }
 
 Future<void> fetchLiveDailyAyahAndDua({bool forceRandom = false}) async {
@@ -166,6 +171,8 @@ class _NoorSuperAppState extends State<NoorSuperApp> {
         appLang = p.getString('lang') ?? 'en';
         use12Hour = p.getBool('use12') ?? true;
         globalUserName = p.getString('user_name') ?? 'Mumin';
+        widgetThemeIdx = p.getInt('wid_theme') ?? 0;
+        widgetAyahSize = p.getInt('wid_size') ?? 22;
       });
       await fetchLiveDailyAyahAndDua();
       if (mounted) setState(() {});
@@ -252,7 +259,9 @@ class _MainShellState extends State<MainShell> {
 
 
 
-// ---------------- 1. ARCHITECTURAL HOMEPAGE & IDENTICAL WIDGET STUDIO ----------------
+
+
+// ---------------- 1. HOMEPAGE (QURAN.COM FONT + ALARMS) & 2. WIDGET STUDIO (SIZE + THEME) ----------------
 class InteractiveHomeScreen extends StatefulWidget {
   final Function(int, {int sub}) onNav;
   final VoidCallback onRebuild;
@@ -262,21 +271,16 @@ class InteractiveHomeScreen extends StatefulWidget {
 }
 
 class _InteractiveHomeScreenState extends State<InteractiveHomeScreen> {
-  String loc = 'Barpaka', hijri = '1448 AH', sunrise = '05:12', sunset = '17:32';
+  String loc = 'Barpaka', hijri = '1448 AH';
   double lat = 26.4167, lon = 92.7333;
-  int school = 0, tasbihCount = 0, zikrIdx = 0, remSeconds = 3600;
+  int school = 0, remSeconds = 3600;
   bool manual = false, isPlayingAyah = false;
   Timer? timer;
-  String nextP = 'Dhuhr', countdown = '02:14:30';
+  String nextP = 'Dhuhr', countdown = '-02:14:30';
 
   final prayers = ['Fajr', 'Dhuhr', 'Asr', 'Maghrib', 'Isha'];
   Map<String, String> times = {'Fajr': '04:15', 'Dhuhr': '12:15', 'Asr': '15:25', 'Maghrib': '16:45', 'Isha': '18:15'};
   Map<String, int> status = {'Fajr': 0, 'Dhuhr': 0, 'Asr': 0, 'Maghrib': 0, 'Isha': 0};
-  final List<Map<String, String>> azkar = const [
-    {'ar': 'سُبْحَانَ اللَّهِ', 'en': 'SubhanAllah'},
-    {'ar': 'الْحَمْدُ لِلَّهِ', 'en': 'Alhamdulillah'},
-    {'ar': 'اللَّهُ أَكْبَرُ', 'en': 'Allahu Akbar'},
-  ];
   final AudioPlayer audioPlayer = AudioPlayer();
 
   @override
@@ -322,17 +326,16 @@ class _InteractiveHomeScreenState extends State<InteractiveHomeScreen> {
       lon = p.getDouble('lon') ?? 92.7333;
       school = p.getInt('school') ?? 0;
       manual = p.getBool('manual') ?? false;
-      tasbihCount = p.getInt('home_tasbih') ?? 0;
       for (var pr in prayers) {
         status[pr] = p.getInt('st_${tKey}_$pr') ?? 0;
         if (manual) times[pr] = p.getString('mt_$pr') ?? times[pr]!;
       }
     });
     if (!manual) _fetchAPI();
-    _syncWidgetPrefs();
+    _syncWidgetAndAlarms();
   }
 
-  Future<void> _syncWidgetPrefs() async {
+  Future<void> _syncWidgetAndAlarms() async {
     _tick();
     final p = await SharedPreferences.getInstance();
     await p.setString('wp_loc', loc.toUpperCase());
@@ -342,6 +345,7 @@ class _InteractiveHomeScreenState extends State<InteractiveHomeScreen> {
     await p.setInt('wp_rem_sec', remSeconds);
     await p.setString('wp_strip', 'Fajr   ${formatClock(times['Fajr']!).split(' ')[0]}\nDhuhr  ${formatClock(times['Dhuhr']!).split(' ')[0]}\nAsr    ${formatClock(times['Asr']!).split(' ')[0]}\nMag    ${formatClock(times['Maghrib']!).split(' ')[0]}\nIsha   ${formatClock(times['Isha']!).split(' ')[0]}');
     await triggerNativeWidgetBroadcast();
+    await scheduleNativePrayerNotifications(times);
   }
 
   Future<void> _fetchAPI() async {
@@ -351,11 +355,9 @@ class _InteractiveHomeScreenState extends State<InteractiveHomeScreen> {
         final d = json.decode(r.body)['data'];
         setState(() {
           for (var pr in prayers) { times[pr] = d['timings'][pr].toString().split(' ')[0]; }
-          sunrise = d['timings']['Sunrise'].toString().split(' ')[0];
-          sunset = d['timings']['Sunset'].toString().split(' ')[0];
           hijri = '${d['date']['hijri']['day']} ${d['date']['hijri']['month']['en']} ${d['date']['hijri']['year']}';
         });
-        _syncWidgetPrefs();
+        _syncWidgetAndAlarms();
       }
     } catch (_) {}
   }
@@ -381,7 +383,7 @@ class _InteractiveHomeScreenState extends State<InteractiveHomeScreen> {
               ),
               Row(
                 children: [
-                  ActionChip(label: Text(use12Hour ? '12H' : '24H', style: TextStyle(fontSize: 10.5, color: kPrimary)), backgroundColor: kCard, onPressed: () async { final p = await SharedPreferences.getInstance(); await p.setBool('use12', !use12Hour); setState(() => use12Hour = !use12Hour); _syncWidgetPrefs(); }),
+                  ActionChip(label: Text(use12Hour ? '12H' : '24H', style: TextStyle(fontSize: 10.5, color: kPrimary)), backgroundColor: kCard, onPressed: () async { final p = await SharedPreferences.getInstance(); await p.setBool('use12', !use12Hour); setState(() => use12Hour = !use12Hour); _syncWidgetAndAlarms(); }),
                   const SizedBox(width: 6),
                   ActionChip(label: Text(school == 0 ? 'SHAFI' : 'HANAFI', style: TextStyle(fontSize: 10.5, color: kSecondary)), backgroundColor: kCard, onPressed: () async { final p = await SharedPreferences.getInstance(); await p.setInt('school', school == 0 ? 1 : 0); _load(); }),
                 ],
@@ -390,7 +392,7 @@ class _InteractiveHomeScreenState extends State<InteractiveHomeScreen> {
           ),
           const SizedBox(height: 14),
 
-          // Dual-Pane Architectural Hero Card (Matches Phone Home Screen Widget!)
+          // Dual-Pane Hero Card
           Container(
             padding: const EdgeInsets.all(18),
             decoration: BoxDecoration(
@@ -464,7 +466,7 @@ class _InteractiveHomeScreenState extends State<InteractiveHomeScreen> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text('DAILY SALAH TRACKER', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w900, color: kMuted, letterSpacing: 1.2)),
-              Text('$salahDone OF 5 COMPLETED • HOLD TO EDIT', style: TextStyle(fontSize: 10, color: kPrimary, fontWeight: FontWeight.bold)),
+              Text('$salahDone OF 5 COMPLETED • HOLD TIME FOR ALARM', style: TextStyle(fontSize: 10, color: kPrimary, fontWeight: FontWeight.bold)),
             ],
           ),
           const SizedBox(height: 8),
@@ -492,7 +494,10 @@ class _InteractiveHomeScreenState extends State<InteractiveHomeScreen> {
                       await p.setString('mt_$pr', t24);
                       await p.setBool('manual', true);
                       setState(() { times[pr] = t24; manual = true; });
-                      _syncWidgetPrefs();
+                      await _syncWidgetAndAlarms();
+                      if (mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(SnackBar(backgroundColor: kSecondary, content: Text('Alarm set for $pr at ${formatClock(t24)}', style: const TextStyle(color: Colors.black, fontWeight: FontWeight.bold))));
+                      }
                     }
                   },
                   child: Container(
@@ -505,9 +510,11 @@ class _InteractiveHomeScreenState extends State<InteractiveHomeScreen> {
                     ),
                     child: Column(
                       children: [
-                        Icon(st > 0 && st < 4 ? Icons.check_circle_outline_rounded : Icons.schedule_rounded, size: 16, color: stCols[st]),
+                        Icon(st > 0 && st < 4 ? Icons.check_circle_outline_rounded : Icons.notifications_active_outlined, size: 16, color: stCols[st]),
                         const SizedBox(height: 6),
                         Text(pr, style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w800, color: isN ? kPrimary : kText)),
+                        const SizedBox(height: 2),
+                        Text(formatClock(times[pr]!).split(' ')[0], style: TextStyle(fontSize: 9.5, color: kMuted)),
                         const SizedBox(height: 4),
                         Text(stTags[st], style: TextStyle(fontSize: 8, fontWeight: FontWeight.w900, color: stCols[st])),
                       ],
@@ -519,7 +526,7 @@ class _InteractiveHomeScreenState extends State<InteractiveHomeScreen> {
           ),
           const SizedBox(height: 18),
 
-          // Live API Ayah Card
+          // Live API Ayah Card with Quran.com Font
           Container(
             padding: const EdgeInsets.all(18),
             decoration: BoxDecoration(color: kCard, borderRadius: BorderRadius.circular(20), border: Border.all(color: kBorder)),
@@ -548,16 +555,16 @@ class _InteractiveHomeScreenState extends State<InteractiveHomeScreen> {
                     ),
                   ],
                 ),
+                const SizedBox(height: 12),
+                Text(liveAyahArab, textAlign: TextAlign.right, style: TextStyle(fontSize: 25, fontFamily: 'QuranFont', color: kText, height: 1.8)),
                 const SizedBox(height: 10),
-                Text(liveAyahArab, textAlign: TextAlign.right, style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: kText)),
-                const SizedBox(height: 8),
                 Text(liveAyahTrans, style: TextStyle(fontSize: 13, fontFamily: 'serif', color: kSecondary, fontStyle: FontStyle.italic)),
               ],
             ),
           ),
           const SizedBox(height: 12),
 
-          // Live API Dua Card
+          // Live API Dua Card with Quran.com Font
           Container(
             padding: const EdgeInsets.all(18),
             decoration: BoxDecoration(color: kCard, borderRadius: BorderRadius.circular(20), border: Border.all(color: kBorder)),
@@ -565,9 +572,9 @@ class _InteractiveHomeScreenState extends State<InteractiveHomeScreen> {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 Text(liveDuaRef.toUpperCase(), style: TextStyle(fontSize: 10, fontWeight: FontWeight.w900, color: kSecondary, letterSpacing: 0.8)),
+                const SizedBox(height: 10),
+                Text(liveDuaArab, textAlign: TextAlign.right, style: TextStyle(fontSize: 23, fontFamily: 'QuranFont', color: kText, height: 1.8)),
                 const SizedBox(height: 8),
-                Text(liveDuaArab, textAlign: TextAlign.right, style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: kText)),
-                const SizedBox(height: 6),
                 Text(liveDuaTrans, style: TextStyle(fontSize: 12.5, fontFamily: 'serif', color: kMuted)),
               ],
             ),
@@ -589,6 +596,12 @@ class _LiveAnimatedWidgetStudioPageState extends State<LiveAnimatedWidgetStudioP
   String loc = 'BARPAKA', nextP = 'Dhuhr', nextTime = '12:15 PM';
   String stripText = 'Fajr   04:15\nDhuhr  12:15\nAsr    15:25\nMag    16:45\nIsha   18:15';
   int remSec = 5420;
+
+  final List<Map<String, dynamic>> widThemes = const [
+    {'name': 'Pine Emerald', 'c1': Color(0xFF0D2621), 'c2': Color(0xFF060D0B), 'border': Color(0xFF2DD4BF)},
+    {'name': 'Obsidian Gold', 'c1': Color(0xFF241A0E), 'c2': Color(0xFF080705), 'border': Color(0xFFD6B36A)},
+    {'name': 'Midnight Sapphire', 'c1': Color(0xFF0F1E36), 'c2': Color(0xFF050912), 'border': Color(0xFF38BDF8)},
+  ];
 
   @override
   void initState() {
@@ -612,21 +625,81 @@ class _LiveAnimatedWidgetStudioPageState extends State<LiveAnimatedWidgetStudioP
 
   String _fmt(int s) => '-${(s ~/ 3600).toString().padLeft(2, '0')}:${((s % 3600) ~/ 60).toString().padLeft(2, '0')}:${(s % 60).toString().padLeft(2, '0')}';
 
+  Future<void> _saveWidgetCustomization() async {
+    final p = await SharedPreferences.getInstance();
+    await p.setInt('wid_theme', widgetThemeIdx);
+    await p.setInt('wid_size', widgetAyahSize);
+    await triggerNativeWidgetBroadcast();
+  }
+
   @override
   Widget build(BuildContext context) {
+    final th = widThemes[widgetThemeIdx];
+    final Color bCol = th['border'] as Color;
+
     return Scaffold(
-      appBar: AppBar(title: Text('$globalUserName\'s Home Screen Widgets'), backgroundColor: kBg),
+      appBar: AppBar(title: Text('$globalUserName\'s Widget Studio'), backgroundColor: kBg),
       body: ListView(
         padding: const EdgeInsets.all(18),
         children: [
-          Text('1. DUAL-PANE PRAYER WIDGET (EXACT PHONE MATCH)', style: TextStyle(fontSize: 10.5, fontWeight: FontWeight.w900, color: kSecondary, letterSpacing: 1)),
-          const SizedBox(height: 10),
+          // NEW: Widget Theme Selector & Ayah Font Size Slider!
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(color: kCard, borderRadius: BorderRadius.circular(18), border: Border.all(color: kBorder)),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('WIDGET THEME & AYAH FONT SIZE', style: TextStyle(fontSize: 10.5, fontWeight: FontWeight.w900, color: kPrimary, letterSpacing: 1)),
+                const SizedBox(height: 10),
+                Row(
+                  children: List.generate(widThemes.length, (i) {
+                    bool sel = widgetThemeIdx == i;
+                    return Expanded(
+                      child: GestureDetector(
+                        onTap: () { setState(() => widgetThemeIdx = i); _saveWidgetCustomization(); },
+                        child: Container(
+                          margin: const EdgeInsets.symmetric(horizontal: 3),
+                          padding: const EdgeInsets.symmetric(vertical: 9),
+                          decoration: BoxDecoration(
+                            color: widThemes[i]['c1'] as Color,
+                            borderRadius: BorderRadius.circular(10),
+                            border: Border.all(color: sel ? (widThemes[i]['border'] as Color) : Colors.white24, width: sel ? 2 : 1),
+                          ),
+                          child: Center(child: Text(widThemes[i]['name'] as String, style: const TextStyle(fontSize: 10.5, fontWeight: FontWeight.bold, color: Colors.white))),
+                        ),
+                      ),
+                    );
+                  }),
+                ),
+                const SizedBox(height: 12),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text('Arabic Ayah Font Size', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: kText)),
+                    Text('${widgetAyahSize}sp', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: kSecondary)),
+                  ],
+                ),
+                Slider(
+                  activeColor: kPrimary,
+                  min: 16,
+                  max: 30,
+                  divisions: 14,
+                  value: widgetAyahSize.toDouble(),
+                  onChanged: (v) { setState(() => widgetAyahSize = v.toInt()); _saveWidgetCustomization(); },
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 18),
+
+          Text('1. DUAL-PANE PRAYER WIDGET', style: TextStyle(fontSize: 10.5, fontWeight: FontWeight.w900, color: kSecondary, letterSpacing: 1)),
+          const SizedBox(height: 8),
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              gradient: const LinearGradient(colors: [Color(0xFF0D2621), Color(0xFF091916), Color(0xFF060D0B)]),
+              gradient: LinearGradient(colors: [th['c1'] as Color, th['c2'] as Color]),
               borderRadius: BorderRadius.circular(24),
-              border: Border.all(color: const Color(0xFF2DD4BF), width: 1.5),
+              border: Border.all(color: bCol, width: 1.5),
             ),
             child: Row(
               children: [
@@ -639,7 +712,7 @@ class _LiveAnimatedWidgetStudioPageState extends State<LiveAnimatedWidgetStudioP
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
                           Text(loc, style: const TextStyle(color: Color(0xFFD6B36A), fontSize: 11, fontWeight: FontWeight.bold)),
-                          Container(padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2), decoration: BoxDecoration(color: const Color(0xFF132A24), borderRadius: BorderRadius.circular(10), border: Border.all(color: const Color(0xFFD6B36A))), child: Text(globalUserName.toUpperCase(), style: const TextStyle(color: Color(0xFF2DD4BF), fontSize: 8.5, fontWeight: FontWeight.bold))),
+                          Container(padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2), decoration: BoxDecoration(color: Colors.white10, borderRadius: BorderRadius.circular(10)), child: Text(globalUserName.toUpperCase(), style: TextStyle(color: bCol, fontSize: 8.5, fontWeight: FontWeight.bold))),
                         ],
                       ),
                       const SizedBox(height: 8),
@@ -649,12 +722,12 @@ class _LiveAnimatedWidgetStudioPageState extends State<LiveAnimatedWidgetStudioP
                       const SizedBox(height: 8),
                       Container(
                         padding: const EdgeInsets.all(6),
-                        decoration: BoxDecoration(color: const Color(0xFF132A24), borderRadius: BorderRadius.circular(12), border: Border.all(color: const Color(0xFFD6B36A))),
+                        decoration: BoxDecoration(color: Colors.white10, borderRadius: BorderRadius.circular(12)),
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
                             const Text('REMAINING', style: TextStyle(color: Color(0xFF8E9E99), fontSize: 8.5, fontWeight: FontWeight.bold)),
-                            Text(_fmt(remSec), style: const TextStyle(color: Color(0xFF2DD4BF), fontSize: 12, fontWeight: FontWeight.bold)),
+                            Text(_fmt(remSec), style: TextStyle(color: bCol, fontSize: 12, fontWeight: FontWeight.bold)),
                           ],
                         ),
                       ),
@@ -666,53 +739,65 @@ class _LiveAnimatedWidgetStudioPageState extends State<LiveAnimatedWidgetStudioP
                   flex: 4,
                   child: Container(
                     padding: const EdgeInsets.all(10),
-                    decoration: BoxDecoration(color: const Color(0xFF132A24), borderRadius: BorderRadius.circular(14), border: Border.all(color: const Color(0xFFD6B36A))),
+                    decoration: BoxDecoration(color: Colors.white10, borderRadius: BorderRadius.circular(14)),
                     child: Text(stripText, style: const TextStyle(color: Colors.white, fontSize: 10.5, fontWeight: FontWeight.bold, height: 1.5)),
                   ),
                 ),
               ],
             ),
           ),
-          const SizedBox(height: 22),
-          Text('2. DAILY QURAN VERSE WIDGET (EXACT PHONE MATCH)', style: TextStyle(fontSize: 10.5, fontWeight: FontWeight.w900, color: kPrimary, letterSpacing: 1)),
-          const SizedBox(height: 10),
+          const SizedBox(height: 20),
+
+          Text('2. DAILY QURAN VERSE WIDGET (QURAN.COM FONT)', style: TextStyle(fontSize: 10.5, fontWeight: FontWeight.w900, color: kPrimary, letterSpacing: 1)),
+          const SizedBox(height: 8),
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              gradient: const LinearGradient(colors: [Color(0xFF0D2621), Color(0xFF091916), Color(0xFF060D0B)]),
+              gradient: LinearGradient(colors: [th['c1'] as Color, th['c2'] as Color]),
               borderRadius: BorderRadius.circular(24),
-              border: Border.all(color: const Color(0xFF2DD4BF), width: 1.5),
+              border: Border.all(color: bCol, width: 1.5),
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 Text(liveAyahRef.toUpperCase(), style: const TextStyle(color: Color(0xFFD6B36A), fontSize: 9.5, fontWeight: FontWeight.bold)),
-                const SizedBox(height: 8),
-                Text(liveAyahArab, textAlign: TextAlign.right, style: const TextStyle(color: Colors.white, fontSize: 21, fontWeight: FontWeight.bold)),
-                const SizedBox(height: 8),
+                const SizedBox(height: 10),
+                Text(liveAyahArab, textAlign: TextAlign.right, style: TextStyle(color: Colors.white, fontSize: widgetAyahSize.toDouble(), fontFamily: 'QuranFont', height: 1.8)),
+                const SizedBox(height: 10),
                 Container(
                   padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(color: const Color(0xFF132A24), borderRadius: BorderRadius.circular(12), border: Border.all(color: const Color(0xFFD6B36A))),
-                  child: Text(liveAyahTrans, style: const TextStyle(color: Color(0xFF2DD4BF), fontSize: 11.5, fontFamily: 'serif', fontStyle: FontStyle.italic)),
+                  decoration: BoxDecoration(color: Colors.white10, borderRadius: BorderRadius.circular(12)),
+                  child: Text(liveAyahTrans, style: TextStyle(color: bCol, fontSize: 11.5, fontFamily: 'serif', fontStyle: FontStyle.italic)),
                 ),
               ],
             ),
           ),
-          const SizedBox(height: 20),
+          const SizedBox(height: 18),
+
           ElevatedButton.icon(
             style: ElevatedButton.styleFrom(backgroundColor: kPrimary, padding: const EdgeInsets.symmetric(vertical: 14)),
             onPressed: () async {
-              await triggerNativeWidgetBroadcast();
-              if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(backgroundColor: kSecondary, content: const Text('Widgets Force-Pushed to Phone Home Screen!', style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold))));
+              await _saveWidgetCustomization();
+              if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(backgroundColor: kSecondary, content: const Text('Widget Theme & Size Applied to Phone Home Screen!', style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold))));
             },
             icon: const Icon(Icons.sync_rounded, color: Colors.black),
-            label: const Text('FORCE SYNC TO PHONE HOME SCREEN', style: TextStyle(color: Colors.black, fontWeight: FontWeight.w900)),
+            label: const Text('APPLY THEME & SIZE TO HOME SCREEN WIDGET', style: TextStyle(color: Colors.black, fontWeight: FontWeight.w900, fontSize: 12)),
+          ),
+          const SizedBox(height: 10),
+          OutlinedButton.icon(
+            style: OutlinedButton.styleFrom(side: BorderSide(color: kSecondary), padding: const EdgeInsets.symmetric(vertical: 12)),
+            onPressed: () async {
+              try { await _widgetChannel.invokeMethod('testNotification', {'prayer': nextP}); } catch (_) {}
+            },
+            icon: Icon(Icons.notifications_active_outlined, size: 18, color: kSecondary),
+            label: Text('TEST PRAYER NOTIFICATION ("May Allah accept your prayers")', style: TextStyle(color: kSecondary, fontWeight: FontWeight.bold, fontSize: 11)),
           ),
         ],
       ),
     );
   }
 }
+
 
 
 
@@ -1127,6 +1212,15 @@ class _KitabScreenState extends State<KitabScreen> {
     );
   }
 }
+
+
+
+
+
+
+
+
+
 
 
 // ---------------- READERS, SETTINGS (VECTOR BRAND LOGOS!) & ADMIN PANEL ----------------
@@ -1620,3 +1714,6 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
     );
   }
 }
+
+
+
