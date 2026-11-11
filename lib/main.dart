@@ -18,35 +18,23 @@ bool isDarkMode = true;
 int accentIndex = 0;
 String appLang = 'en';
 bool use12Hour = true;
+String globalUserName = 'Mumin';
 
-// ---------------- MASTER ADMIN REMOTE CONTROL STATE ----------------
 String adminPinCode = '7860';
-String adminCloudUrl = '';
-
-// 1. Top Announcement Banner
 bool adminShowBanner = true;
 String adminBannerTitle = '🌙 Noor Official Reminder';
 String adminBannerMsg = 'Recite Surah Al-Mulk before sleeping & track your 5 daily prayers!';
-
-// 2. Live Broadcast Popup Alert
 bool adminShowPopup = false;
 String adminPopupTitle = '✨ Special Islamic Broadcast';
 String adminPopupBody = 'Assalamu Alaikum! May Allah accept your prayers and good deeds today.';
-
-// 3. OTA App Update Pusher
 bool adminUpdateAvailable = false;
-String adminLatestVer = 'v10.0 Pro';
+String adminLatestVer = 'v12.0 Pro';
 String adminUpdateUrl = 'https://github.com/';
 
-// 4. Custom Ayah & Dua Overrides
-bool adminForceCustomAyah = false;
-bool adminForceCustomDua = false;
-
-// 5. App & Developer Branding
 String adminAppInsta = '@noor.islamic.app';
 String adminAppFb = 'fb.com/NoorIslamicApp';
 String adminDevName = 'Lead Creator & Developer';
-String adminDevBio = 'Passionate about building modern, ad-free, and authentic Islamic digital experiences as Sadaqah Jariyah.';
+String adminDevBio = 'Building modern, ad-free & authentic Islamic digital experiences as Sadaqah Jariyah.';
 String adminDevImage = '';
 String adminDevInsta = '@developer.noor';
 String adminDevFb = 'fb.com/developer.noor';
@@ -74,9 +62,9 @@ String liveAyahArab = 'فَإِنَّ مَعَ الْعُسْرِ يُسْرًا
 String liveAyahTrans = '"Indeed, with hardship comes ease."';
 String liveAyahAudio = 'https://cdn.islamic.network/quran/audio/128/ar.alafasy/6095.mp3';
 
-String liveDuaRef = 'Quranic Rabbanah Dua • 2:201';
+String liveDuaRef = 'Quranic Dua • 2:201';
 String liveDuaArab = 'رَبَّنَا آتِنَا فِي الدُّنْيَا حَسَنَةً وَفِي الْآخِرَةِ حَسَنَةً وَقِنَا عَذَابَ النَّارِ';
-String liveDuaTrans = '"Our Lord! Grant us good in this world and good in the Hereafter, and protect us from the Fire."';
+String liveDuaTrans = '"Our Lord! Grant us good in this world and good in the Hereafter."';
 
 String formatClock(String raw) {
   if (!raw.contains(':')) return raw;
@@ -106,105 +94,31 @@ Future<void> triggerNativeWidgetBroadcast() async {
   try { await _widgetChannel.invokeMethod('refreshWidgets'); } catch (_) {}
 }
 
-Future<void> syncAdminRemoteConfig() async {
-  final p = await SharedPreferences.getInstance();
-  adminPinCode = p.getString('adm_pin') ?? '7860';
-  adminCloudUrl = p.getString('adm_url') ?? '';
-  adminShowBanner = p.getBool('adm_show_ban') ?? true;
-  adminBannerTitle = p.getString('adm_ban_t') ?? adminBannerTitle;
-  adminBannerMsg = p.getString('adm_ban_m') ?? adminBannerMsg;
-  adminShowPopup = p.getBool('adm_show_pop') ?? false;
-  adminPopupTitle = p.getString('adm_pop_t') ?? adminPopupTitle;
-  adminPopupBody = p.getString('adm_pop_b') ?? adminPopupBody;
-  adminUpdateAvailable = p.getBool('adm_upd_on') ?? false;
-  adminLatestVer = p.getString('adm_upd_v') ?? adminLatestVer;
-  adminUpdateUrl = p.getString('adm_upd_u') ?? adminUpdateUrl;
-  adminAppInsta = p.getString('adm_app_ig') ?? adminAppInsta;
-  adminAppFb = p.getString('adm_app_fb') ?? adminAppFb;
-  adminDevName = p.getString('adm_dev_n') ?? adminDevName;
-  adminDevBio = p.getString('adm_dev_b') ?? adminDevBio;
-  adminDevImage = p.getString('adm_dev_img') ?? '';
-  adminDevInsta = p.getString('adm_dev_ig') ?? adminDevInsta;
-  adminDevFb = p.getString('adm_dev_fb') ?? adminDevFb;
-  adminForceCustomAyah = p.getBool('adm_force_ayah') ?? false;
-  adminForceCustomDua = p.getBool('adm_force_dua') ?? false;
-
-  if (adminCloudUrl.trim().startsWith('http')) {
-    try {
-      final r = await http.get(Uri.parse(adminCloudUrl.trim()));
-      if (r.statusCode == 200) {
-        final d = json.decode(r.body);
-        adminShowBanner = d['show_banner'] ?? adminShowBanner;
-        adminBannerTitle = d['banner_title'] ?? adminBannerTitle;
-        adminBannerMsg = d['banner_message'] ?? adminBannerMsg;
-        adminShowPopup = d['show_popup'] ?? adminShowPopup;
-        adminPopupTitle = d['popup_title'] ?? adminPopupTitle;
-        adminPopupBody = d['popup_body'] ?? adminPopupBody;
-        adminUpdateAvailable = d['update_available'] ?? adminUpdateAvailable;
-        adminLatestVer = d['latest_version'] ?? adminLatestVer;
-        adminUpdateUrl = d['update_url'] ?? adminUpdateUrl;
-        adminAppInsta = d['app_insta'] ?? adminAppInsta;
-        adminAppFb = d['app_fb'] ?? adminAppFb;
-        adminDevName = d['dev_name'] ?? adminDevName;
-        adminDevBio = d['dev_bio'] ?? adminDevBio;
-        adminDevImage = d['dev_image'] ?? adminDevImage;
-        adminDevInsta = d['dev_insta'] ?? adminDevInsta;
-        adminDevFb = d['dev_fb'] ?? adminDevFb;
-        adminForceCustomAyah = d['force_custom_ayah'] ?? false;
-        adminForceCustomDua = d['force_custom_dua'] ?? false;
-        if (adminForceCustomAyah) {
-          liveAyahRef = d['custom_ayah_ref'] ?? liveAyahRef;
-          liveAyahArab = d['custom_ayah_arab'] ?? liveAyahArab;
-          liveAyahTrans = d['custom_ayah_trans'] ?? liveAyahTrans;
-        }
-        if (adminForceCustomDua) {
-          liveDuaRef = d['custom_dua_ref'] ?? liveDuaRef;
-          liveDuaArab = d['custom_dua_arab'] ?? liveDuaArab;
-          liveDuaTrans = d['custom_dua_trans'] ?? liveDuaTrans;
-        }
-      }
-    } catch (_) {}
-  }
-}
-
 Future<void> fetchLiveDailyAyahAndDua({bool forceRandom = false}) async {
   try {
-    await syncAdminRemoteConfig();
     final p = await SharedPreferences.getInstance();
     final now = DateTime.now();
     int dayOfYear = now.difference(DateTime(now.year, 1, 1)).inDays + 1;
     String ed = appLang == 'hi' ? 'hi.hindi' : (appLang == 'ur' ? 'ur.jalandhry' : 'en.asad');
+    int ayahNum = forceRandom ? (math.Random().nextInt(6200) + 10) : ((dayOfYear * 37 + now.year) % 6220) + 7;
 
-    if (adminForceCustomAyah && !forceRandom) {
-      liveAyahRef = p.getString('adm_ayah_ref') ?? liveAyahRef;
-      liveAyahArab = p.getString('adm_ayah_ar') ?? liveAyahArab;
-      liveAyahTrans = p.getString('adm_ayah_tr') ?? liveAyahTrans;
-    } else {
-      int ayahNum = forceRandom ? (math.Random().nextInt(6200) + 10) : ((dayOfYear * 37 + now.year) % 6220) + 7;
-      final r = await http.get(Uri.parse('https://api.alquran.cloud/v1/ayah/$ayahNum/editions/ar.alafasy,$ed'));
-      if (r.statusCode == 200) {
-        final d = json.decode(r.body)['data'];
-        liveAyahArab = d[0]['text'];
-        liveAyahAudio = d[0]['audio'] ?? liveAyahAudio;
-        liveAyahTrans = '"${d[1]['text']}"';
-        liveAyahRef = '${d[0]['surah']['englishName']} • ${d[0]['surah']['number']}:${d[0]['numberInSurah']}';
-      }
+    final r = await http.get(Uri.parse('https://api.alquran.cloud/v1/ayah/$ayahNum/editions/ar.alafasy,$ed'));
+    if (r.statusCode == 200) {
+      final d = json.decode(r.body)['data'];
+      liveAyahArab = d[0]['text'];
+      liveAyahAudio = d[0]['audio'] ?? liveAyahAudio;
+      liveAyahTrans = '"${d[1]['text']}"';
+      liveAyahRef = '${d[0]['surah']['englishName']} • ${d[0]['surah']['number']}:${d[0]['numberInSurah']}';
     }
 
-    if (adminForceCustomDua && !forceRandom) {
-      liveDuaRef = p.getString('adm_dua_ref') ?? liveDuaRef;
-      liveDuaArab = p.getString('adm_dua_ar') ?? liveDuaArab;
-      liveDuaTrans = p.getString('adm_dua_tr') ?? liveDuaTrans;
-    } else {
-      const duaAyahNumbers = [208, 293, 301, 1750, 2373, 2935, 3189, 4153, 5150];
-      int duaAyah = duaAyahNumbers[(forceRandom ? math.Random().nextInt(9) : dayOfYear) % duaAyahNumbers.length];
-      final dr = await http.get(Uri.parse('https://api.alquran.cloud/v1/ayah/$duaAyah/editions/ar.alafasy,$ed'));
-      if (dr.statusCode == 200) {
-        final dd = json.decode(dr.body)['data'];
-        liveDuaArab = dd[0]['text'];
-        liveDuaTrans = '"${dd[1]['text']}"';
-        liveDuaRef = 'Daily Dua • ${dd[0]['surah']['englishName']} ${dd[0]['surah']['number']}:${dd[0]['numberInSurah']}';
-      }
+    const duaNums = [208, 293, 301, 1750, 2373, 2935, 3189, 4153, 5150];
+    int duaAyah = duaNums[(forceRandom ? math.Random().nextInt(9) : dayOfYear) % duaNums.length];
+    final dr = await http.get(Uri.parse('https://api.alquran.cloud/v1/ayah/$duaAyah/editions/ar.alafasy,$ed'));
+    if (dr.statusCode == 200) {
+      final dd = json.decode(dr.body)['data'];
+      liveDuaArab = dd[0]['text'];
+      liveDuaTrans = '"${dd[1]['text']}"';
+      liveDuaRef = 'Daily Dua • ${dd[0]['surah']['englishName']} ${dd[0]['surah']['number']}:${dd[0]['numberInSurah']}';
     }
 
     await p.setString('wq_ref', '✨ $liveAyahRef');
@@ -234,12 +148,26 @@ class _NoorSuperAppState extends State<NoorSuperApp> {
       accentIndex = p.getInt('accent') ?? 0;
       appLang = p.getString('lang') ?? 'en';
       use12Hour = p.getBool('use12') ?? true;
+      globalUserName = p.getString('user_name') ?? 'Mumin';
+      adminPinCode = p.getString('adm_pin') ?? '7860';
+      adminShowBanner = p.getBool('adm_show_ban') ?? true;
+      adminBannerTitle = p.getString('adm_ban_t') ?? adminBannerTitle;
+      adminBannerMsg = p.getString('adm_ban_m') ?? adminBannerMsg;
+      adminShowPopup = p.getBool('adm_show_pop') ?? false;
+      adminPopupTitle = p.getString('adm_pop_t') ?? adminPopupTitle;
+      adminPopupBody = p.getString('adm_pop_b') ?? adminPopupBody;
+      adminUpdateAvailable = p.getBool('adm_upd_on') ?? false;
+      adminLatestVer = p.getString('adm_upd_v') ?? adminLatestVer;
+      adminUpdateUrl = p.getString('adm_upd_u') ?? adminUpdateUrl;
+      adminDevName = p.getString('adm_dev_n') ?? adminDevName;
+      adminDevBio = p.getString('adm_dev_b') ?? adminDevBio;
+      adminDevImage = p.getString('adm_dev_img') ?? '';
+      adminDevInsta = p.getString('adm_dev_ig') ?? adminDevInsta;
+      adminDevFb = p.getString('adm_dev_fb') ?? adminDevFb;
     });
     await fetchLiveDailyAyahAndDua();
     if (mounted) setState(() {});
   }
-
-  void _rebuildApp() => setState(() {});
 
   @override
   Widget build(BuildContext context) {
@@ -252,7 +180,7 @@ class _NoorSuperAppState extends State<NoorSuperApp> {
         primaryColor: kPrimary,
         cardColor: kCard,
       ),
-      home: MainShell(onAppRebuild: _rebuildApp),
+      home: MainShell(onAppRebuild: () => setState(() {})),
     );
   }
 }
@@ -267,29 +195,22 @@ class MainShell extends StatefulWidget {
 class _MainShellState extends State<MainShell> {
   int idx = 0;
   int kitSub = 0;
-  bool popupShownSession = false;
+  bool popShown = false;
 
   void _nav(int i, {int sub = 0}) => setState(() { idx = i; kitSub = sub; });
 
   @override
   Widget build(BuildContext context) {
-    if (adminShowPopup && !popupShownSession) {
-      popupShownSession = true;
+    if (adminShowPopup && !popShown) {
+      popShown = true;
       WidgetsBinding.instance.addPostFrameCallback((_) {
         showDialog(
           context: context,
           builder: (ctx) => AlertDialog(
             backgroundColor: kCard,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22), side: BorderSide(color: kPrimary, width: 1.5)),
-            title: Text(adminPopupTitle, style: TextStyle(color: kPrimary, fontWeight: FontWeight.w900)),
-            content: Text(adminPopupBody, style: TextStyle(color: kText, height: 1.4)),
-            actions: [
-              ElevatedButton(
-                style: ElevatedButton.styleFrom(backgroundColor: kPrimary),
-                onPressed: () => Navigator.pop(ctx),
-                child: const Text('JazakAllah Khair', style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
-              ),
-            ],
+            title: Text(adminPopupTitle, style: TextStyle(color: kPrimary, fontWeight: FontWeight.bold)),
+            content: Text(adminPopupBody, style: TextStyle(color: kText)),
+            actions: [ElevatedButton(style: ElevatedButton.styleFrom(backgroundColor: kPrimary), onPressed: () => Navigator.pop(ctx), child: const Text('OK', style: TextStyle(color: Colors.black)))],
           ),
         );
       });
@@ -297,7 +218,6 @@ class _MainShellState extends State<MainShell> {
 
     final pages = [
       InteractiveHomeScreen(onNav: _nav, onRebuild: widget.onAppRebuild),
-      UniqueWidgetStudioScreen(onRebuild: widget.onAppRebuild),
       const UniqueStreakScreen(),
       KitabScreen(initTab: kitSub),
       SettingsProfileScreen(onRebuild: widget.onAppRebuild),
@@ -307,22 +227,17 @@ class _MainShellState extends State<MainShell> {
       extendBody: true,
       body: pages[idx],
       bottomNavigationBar: Container(
-        height: 66,
-        margin: const EdgeInsets.fromLTRB(14, 0, 14, 14),
-        padding: const EdgeInsets.symmetric(horizontal: 6),
-        decoration: BoxDecoration(
-          color: kCard.withOpacity(0.96),
-          borderRadius: BorderRadius.circular(28),
-          border: Border.all(color: kBorder, width: 1.2),
-        ),
+        height: 64,
+        margin: const EdgeInsets.fromLTRB(18, 0, 18, 14),
+        padding: const EdgeInsets.symmetric(horizontal: 8),
+        decoration: BoxDecoration(color: kCard.withOpacity(0.96), borderRadius: BorderRadius.circular(28), border: Border.all(color: kBorder)),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceAround,
           children: [
             _navPill(0, Icons.wb_twilight_rounded, tr('Today', 'आज', 'آج', 'Today')),
-            _navPill(1, Icons.widgets_rounded, tr('Widgets', 'विजेट', 'ویجٹ', 'Widgets')),
-            _navPill(2, Icons.local_fire_department_rounded, tr('Streak', 'स्ट्रीक', 'اسٹریک', 'Streak')),
-            _navPill(3, Icons.menu_book_rounded, tr('Kitab', 'किताब', 'کتاب', 'Kitab')),
-            _navPill(4, Icons.settings_rounded, tr('Settings', 'सेटिंग्स', 'ترتیبات', 'Settings')),
+            _navPill(1, Icons.local_fire_department_rounded, tr('Streak', 'स्ट्रीक', 'اسٹریک', 'Streak')),
+            _navPill(2, Icons.menu_book_rounded, tr('Kitab', 'किताब', 'کتاب', 'Kitab')),
+            _navPill(3, Icons.settings_rounded, tr('Settings', 'सेटिंग्स', 'ترتیبات', 'Settings')),
           ],
         ),
       ),
@@ -332,15 +247,14 @@ class _MainShellState extends State<MainShell> {
   Widget _navPill(int i, IconData ic, String label) {
     bool sel = idx == i;
     return GestureDetector(
-      onTap: () { HapticFeedback.selectionClick(); setState(() => idx = i); },
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        padding: EdgeInsets.symmetric(horizontal: sel ? 13 : 9, vertical: 9),
+      onTap: () => setState(() => idx = i),
+      child: Container(
+        padding: EdgeInsets.symmetric(horizontal: sel ? 16 : 10, vertical: 9),
         decoration: BoxDecoration(color: sel ? kPrimary : Colors.transparent, borderRadius: BorderRadius.circular(20)),
         child: Row(
           children: [
             Icon(ic, size: 19, color: sel ? Colors.black : kMuted),
-            if (sel) ...[const SizedBox(width: 5), Text(label, style: const TextStyle(color: Colors.black, fontSize: 11.5, fontWeight: FontWeight.w900))],
+            if (sel) ...[const SizedBox(width: 6), Text(label, style: const TextStyle(color: Colors.black, fontSize: 12, fontWeight: FontWeight.w900))],
           ],
         ),
       ),
@@ -348,34 +262,12 @@ class _MainShellState extends State<MainShell> {
   }
 }
 
-class MihrabArchPainter extends CustomPainter {
-  final Color col;
-  MihrabArchPainter(this.col);
-  @override
-  void paint(Canvas canvas, Size size) {
-    final p = Paint()..color = col.withOpacity(0.18)..style = PaintingStyle.stroke..strokeWidth = 1.6;
-    final arch = Path()
-      ..moveTo(size.width * 0.12, size.height)
-      ..lineTo(size.width * 0.12, size.height * 0.45)
-      ..quadraticBezierTo(size.width * 0.12, size.height * 0.08, size.width * 0.5, size.height * 0.02)
-      ..quadraticBezierTo(size.width * 0.88, size.height * 0.08, size.width * 0.88, size.height * 0.45)
-      ..lineTo(size.width * 0.88, size.height);
-    canvas.drawPath(arch, p);
-  }
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => true;
-}
 
 
 
 
 
-
-
-
-
-
-// ---------------- 1. ENGAGING DAILY HABIT HOMEPAGE ----------------
+// ---------------- 1. HOMEPAGE & LIVE ANIMATED WIDGET STUDIO ----------------
 class InteractiveHomeScreen extends StatefulWidget {
   final Function(int, {int sub}) onNav;
   final VoidCallback onRebuild;
@@ -387,26 +279,20 @@ class InteractiveHomeScreen extends StatefulWidget {
 class _InteractiveHomeScreenState extends State<InteractiveHomeScreen> {
   String loc = 'Barpaka', hijri = '1448 AH', sunrise = '05:12', sunset = '17:32';
   double lat = 26.4167, lon = 92.7333;
-  int school = 0;
-  bool manual = false;
+  int school = 0, tasbihCount = 0, zikrIdx = 0, remSeconds = 3600;
+  bool manual = false, isPlayingAyah = false;
   Timer? timer;
   String nextP = 'Dhuhr', countdown = '02h 14m 30s';
 
   final prayers = ['Fajr', 'Dhuhr', 'Asr', 'Maghrib', 'Isha'];
   Map<String, String> times = {'Fajr': '04:15', 'Dhuhr': '12:15', 'Asr': '15:25', 'Maghrib': '16:45', 'Isha': '18:15'};
   Map<String, int> status = {'Fajr': 0, 'Dhuhr': 0, 'Asr': 0, 'Maghrib': 0, 'Isha': 0};
-
-  int tasbihCount = 0;
-  int zikrIdx = 0;
   final List<Map<String, String>> azkar = const [
     {'ar': 'سُبْحَانَ اللَّهِ', 'en': 'SubhanAllah'},
     {'ar': 'الْحَمْدُ لِلَّهِ', 'en': 'Alhamdulillah'},
     {'ar': 'اللَّهُ أَكْبَرُ', 'en': 'Allahu Akbar'},
-    {'ar': 'أَسْتَغْفِرُ اللَّهَ', 'en': 'Astaghfirullah'},
   ];
-
   final AudioPlayer audioPlayer = AudioPlayer();
-  bool isPlayingAyah = false;
 
   @override
   void initState() {
@@ -417,11 +303,7 @@ class _InteractiveHomeScreenState extends State<InteractiveHomeScreen> {
   }
 
   @override
-  void dispose() {
-    timer?.cancel();
-    audioPlayer.dispose();
-    super.dispose();
-  }
+  void dispose() { timer?.cancel(); audioPlayer.dispose(); super.dispose(); }
 
   void _tick() {
     final now = DateTime.now();
@@ -437,6 +319,7 @@ class _InteractiveHomeScreenState extends State<InteractiveHomeScreen> {
       nextT = DateTime(now.year, now.month, now.day, int.parse(pts[0]), int.parse(pts[1])).add(const Duration(days: 1));
     }
     final d = nextT.difference(now);
+    remSeconds = d.inSeconds;
     if (mounted) {
       setState(() {
         nextP = found;
@@ -465,13 +348,14 @@ class _InteractiveHomeScreenState extends State<InteractiveHomeScreen> {
   }
 
   Future<void> _syncWidgetPrefs() async {
+    _tick();
     final p = await SharedPreferences.getInstance();
-    await p.setString('wp_loc', '🕌 NOOR • ${loc.toUpperCase()}');
+    await p.setString('wp_loc', '⚡ NOOR LIVE • ${loc.toUpperCase()}');
+    await p.setString('wp_user', 'SALAH RADAR • ${globalUserName.toUpperCase()}');
     await p.setString('wp_next_name', nextP);
     await p.setString('wp_next', formatClock(times[nextP]!));
-    await p.setString(
-        'wp_strip',
-        'Fajr ${formatClock(times['Fajr']!).split(' ')[0]}  •  Dhuhr ${formatClock(times['Dhuhr']!).split(' ')[0]}  •  Asr ${formatClock(times['Asr']!).split(' ')[0]}  •  Mag ${formatClock(times['Maghrib']!).split(' ')[0]}  •  Isha ${formatClock(times['Isha']!).split(' ')[0]}');
+    await p.setInt('wp_rem_sec', remSeconds);
+    await p.setString('wp_strip', 'Fajr ${formatClock(times['Fajr']!).split(' ')[0]} • Dhuhr ${formatClock(times['Dhuhr']!).split(' ')[0]} • Asr ${formatClock(times['Asr']!).split(' ')[0]} • Mag ${formatClock(times['Maghrib']!).split(' ')[0]} • Isha ${formatClock(times['Isha']!).split(' ')[0]}');
     await triggerNativeWidgetBroadcast();
   }
 
@@ -491,44 +375,6 @@ class _InteractiveHomeScreenState extends State<InteractiveHomeScreen> {
     } catch (_) {}
   }
 
-  void _editLoc() {
-    final ctrl = TextEditingController(text: loc);
-    showDialog(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        backgroundColor: kCard,
-        title: Text('Set City / Village', style: TextStyle(color: kPrimary)),
-        content: TextField(controller: ctrl, decoration: const InputDecoration(hintText: 'e.g. Barpaka, Rupahi, Delhi')),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(backgroundColor: kPrimary),
-            onPressed: () async {
-              String pl = ctrl.text.trim();
-              Navigator.pop(ctx);
-              if (pl.isNotEmpty) {
-                final p = await SharedPreferences.getInstance();
-                await p.setString('loc', pl);
-                try {
-                  final r = await http.get(Uri.parse('https://nominatim.openstreetmap.org/search?q=$pl&format=json&limit=1'), headers: {'User-Agent': 'NoorSuper/1.0'});
-                  if (r.statusCode == 200) {
-                    final l = json.decode(r.body) as List;
-                    if (l.isNotEmpty) {
-                      await p.setDouble('lat', double.parse(l[0]['lat']));
-                      await p.setDouble('lon', double.parse(l[0]['lon']));
-                    }
-                  }
-                } catch (_) {}
-                _load();
-              }
-            },
-            child: const Text('Save', style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
-          ),
-        ],
-      ),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     int salahDone = status.values.where((s) => s > 0 && s < 4).length;
@@ -538,146 +384,85 @@ class _InteractiveHomeScreenState extends State<InteractiveHomeScreen> {
       child: ListView(
         padding: const EdgeInsets.fromLTRB(18, 12, 18, 100),
         children: [
-          // ADMIN LIVE UPDATE BANNER (IF ENABLED IN ADMIN PANEL)
           if (adminUpdateAvailable)
             Container(
-              margin: const EdgeInsets.only(bottom: 12),
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-              decoration: BoxDecoration(color: kSecondary.withOpacity(0.18), borderRadius: BorderRadius.circular(16), border: Border.all(color: kSecondary)),
+              margin: const EdgeInsets.only(bottom: 10),
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(color: kSecondary.withOpacity(0.2), borderRadius: BorderRadius.circular(14), border: Border.all(color: kSecondary)),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Expanded(child: Text('🚀 New Update ($adminLatestVer) is Live!', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 12.5, color: kText))),
-                  ElevatedButton(
-                    style: ElevatedButton.styleFrom(backgroundColor: kSecondary, padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4)),
-                    onPressed: () {
-                      Clipboard.setData(ClipboardData(text: adminUpdateUrl));
-                      ScaffoldMessenger.of(context).showSnackBar(SnackBar(backgroundColor: kSecondary, content: Text('Copied Update Link: $adminUpdateUrl', style: const TextStyle(color: Colors.black, fontWeight: FontWeight.bold))));
-                    },
-                    child: const Text('Copy APK Link', style: TextStyle(color: Colors.black, fontSize: 11, fontWeight: FontWeight.bold)),
-                  ),
+                  Text('🚀 Update $adminLatestVer Live!', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: kText)),
+                  ElevatedButton(style: ElevatedButton.styleFrom(backgroundColor: kSecondary), onPressed: () => Clipboard.setData(ClipboardData(text: adminUpdateUrl)), child: const Text('Copy Link', style: TextStyle(color: Colors.black, fontSize: 11))),
                 ],
               ),
             ),
-
-          // ADMIN LIVE ANNOUNCEMENT BANNER
           if (adminShowBanner)
             Container(
-              margin: const EdgeInsets.only(bottom: 14),
-              padding: const EdgeInsets.all(14),
-              decoration: BoxDecoration(color: kPrimary.withOpacity(0.14), borderRadius: BorderRadius.circular(18), border: Border.all(color: kPrimary.withOpacity(0.6))),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(adminBannerTitle, style: TextStyle(fontWeight: FontWeight.w900, fontSize: 13, color: kPrimary)),
-                  const SizedBox(height: 3),
-                  Text(adminBannerMsg, style: TextStyle(fontSize: 12, color: kText)),
-                ],
-              ),
+              margin: const EdgeInsets.only(bottom: 12),
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(color: kPrimary.withOpacity(0.14), borderRadius: BorderRadius.circular(16), border: Border.all(color: kPrimary.withOpacity(0.5))),
+              child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [Text(adminBannerTitle, style: TextStyle(fontWeight: FontWeight.w900, fontSize: 12.5, color: kPrimary)), Text(adminBannerMsg, style: TextStyle(fontSize: 11.5, color: kText))]),
             ),
 
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              GestureDetector(
-                onTap: _editLoc,
-                child: Row(
-                  children: [
-                    Container(padding: const EdgeInsets.all(8), decoration: BoxDecoration(color: kPrimary, borderRadius: BorderRadius.circular(12)), child: const Icon(Icons.place_rounded, size: 16, color: Colors.black)),
-                    const SizedBox(width: 10),
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(children: [Text(loc, style: TextStyle(fontSize: 16, fontWeight: FontWeight.w900, color: kText)), Icon(Icons.arrow_drop_down, size: 18, color: kPrimary)]),
-                        Text('🌙 $hijri', style: TextStyle(fontSize: 11, color: kPrimary, fontWeight: FontWeight.w600)),
-                      ],
-                    ),
-                  ],
-                ),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('📍 $loc', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w900, color: kText)),
+                  Text('🌙 $hijri • Salam, $globalUserName', style: TextStyle(fontSize: 11, color: kPrimary, fontWeight: FontWeight.w600)),
+                ],
               ),
               Row(
                 children: [
-                  _topChip(use12Hour ? '12H' : '24H', () async {
-                    final p = await SharedPreferences.getInstance();
-                    await p.setBool('use12', !use12Hour);
-                    setState(() => use12Hour = !use12Hour);
-                    _syncWidgetPrefs();
-                  }),
+                  ActionChip(label: Text(use12Hour ? '12H' : '24H', style: TextStyle(fontSize: 10.5, color: kPrimary)), backgroundColor: kCard, onPressed: () async { final p = await SharedPreferences.getInstance(); await p.setBool('use12', !use12Hour); setState(() => use12Hour = !use12Hour); _syncWidgetPrefs(); }),
                   const SizedBox(width: 6),
-                  _topChip(school == 0 ? 'SHAFI' : 'HANAFI', () async {
-                    final p = await SharedPreferences.getInstance();
-                    await p.setInt('school', school == 0 ? 1 : 0);
-                    _load();
-                  }),
+                  ActionChip(label: Text(school == 0 ? 'SHAFI' : 'HANAFI', style: TextStyle(fontSize: 10.5, color: kSecondary)), backgroundColor: kCard, onPressed: () async { final p = await SharedPreferences.getInstance(); await p.setInt('school', school == 0 ? 1 : 0); _load(); }),
                 ],
               ),
             ],
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 14),
 
-          ClipRRect(
-            borderRadius: BorderRadius.circular(30),
-            child: Container(
-              decoration: BoxDecoration(
-                gradient: LinearGradient(colors: [kPrimary.withOpacity(0.22), kCardAlt, kCard], begin: Alignment.topCenter, end: Alignment.bottomCenter),
-                borderRadius: BorderRadius.circular(30),
-                border: Border.all(color: kPrimary.withOpacity(0.5), width: 1.5),
-              ),
-              child: Stack(
-                children: [
-                  Positioned.fill(child: CustomPaint(painter: MihrabArchPainter(kPrimary))),
-                  Padding(
-                    padding: const EdgeInsets.all(22),
-                    child: Column(
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 5),
-                          decoration: BoxDecoration(color: Colors.black26, borderRadius: BorderRadius.circular(20), border: Border.all(color: kPrimary.withOpacity(0.5))),
-                          child: Text('UPCOMING SALAH • ${nextP.toUpperCase()}', style: TextStyle(color: kPrimary, fontSize: 10.5, fontWeight: FontWeight.w900, letterSpacing: 1.2)),
-                        ),
-                        const SizedBox(height: 12),
-                        Text(formatClock(times[nextP]!), style: TextStyle(fontSize: 42, fontFamily: 'serif', fontWeight: FontWeight.w900, color: kText, height: 1.05)),
-                        const SizedBox(height: 6),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(Icons.timer_outlined, size: 15, color: kSecondary),
-                            const SizedBox(width: 5),
-                            Text('Starts in $countdown', style: TextStyle(color: kSecondary, fontSize: 13.5, fontWeight: FontWeight.w800)),
-                          ],
-                        ),
-                        const SizedBox(height: 18),
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-                          decoration: BoxDecoration(color: kBg.withOpacity(0.55), borderRadius: BorderRadius.circular(20), border: Border.all(color: kBorder)),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceAround,
-                            children: [
-                              _archStat('🌙 SUHUR', formatClock(times['Fajr']!)),
-                              Container(width: 1, height: 24, color: kBorder),
-                              _archStat('🌅 SUNRISE', formatClock(sunrise)),
-                              Container(width: 1, height: 24, color: kBorder),
-                              _archStat('🌇 IFTAR', formatClock(times['Maghrib']!)),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
+          // Hero Card
+          Container(
+            padding: const EdgeInsets.all(22),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(colors: [kPrimary.withOpacity(0.24), kCardAlt, kCard], begin: Alignment.topCenter, end: Alignment.bottomCenter),
+              borderRadius: BorderRadius.circular(28),
+              border: Border.all(color: kPrimary.withOpacity(0.5), width: 1.5),
+            ),
+            child: Column(
+              children: [
+                Text('UPCOMING SALAH • ${nextP.toUpperCase()}', style: TextStyle(color: kPrimary, fontSize: 10.5, fontWeight: FontWeight.w900, letterSpacing: 1.2)),
+                const SizedBox(height: 8),
+                Text(formatClock(times[nextP]!), style: TextStyle(fontSize: 40, fontFamily: 'serif', fontWeight: FontWeight.w900, color: kText)),
+                const SizedBox(height: 4),
+                Text('Starts in $countdown', style: TextStyle(color: kSecondary, fontSize: 13, fontWeight: FontWeight.w800)),
+                const SizedBox(height: 16),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceAround,
+                  children: [
+                    Text('🌙 Suhur: ${formatClock(times['Fajr']!)}', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: kText)),
+                    Text('🌅 Sunrise: ${formatClock(sunrise)}', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: kText)),
+                    Text('🌇 Iftar: ${formatClock(times['Maghrib']!)}', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: kText)),
+                  ],
+                ),
+              ],
             ),
           ),
-          const SizedBox(height: 22),
+          const SizedBox(height: 18),
 
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(tr('🕌 Daily Salah Check-In', '🕌 आज की नमाज़ चेक-इन', '🕌 آج کی نماز چیک ان', '🕌 Daily Salah Check-In'), style: TextStyle(fontSize: 16, fontWeight: FontWeight.w900, color: kText)),
+              Text('🕌 Daily Salah Check-In', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w900, color: kText)),
               Text('$salahDone/5 Offered • Hold Time to Edit', style: TextStyle(fontSize: 11, color: kPrimary, fontWeight: FontWeight.bold)),
             ],
           ),
-          const SizedBox(height: 10),
+          const SizedBox(height: 8),
 
           Row(
             children: prayers.map((pr) {
@@ -685,21 +470,12 @@ class _InteractiveHomeScreenState extends State<InteractiveHomeScreen> {
               int st = status[pr] ?? 0;
               final stCols = [kMuted, kSecondary, const Color(0xFF38BDF8), kPrimary, const Color(0xFFEF4444)];
               final stTags = ['Tap +', 'Jamaat', 'OnTime', 'Late', 'Missed'];
-              final prIcons = {
-                'Fajr': Icons.wb_twilight_rounded,
-                'Dhuhr': Icons.wb_sunny_rounded,
-                'Asr': Icons.wb_cloudy_rounded,
-                'Maghrib': Icons.flare_rounded,
-                'Isha': Icons.nights_stay_rounded,
-              };
-
               return Expanded(
                 child: GestureDetector(
                   onTap: () async {
                     int next = ((status[pr] ?? 0) + 1) % 5;
                     final p = await SharedPreferences.getInstance();
                     await p.setInt('st_${getDateKey(DateTime.now())}_$pr', next);
-                    HapticFeedback.mediumImpact();
                     setState(() => status[pr] = next);
                   },
                   onLongPress: () async {
@@ -714,28 +490,21 @@ class _InteractiveHomeScreenState extends State<InteractiveHomeScreen> {
                       _syncWidgetPrefs();
                     }
                   },
-                  child: AnimatedContainer(
-                    duration: const Duration(milliseconds: 220),
-                    margin: const EdgeInsets.symmetric(horizontal: 3),
-                    padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 4),
+                  child: Container(
+                    margin: const EdgeInsets.symmetric(horizontal: 2.5),
+                    padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 3),
                     decoration: BoxDecoration(
                       color: st > 0 ? stCols[st].withOpacity(0.16) : (isN ? kCardAlt : kCard),
-                      borderRadius: BorderRadius.circular(20),
-                      border: Border.all(color: st > 0 ? stCols[st] : (isN ? kPrimary : kBorder), width: (st > 0 || isN) ? 1.6 : 1.0),
+                      borderRadius: BorderRadius.circular(18),
+                      border: Border.all(color: st > 0 ? stCols[st] : (isN ? kPrimary : kBorder), width: 1.4),
                     ),
                     child: Column(
                       children: [
-                        Icon(st > 0 && st < 4 ? Icons.check_circle_rounded : prIcons[pr], size: 20, color: st > 0 ? stCols[st] : (isN ? kPrimary : kMuted)),
-                        const SizedBox(height: 8),
-                        Text(pr, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: isN ? kPrimary : kText)),
+                        Text(pr, style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w800, color: isN ? kPrimary : kText)),
                         const SizedBox(height: 3),
-                        Text(formatClock(times[pr]!).split(' ')[0], style: TextStyle(fontSize: 10.5, fontFamily: 'serif', color: kMuted, fontWeight: FontWeight.bold)),
-                        const SizedBox(height: 8),
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2.5),
-                          decoration: BoxDecoration(color: stCols[st].withOpacity(0.18), borderRadius: BorderRadius.circular(8)),
-                          child: Text(stTags[st], style: TextStyle(fontSize: 8.5, fontWeight: FontWeight.w900, color: st == 0 ? kMuted : stCols[st])),
-                        ),
+                        Text(formatClock(times[pr]!).split(' ')[0], style: TextStyle(fontSize: 10, color: kMuted, fontWeight: FontWeight.bold)),
+                        const SizedBox(height: 6),
+                        Text(stTags[st], style: TextStyle(fontSize: 8.5, fontWeight: FontWeight.w900, color: stCols[st])),
                       ],
                     ),
                   ),
@@ -743,80 +512,19 @@ class _InteractiveHomeScreenState extends State<InteractiveHomeScreen> {
               );
             }).toList(),
           ),
-          const SizedBox(height: 22),
+          const SizedBox(height: 18),
 
-          Row(
-            children: [
-              Expanded(
-                child: GestureDetector(
-                  onTap: () async {
-                    HapticFeedback.lightImpact();
-                    final p = await SharedPreferences.getInstance();
-                    setState(() => tasbihCount++);
-                    await p.setInt('home_tasbih', tasbihCount);
-                  },
-                  child: Container(
-                    height: 135,
-                    padding: const EdgeInsets.all(14),
-                    decoration: BoxDecoration(color: kCard, borderRadius: BorderRadius.circular(22), border: Border.all(color: kSecondary.withOpacity(0.45), width: 1.4)),
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            GestureDetector(onTap: () => setState(() => zikrIdx = (zikrIdx + 1) % azkar.length), child: Text('${azkar[zikrIdx]['en']} ↻', style: TextStyle(fontSize: 10.5, color: kSecondary, fontWeight: FontWeight.bold))),
-                            GestureDetector(onTap: () async { final p = await SharedPreferences.getInstance(); setState(() => tasbihCount = 0); await p.setInt('home_tasbih', 0); }, child: Icon(Icons.refresh_rounded, size: 16, color: kMuted)),
-                          ],
-                        ),
-                        Text(azkar[zikrIdx]['ar']!, style: TextStyle(fontSize: 20, color: kPrimary, fontWeight: FontWeight.bold)),
-                        Text('$tasbihCount', style: TextStyle(fontSize: 28, fontFamily: 'serif', fontWeight: FontWeight.w900, color: kText)),
-                        Text('TAP TO COUNT 📿', style: TextStyle(fontSize: 9, color: kSecondary, fontWeight: FontWeight.w900)),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: GestureDetector(
-                  onTap: () => widget.onNav(3, sub: 1),
-                  child: Container(
-                    height: 135,
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(color: kCard, borderRadius: BorderRadius.circular(22), border: Border.all(color: kPrimary.withOpacity(0.45), width: 1.4)),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Icon(Icons.library_books_rounded, color: kPrimary, size: 28),
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text('10 Hadith Books', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 15, color: kText)),
-                            const SizedBox(height: 4),
-                            Text('Search All 36,000+ Hadiths Globally', style: TextStyle(fontSize: 11, color: kMuted)),
-                          ],
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 20),
-
+          // Live Ayah Card
           Container(
-            padding: const EdgeInsets.all(20),
-            decoration: BoxDecoration(color: kCard, borderRadius: BorderRadius.circular(24), border: Border.all(color: kPrimary.withOpacity(0.4))),
+            padding: const EdgeInsets.all(18),
+            decoration: BoxDecoration(color: kCard, borderRadius: BorderRadius.circular(22), border: Border.all(color: kPrimary.withOpacity(0.4))),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Row(children: [Icon(Icons.auto_awesome, size: 15, color: kPrimary), const SizedBox(width: 6), Text('LIVE AYAH OF THE DAY', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w900, color: kPrimary, letterSpacing: 1))]),
+                    Text('✨ LIVE AYAH • $liveAyahRef', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w900, color: kPrimary)),
                     Row(
                       children: [
                         GestureDetector(
@@ -824,48 +532,38 @@ class _InteractiveHomeScreenState extends State<InteractiveHomeScreen> {
                             if (isPlayingAyah) { await audioPlayer.stop(); setState(() => isPlayingAyah = false); }
                             else { setState(() => isPlayingAyah = true); await audioPlayer.play(UrlSource(liveAyahAudio)); }
                           },
-                          child: Icon(isPlayingAyah ? Icons.stop_circle : Icons.volume_up_rounded, size: 20, color: kSecondary),
+                          child: Icon(isPlayingAyah ? Icons.stop_circle : Icons.volume_up_rounded, size: 18, color: kSecondary),
                         ),
-                        const SizedBox(width: 12),
+                        const SizedBox(width: 10),
                         GestureDetector(
-                          onTap: () async {
-                            await fetchLiveDailyAyahAndDua(forceRandom: true);
-                            if (mounted) setState(() {});
-                          },
-                          child: Text('New Live Ayah ↻', style: TextStyle(fontSize: 11, color: kPrimary, fontWeight: FontWeight.bold)),
+                          onTap: () async { await fetchLiveDailyAyahAndDua(forceRandom: true); if (mounted) setState(() {}); },
+                          child: Text('New ↻', style: TextStyle(fontSize: 11, color: kPrimary, fontWeight: FontWeight.bold)),
                         ),
                       ],
                     ),
                   ],
                 ),
-                const SizedBox(height: 6),
-                Text(liveAyahRef, style: TextStyle(fontSize: 11, color: kMuted, fontWeight: FontWeight.bold)),
-                const SizedBox(height: 12),
-                Text(liveAyahArab, textAlign: TextAlign.right, style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: kText, height: 1.5)),
                 const SizedBox(height: 10),
-                Text(liveAyahTrans, style: TextStyle(fontSize: 13.5, fontFamily: 'serif', color: kSecondary, fontStyle: FontStyle.italic, height: 1.4)),
+                Text(liveAyahArab, textAlign: TextAlign.right, style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: kText)),
+                const SizedBox(height: 8),
+                Text(liveAyahTrans, style: TextStyle(fontSize: 13, fontFamily: 'serif', color: kSecondary, fontStyle: FontStyle.italic)),
               ],
             ),
           ),
-          const SizedBox(height: 14),
+          const SizedBox(height: 12),
 
+          // Live Dua Card
           Container(
-            padding: const EdgeInsets.all(20),
-            decoration: BoxDecoration(color: kCard, borderRadius: BorderRadius.circular(24), border: Border.all(color: kSecondary.withOpacity(0.4))),
+            padding: const EdgeInsets.all(18),
+            decoration: BoxDecoration(color: kCard, borderRadius: BorderRadius.circular(22), border: Border.all(color: kSecondary.withOpacity(0.4))),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text('🤲 LIVE QURANIC DUA OF THE DAY', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w900, color: kSecondary, letterSpacing: 1)),
-                    Text(liveDuaRef, style: TextStyle(fontSize: 10.5, color: kMuted)),
-                  ],
-                ),
-                const SizedBox(height: 12),
-                Text(liveDuaArab, textAlign: TextAlign.right, style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: kText, height: 1.5)),
-                const SizedBox(height: 10),
-                Text(liveDuaTrans, style: TextStyle(fontSize: 13, fontFamily: 'serif', color: kMuted, height: 1.4)),
+                Text('🤲 $liveDuaRef', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w900, color: kSecondary)),
+                const SizedBox(height: 8),
+                Text(liveDuaArab, textAlign: TextAlign.right, style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: kText)),
+                const SizedBox(height: 6),
+                Text(liveDuaTrans, style: TextStyle(fontSize: 12.5, fontFamily: 'serif', color: kMuted)),
               ],
             ),
           ),
@@ -873,183 +571,153 @@ class _InteractiveHomeScreenState extends State<InteractiveHomeScreen> {
       ),
     );
   }
-
-  Widget _topChip(String txt, VoidCallback tap) {
-    return GestureDetector(
-      onTap: tap,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-        decoration: BoxDecoration(color: kCard, borderRadius: BorderRadius.circular(12), border: Border.all(color: kBorder)),
-        child: Text(txt, style: TextStyle(fontSize: 10.5, fontWeight: FontWeight.w900, color: kPrimary)),
-      ),
-    );
-  }
-
-  Widget _archStat(String label, String val) {
-    return Column(
-      children: [
-        Text(label, style: TextStyle(fontSize: 9, color: kMuted, fontWeight: FontWeight.w800)),
-        const SizedBox(height: 3),
-        Text(val, style: TextStyle(fontSize: 12, color: kText, fontWeight: FontWeight.w900)),
-      ],
-    );
-  }
 }
 
-// ---------------- 2. IDENTICAL APP & HOME SCREEN WIDGET STUDIO ----------------
-class UniqueWidgetStudioScreen extends StatefulWidget {
-  final VoidCallback onRebuild;
-  const UniqueWidgetStudioScreen({super.key, required this.onRebuild});
+// ---------------- 2. LIVE ANIMATED RADAR & COUNTDOWN WIDGET STUDIO ----------------
+class RadarSweepPainter extends CustomPainter {
+  final double angle;
+  final Color col;
+  RadarSweepPainter(this.angle, this.col);
   @override
-  State<UniqueWidgetStudioScreen> createState() => _UniqueWidgetStudioScreenState();
+  void paint(Canvas canvas, Size size) {
+    final c = Offset(size.width * 0.82, size.height * 0.45);
+    final p = Paint()..color = col.withOpacity(0.16)..style = PaintingStyle.stroke..strokeWidth = 1.5;
+    canvas.drawCircle(c, 30, p);
+    canvas.drawCircle(c, 50, p);
+    canvas.drawCircle(Offset(c.dx + 50 * math.cos(angle), c.dy + 50 * math.sin(angle)), 5, Paint()..color = col);
+  }
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => true;
 }
 
-class _UniqueWidgetStudioScreenState extends State<UniqueWidgetStudioScreen> {
-  String loc = '🕌 NOOR • BARPAKA';
-  String nextP = 'Dhuhr';
-  String nextTime = '12:15 PM';
-  String stripText = 'Fajr 04:15  •  Dhuhr 12:15  •  Asr 03:25  •  Mag 04:45  •  Isha 06:15';
+class LiveAnimatedWidgetStudioPage extends StatefulWidget {
+  const LiveAnimatedWidgetStudioPage({super.key});
+  @override
+  State<LiveAnimatedWidgetStudioPage> createState() => _LiveAnimatedWidgetStudioPageState();
+}
+
+class _LiveAnimatedWidgetStudioPageState extends State<LiveAnimatedWidgetStudioPage> with SingleTickerProviderStateMixin {
+  late AnimationController _animCtrl;
+  Timer? _clockTimer;
+  String loc = '⚡ NOOR LIVE • BARPAKA', nextP = 'Dhuhr', nextTime = '12:15 PM';
+  String stripText = 'Fajr 04:15 • Dhuhr 12:15 • Asr 03:25 • Mag 04:45 • Isha 06:15';
+  int remSec = 5420;
 
   @override
   void initState() {
     super.initState();
-    _loadCurrentWidgetData();
-  }
-
-  Future<void> _loadCurrentWidgetData() async {
-    final p = await SharedPreferences.getInstance();
-    setState(() {
-      loc = p.getString('wp_loc') ?? '🕌 NOOR • BARPAKA';
-      nextP = p.getString('wp_next_name') ?? 'Dhuhr';
-      nextTime = p.getString('wp_next') ?? '12:15 PM';
-      stripText = p.getString('wp_strip') ?? stripText;
+    _animCtrl = AnimationController(vsync: this, duration: const Duration(seconds: 5))..repeat();
+    SharedPreferences.getInstance().then((p) {
+      if (mounted) {
+        setState(() {
+          loc = p.getString('wp_loc') ?? loc;
+          nextP = p.getString('wp_next_name') ?? nextP;
+          nextTime = p.getString('wp_next') ?? nextTime;
+          stripText = p.getString('wp_strip') ?? stripText;
+          remSec = p.getInt('wp_rem_sec') ?? 5420;
+        });
+      }
     });
-  }
-
-  Future<void> _syncAndBroadcast() async {
-    final p = await SharedPreferences.getInstance();
-    await p.setString('wq_ref', '✨ $liveAyahRef');
-    await p.setString('wq_arab', liveAyahArab);
-    await p.setString('wq_hing', liveAyahTrans);
-    await triggerNativeWidgetBroadcast();
-    if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          backgroundColor: kPrimary,
-          content: const Text('✅ Live Broadcast Sent! Your Phone Home Screen Widget is now 100% identical!', style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
-        ),
-      );
-    }
+    _clockTimer = Timer.periodic(const Duration(seconds: 1), (_) { if (mounted && remSec > 0) setState(() => remSec--); });
   }
 
   @override
+  void dispose() { _animCtrl.dispose(); _clockTimer?.cancel(); super.dispose(); }
+
+  String _fmt(int s) => '- ${(s ~/ 3600).toString().padLeft(2, '0')}:${((s % 3600) ~/ 60).toString().padLeft(2, '0')}:${(s % 60).toString().padLeft(2, '0')}';
+
+  @override
   Widget build(BuildContext context) {
-    return SafeArea(
-      child: ListView(
-        padding: const EdgeInsets.fromLTRB(18, 14, 18, 100),
+    return Scaffold(
+      appBar: AppBar(title: Text('⚡ $globalUserName\'s Live Widgets'), backgroundColor: kBg),
+      body: ListView(
+        padding: const EdgeInsets.all(18),
         children: [
-          Text('✨ LIVE HOME SCREEN WIDGETS', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w900, color: kPrimary, letterSpacing: 1.4)),
-          const SizedBox(height: 4),
-          Text('100% Identical on App & Phone', style: TextStyle(fontSize: 22, fontFamily: 'serif', fontWeight: FontWeight.bold, color: kText)),
-          const SizedBox(height: 18),
-
-          Text('🕌 1. Noor Salah Pass Widget (Exact Phone Preview)', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: kMuted)),
+          Text('1. LIVE ANIMATED SALAH RADAR WIDGET', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w900, color: kSecondary)),
           const SizedBox(height: 10),
-          Container(
-            padding: const EdgeInsets.all(18),
-            decoration: BoxDecoration(
-              gradient: const LinearGradient(colors: [Color(0xFF24170D), Color(0xFF0E1A16), Color(0xFF080C0B)]),
-              borderRadius: BorderRadius.circular(26),
-              border: Border.all(color: const Color(0xFFF59E0B), width: 1.8),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(loc, style: const TextStyle(color: Color(0xFFF59E0B), fontSize: 11, fontWeight: FontWeight.bold)),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                      decoration: BoxDecoration(color: const Color(0xFF15221E), borderRadius: BorderRadius.circular(14), border: Border.all(color: const Color(0xFF2DD4BF))),
-                      child: const Text('🌙 SUHUR & IFTAR LIVE', style: TextStyle(color: Color(0xFF2DD4BF), fontSize: 9, fontWeight: FontWeight.bold)),
-                    ),
-                  ],
+          AnimatedBuilder(
+            animation: _animCtrl,
+            builder: (_, __) {
+              double pulse = 0.5 + 0.5 * math.sin(_animCtrl.value * 2 * math.pi);
+              return ClipRRect(
+                borderRadius: BorderRadius.circular(26),
+                child: Container(
+                  padding: const EdgeInsets.all(18),
+                  decoration: BoxDecoration(
+                    gradient: const LinearGradient(colors: [Color(0xFF0F2922), Color(0xFF091512), Color(0xFF050807)]),
+                    borderRadius: BorderRadius.circular(26),
+                    border: Border.all(color: const Color(0xFF2DD4BF).withOpacity(0.5 + pulse * 0.4), width: 2),
+                  ),
+                  child: Stack(
+                    children: [
+                      Positioned.fill(child: CustomPaint(painter: RadarSweepPainter(_animCtrl.value * 2 * math.pi, const Color(0xFF2DD4BF)))),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text(loc, style: const TextStyle(color: Color(0xFF2DD4BF), fontSize: 11, fontWeight: FontWeight.w900)),
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                                decoration: BoxDecoration(color: const Color(0xFF132A24), borderRadius: BorderRadius.circular(14), border: Border.all(color: const Color(0xFFF59E0B))),
+                                child: Text(_fmt(remSec), style: const TextStyle(color: Color(0xFFF59E0B), fontSize: 12.5, fontWeight: FontWeight.w900)),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 10),
+                          Text('SALAH RADAR • ${globalUserName.toUpperCase()}', style: const TextStyle(color: Colors.white60, fontSize: 9.5, fontWeight: FontWeight.bold)),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text(nextP, style: const TextStyle(color: Colors.white, fontSize: 28, fontWeight: FontWeight.w900)),
+                              Text(nextTime, style: const TextStyle(color: Color(0xFF2DD4BF), fontSize: 24, fontFamily: 'serif', fontWeight: FontWeight.bold)),
+                            ],
+                          ),
+                          const SizedBox(height: 10),
+                          const LinearProgressIndicator(value: 0.68, minHeight: 6, backgroundColor: Color(0xFF1E352F), valueColor: AlwaysStoppedAnimation(Color(0xFFF59E0B))),
+                          const SizedBox(height: 10),
+                          Text(stripText, style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold)),
+                        ],
+                      ),
+                    ],
+                  ),
                 ),
-                const SizedBox(height: 10),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  crossAxisAlignment: CrossAxisAlignment.end,
-                  children: [
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text('UPCOMING SALAH', style: TextStyle(color: Color(0xFF8E9E99), fontSize: 9, fontWeight: FontWeight.bold)),
-                        Text(nextP, style: const TextStyle(color: Colors.white, fontSize: 26, fontWeight: FontWeight.bold)),
-                      ],
-                    ),
-                    Text(nextTime, style: const TextStyle(color: Color(0xFFF59E0B), fontSize: 24, fontFamily: 'serif', fontWeight: FontWeight.bold)),
-                  ],
-                ),
-                const SizedBox(height: 12),
-                Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.all(10),
-                  decoration: BoxDecoration(color: const Color(0xFF15221E), borderRadius: BorderRadius.circular(16), border: Border.all(color: const Color(0xFF2DD4BF))),
-                  child: Text(stripText, textAlign: TextAlign.center, style: const TextStyle(color: Colors.white, fontSize: 10.5, fontWeight: FontWeight.bold)),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 24),
-
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text('📖 2. Noor Live Verse Widget (Exact Phone Preview)', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: kMuted)),
-              GestureDetector(
-                onTap: () async {
-                  await fetchLiveDailyAyahAndDua(forceRandom: true);
-                  if (mounted) setState(() {});
-                },
-                child: Text('Load New API Verse ↻', style: TextStyle(fontSize: 11.5, color: kPrimary, fontWeight: FontWeight.bold)),
-              ),
-            ],
-          ),
-          const SizedBox(height: 10),
-          Container(
-            padding: const EdgeInsets.all(18),
-            decoration: BoxDecoration(
-              gradient: const LinearGradient(colors: [Color(0xFF24170D), Color(0xFF0E1A16), Color(0xFF080C0B)]),
-              borderRadius: BorderRadius.circular(26),
-              border: Border.all(color: const Color(0xFFF59E0B), width: 1.8),
-            ),
-            child: Column(
-              children: [
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
-                  decoration: BoxDecoration(color: const Color(0xFF15221E), borderRadius: BorderRadius.circular(14), border: Border.all(color: const Color(0xFF2DD4BF))),
-                  child: Text('✨ $liveAyahRef', style: const TextStyle(color: Color(0xFFF59E0B), fontSize: 10, fontWeight: FontWeight.bold)),
-                ),
-                const SizedBox(height: 10),
-                Text(liveAyahArab, textAlign: TextAlign.center, style: const TextStyle(color: Colors.white, fontSize: 22, fontWeight: FontWeight.bold)),
-                const SizedBox(height: 10),
-                Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.all(9),
-                  decoration: BoxDecoration(color: const Color(0xFF15221E), borderRadius: BorderRadius.circular(16), border: Border.all(color: const Color(0xFF2DD4BF))),
-                  child: Text(liveAyahTrans, textAlign: TextAlign.center, style: const TextStyle(color: Color(0xFF2DD4BF), fontSize: 12, fontFamily: 'serif', fontStyle: FontStyle.italic)),
-                ),
-              ],
-            ),
+              );
+            },
           ),
           const SizedBox(height: 22),
-
+          Text('2. LIVE STREAMING AYAH WIDGET', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w900, color: kPrimary)),
+          const SizedBox(height: 10),
+          Container(
+            padding: const EdgeInsets.all(18),
+            decoration: BoxDecoration(
+              gradient: const LinearGradient(colors: [Color(0xFF0F2922), Color(0xFF091512), Color(0xFF050807)]),
+              borderRadius: BorderRadius.circular(26),
+              border: Border.all(color: const Color(0xFF2DD4BF), width: 1.8),
+            ),
+            child: Column(
+              children: [
+                Text('✨ $liveAyahRef', style: const TextStyle(color: Color(0xFFF59E0B), fontSize: 10, fontWeight: FontWeight.bold)),
+                const SizedBox(height: 10),
+                Text(liveAyahArab, textAlign: TextAlign.center, style: const TextStyle(color: Colors.white, fontSize: 21, fontWeight: FontWeight.bold)),
+                const SizedBox(height: 8),
+                Text(liveAyahTrans, textAlign: TextAlign.center, style: const TextStyle(color: Color(0xFF2DD4BF), fontSize: 12, fontFamily: 'serif')),
+              ],
+            ),
+          ),
+          const SizedBox(height: 20),
           ElevatedButton.icon(
-            style: ElevatedButton.styleFrom(backgroundColor: kPrimary, padding: const EdgeInsets.symmetric(vertical: 15), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18))),
-            onPressed: _syncAndBroadcast,
-            icon: const Icon(Icons.sync_rounded, color: Colors.black),
-            label: const Text('INSTANT SYNC TO PHONE HOME SCREEN', style: TextStyle(color: Colors.black, fontWeight: FontWeight.w900, fontSize: 12.5)),
+            style: ElevatedButton.styleFrom(backgroundColor: kSecondary, padding: const EdgeInsets.symmetric(vertical: 14)),
+            onPressed: () async {
+              final p = await SharedPreferences.getInstance();
+              await p.setString('wp_user', 'SALAH RADAR • ${globalUserName.toUpperCase()}');
+              await p.setInt('wp_rem_sec', remSec);
+              await triggerNativeWidgetBroadcast();
+              if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(backgroundColor: kSecondary, content: const Text('⚡ Live Countdown Widget Synced to Phone!', style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold))));
+            },
+            icon: const Icon(Icons.bolt_rounded, color: Colors.black),
+            label: const Text('SYNC LIVE WIDGETS TO PHONE', style: TextStyle(color: Colors.black, fontWeight: FontWeight.w900)),
           ),
         ],
       ),
@@ -1063,11 +731,7 @@ class _UniqueWidgetStudioScreenState extends State<UniqueWidgetStudioScreen> {
 
 
 
-
-
-
-
-// ---------------- 3. UNIQUE STREAK, BADGES & CONSISTENCY TAB ----------------
+// ---------------- 3. STREAK TAB & 4. KITAB TAB (TOP HADITH SEARCH!) ----------------
 class UniqueStreakScreen extends StatefulWidget {
   const UniqueStreakScreen({super.key});
   @override
@@ -1077,188 +741,66 @@ class UniqueStreakScreen extends StatefulWidget {
 class _UniqueStreakScreenState extends State<UniqueStreakScreen> {
   SharedPreferences? prefs;
   final prayers = ['Fajr', 'Dhuhr', 'Asr', 'Maghrib', 'Isha'];
-
   @override
-  void initState() {
-    super.initState();
-    SharedPreferences.getInstance().then((p) => setState(() => prefs = p));
-  }
-
+  void initState() { super.initState(); SharedPreferences.getInstance().then((p) => setState(() => prefs = p)); }
   int _st(DateTime d, String p) => prefs?.getInt('st_${getDateKey(d)}_$p') ?? 0;
 
   @override
   Widget build(BuildContext context) {
     final now = DateTime.now();
     int daysInM = DateUtils.getDaysInMonth(now.year, now.month);
-    int mAda = 0, mJamaat = 0, perfectDays = 0;
-    Map<String, int> pCounts = {'Fajr': 0, 'Dhuhr': 0, 'Asr': 0, 'Maghrib': 0, 'Isha': 0};
-
+    int mAda = 0, mJamaat = 0;
     for (int i = 1; i <= daysInM; i++) {
       final dt = DateTime(now.year, now.month, i);
-      int dayC = 0;
       for (var p in prayers) {
         int s = _st(dt, p);
-        if (s > 0 && s < 4) {
-          mAda++;
-          dayC++;
-          pCounts[p] = (pCounts[p] ?? 0) + 1;
-        }
+        if (s > 0 && s < 4) mAda++;
         if (s == 1) mJamaat++;
       }
-      if (dayC == 5) perfectDays++;
     }
-
-    int activeStreak = 0;
-    for (int i = 0; i < 30; i++) {
-      final dt = now.subtract(Duration(days: i));
-      int c = prayers.where((p) { int s = _st(dt, p); return s > 0 && s < 4; }).length;
-      if (c > 0) activeStreak++;
-      else if (i > 0) break;
-    }
-
-    int passedDays = math.max(1, now.day);
-
     return SafeArea(
       child: ListView(
         padding: const EdgeInsets.fromLTRB(18, 14, 18, 100),
         children: [
-          Text('🔥 SPIRITUAL STREAK & MILESTONES', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w900, color: kPrimary, letterSpacing: 1.4)),
-          const SizedBox(height: 4),
-          Text('Your Daily Salah Journey', style: TextStyle(fontSize: 22, fontFamily: 'serif', fontWeight: FontWeight.bold, color: kText)),
-          const SizedBox(height: 16),
-
+          Text('🔥 SPIRITUAL STREAK & BADGES', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w900, color: kPrimary)),
+          const SizedBox(height: 12),
           Container(
-            padding: const EdgeInsets.all(22),
-            decoration: BoxDecoration(
-              gradient: LinearGradient(colors: [kPrimary.withOpacity(0.25), kCard]),
-              borderRadius: BorderRadius.circular(26),
-              border: Border.all(color: kPrimary.withOpacity(0.5), width: 1.5),
-            ),
-            child: Row(
-              children: [
-                Container(
-                  width: 78,
-                  height: 78,
-                  decoration: BoxDecoration(color: kPrimary.withOpacity(0.2), shape: BoxShape.circle, border: Border.all(color: kPrimary, width: 2.5)),
-                  child: Center(child: Text('🔥 $activeStreak', style: TextStyle(fontSize: 24, fontWeight: FontWeight.w900, color: kText))),
-                ),
-                const SizedBox(width: 18),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text('$activeStreak DAY ACTIVE STREAK', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w900, color: kPrimary)),
-                      const SizedBox(height: 4),
-                      Text('$mAda Prayers Offered • $mJamaat in Jamaat • $perfectDays Perfect 5/5 Days', style: TextStyle(fontSize: 12, color: kMuted, height: 1.4)),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 18),
-
-          Text('🏆 SPIRITUAL ACHIEVEMENT BADGES', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w900, color: kMuted)),
-          const SizedBox(height: 10),
-          Row(
-            children: [
-              _badgeCard('🌅 Fajr Warrior', (pCounts['Fajr'] ?? 0) >= 3, '3+ Fajr on time'),
-              const SizedBox(width: 8),
-              _badgeCard('🕌 Jamaat Star', mJamaat >= 5, '5+ in Jamaat'),
-              const SizedBox(width: 8),
-              _badgeCard('👑 5/5 Master', perfectDays >= 1, 'Full 5/5 Day'),
-            ],
-          ),
-          const SizedBox(height: 18),
-
-          Container(
-            padding: const EdgeInsets.all(18),
-            decoration: BoxDecoration(color: kCard, borderRadius: BorderRadius.circular(22), border: Border.all(color: kBorder)),
+            padding: const EdgeInsets.all(20),
+            decoration: BoxDecoration(color: kCard, borderRadius: BorderRadius.circular(24), border: Border.all(color: kPrimary.withOpacity(0.5))),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('📊 PRAYER-BY-PRAYER STRENGTH', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w900, color: kPrimary)),
-                const SizedBox(height: 12),
-                ...prayers.map((p) {
-                  int c = pCounts[p] ?? 0;
-                  double ratio = (c / passedDays).clamp(0.0, 1.0);
-                  return Padding(
-                    padding: const EdgeInsets.only(bottom: 10),
-                    child: Column(
-                      children: [
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Text(p, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: kText)),
-                            Text('${(ratio * 100).toInt()}% ($c/$passedDays days)', style: TextStyle(fontSize: 11.5, color: kSecondary, fontWeight: FontWeight.bold)),
-                          ],
-                        ),
-                        const SizedBox(height: 5),
-                        ClipRRect(
-                          borderRadius: BorderRadius.circular(6),
-                          child: LinearProgressIndicator(value: ratio, minHeight: 7, backgroundColor: kBg, valueColor: AlwaysStoppedAnimation<Color>(kSecondary)),
-                        ),
-                      ],
-                    ),
-                  );
-                }).toList(),
+                Text('$mAda Prayers Offered This Month', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w900, color: kText)),
+                const SizedBox(height: 4),
+                Text('🟢 $mJamaat Offered in Congregation (Jamaat)', style: TextStyle(fontSize: 13, color: kSecondary, fontWeight: FontWeight.bold)),
               ],
             ),
           ),
-          const SizedBox(height: 18),
-
+          const SizedBox(height: 16),
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(color: kCard, borderRadius: BorderRadius.circular(22), border: Border.all(color: kBorder)),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text('🗓️ MONTHLY STREAK HEATMAP', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w900, color: kMuted)),
-                const SizedBox(height: 12),
-                GridView.builder(
-                  shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
-                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: 7, crossAxisSpacing: 6, mainAxisSpacing: 6),
-                  itemCount: daysInM,
-                  itemBuilder: (_, i) {
-                    final dt = DateTime(now.year, now.month, i + 1);
-                    int count = prayers.where((p) { int s = _st(dt, p); return s > 0 && s < 4; }).length;
-                    return Container(
-                      decoration: BoxDecoration(
-                        color: count == 5 ? kSecondary.withOpacity(0.35) : (count > 0 ? kCardAlt : kBg),
-                        borderRadius: BorderRadius.circular(8),
-                        border: Border.all(color: count == 5 ? kSecondary : kBorder),
-                      ),
-                      child: Center(child: Text('${i + 1}', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: kText))),
-                    );
-                  },
-                ),
-              ],
+            child: GridView.builder(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: 7, crossAxisSpacing: 6, mainAxisSpacing: 6),
+              itemCount: daysInM,
+              itemBuilder: (_, i) {
+                final dt = DateTime(now.year, now.month, i + 1);
+                int c = prayers.where((p) { int s = _st(dt, p); return s > 0 && s < 4; }).length;
+                return Container(
+                  decoration: BoxDecoration(color: c == 5 ? kSecondary.withOpacity(0.35) : (c > 0 ? kCardAlt : kBg), borderRadius: BorderRadius.circular(8), border: Border.all(color: c == 5 ? kSecondary : kBorder)),
+                  child: Center(child: Text('${i + 1}', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: kText))),
+                );
+              },
             ),
           ),
         ],
       ),
     );
   }
-
-  Widget _badgeCard(String title, bool unlocked, String sub) {
-    return Expanded(
-      child: Container(
-        padding: const EdgeInsets.all(12),
-        decoration: BoxDecoration(color: unlocked ? kPrimary.withOpacity(0.18) : kCard, borderRadius: BorderRadius.circular(18), border: Border.all(color: unlocked ? kPrimary : kBorder)),
-        child: Column(
-          children: [
-            Text(title, textAlign: TextAlign.center, style: TextStyle(fontWeight: FontWeight.w900, fontSize: 11.5, color: unlocked ? kPrimary : kMuted)),
-            const SizedBox(height: 4),
-            Text(unlocked ? 'UNLOCKED ✓' : sub, style: TextStyle(fontSize: 9.5, color: unlocked ? kSecondary : kMuted, fontWeight: FontWeight.bold)),
-          ],
-        ),
-      ),
-    );
-  }
 }
 
-// ---------------- 4. QURAN & 10-BOOK HADITH VAULT ----------------
 class KitabScreen extends StatefulWidget {
   final int initTab;
   const KitabScreen({super.key, this.initTab = 0});
@@ -1270,7 +812,8 @@ class _KitabScreenState extends State<KitabScreen> {
   late int tab;
   List surahs = [];
   bool loadingQuran = true;
-  String qSearch = '';
+  String qSearch = '', globalHadithQuery = '';
+  List<Map<String, String>> globalHadithPool = [];
 
   final List<Map<String, dynamic>> hadithBooks = const [
     {'id': 'bukhari', 'title': 'Sahih\nal-Bukhari', 'count': '7589', 'sec': 97, 'col': Color(0xFF818CF8), 'ic': Icons.book_rounded},
@@ -1285,18 +828,83 @@ class _KitabScreenState extends State<KitabScreen> {
     {'id': 'dehlawi', 'title': 'Shah Waliullah\n40 Hadith', 'count': '40', 'sec': 1, 'col': Color(0xFF10B981), 'ic': Icons.history_edu_rounded},
   ];
 
+  final List<Map<String, String>> masterHadithIndex = [
+    {'book': 'Sahih al-Bukhari', 'num': '1', 'ar': 'إِنَّمَا الأَعْمَالُ بِالنِّيَّاتِ', 'en': 'Actions are judged only by intentions, and every person will have only what they intended.'},
+    {'book': 'Sahih al-Bukhari', 'num': '5027', 'ar': 'خَيْرُكُمْ مَنْ تَعَلَّمَ الْقُرْآنَ وَعَلَّمَهُ', 'en': 'The best among you (Muslims) are those who learn the Glorious Qur\'an and teach it to others.'},
+    {'book': 'Sahih Muslim', 'num': '223', 'ar': 'الطُّهُورُ شَطْرُ الإِيمَانِ', 'en': 'Cleanliness (Wudu/Purity) is half of faith (Iman), and saying Alhamdulillah fills the scale of good deeds, and Prayer (Salah) is a light (Noor), and Charity (Sadaqah) is a proof.'},
+    {'book': 'Sahih Muslim', 'num': '2564', 'ar': 'إِنَّ اللَّهَ لاَ يَنْظُرُ إِلَى صُوَرِكُمْ', 'en': 'Verily, Allah does not look at your appearances or your wealth, rather He looks at your hearts and your deeds.'},
+    {'book': 'Jami\' at-Tirmidhi', 'num': '1956', 'ar': 'تَبَسُّمُكَ فِي وَجْهِ أَخِيكَ لَكَ صَدَقَةٌ', 'en': 'Your smiling in the face of your brother is a charity (Sadaqah) for you.'},
+    {'book': 'Sunan an-Nasa\'i', 'num': '3104', 'ar': 'الْجَنَّةُ تَحْتَ أَقْدَامِ الأُمَّهَاتِ', 'en': 'Stay with your mother, for indeed Paradise (Jannah) lies beneath her feet.'},
+  ];
+
   @override
   void initState() {
     super.initState();
     tab = widget.initTab;
+    globalHadithPool = List.from(masterHadithIndex);
     http.get(Uri.parse('https://api.alquran.cloud/v1/surah')).then((r) {
       if (r.statusCode == 200 && mounted) setState(() { surahs = json.decode(r.body)['data']; loadingQuran = false; });
     });
+    _preloadHadiths();
+  }
+
+  Future<void> _preloadHadiths() async {
+    try {
+      for (var u in [
+        {'b': 'An-Nawawi 40', 'url': 'https://cdn.jsdelivr.net/gh/fawazahmed0/hadith-api@1/editions/eng-nawawi.json'},
+        {'b': 'Sahih Bukhari', 'url': 'https://cdn.jsdelivr.net/gh/fawazahmed0/hadith-api@1/editions/eng-bukhari/sections/1.json'},
+        {'b': 'Sahih Muslim', 'url': 'https://cdn.jsdelivr.net/gh/fawazahmed0/hadith-api@1/editions/eng-muslim/sections/1.json'},
+      ]) {
+        final r = await http.get(Uri.parse(u['url']!));
+        if (r.statusCode == 200) {
+          for (var h in (json.decode(r.body)['hadiths'] ?? [])) {
+            final t = h['text']?.toString() ?? '';
+            if (t.isNotEmpty) globalHadithPool.add({'book': u['b']!, 'num': h['hadithnumber']?.toString() ?? '', 'ar': '', 'en': t});
+          }
+        }
+      }
+    } catch (_) {}
+  }
+
+  void _openFullHadithModal(Map<String, String> h) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: kCard,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(28))),
+      builder: (ctx) => Padding(
+        padding: const EdgeInsets.all(22),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text('📜 ${h['book']} • Hadith #${h['num']}', style: TextStyle(color: kPrimary, fontWeight: FontWeight.w900, fontSize: 13)),
+                IconButton(icon: Icon(Icons.copy_rounded, color: kSecondary), onPressed: () { Clipboard.setData(ClipboardData(text: '${h['ar']}\n\n${h['en']}')); Navigator.pop(ctx); }),
+              ],
+            ),
+            const SizedBox(height: 12),
+            if ((h['ar'] ?? '').isNotEmpty) ...[
+              Text(h['ar']!, textAlign: TextAlign.right, style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: kText)),
+              Divider(color: kBorder, height: 22),
+            ],
+            Text(h['en']!, style: TextStyle(fontSize: 15, fontFamily: 'serif', color: kText, height: 1.55)),
+            const SizedBox(height: 16),
+          ],
+        ),
+      ),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     final fS = surahs.where((s) => s['englishName'].toString().toLowerCase().contains(qSearch.toLowerCase()) || s['number'].toString().contains(qSearch)).toList();
+    final bool isSearchingH = globalHadithQuery.trim().isNotEmpty;
+    final hResults = isSearchingH
+        ? globalHadithPool.where((h) => h['en']!.toLowerCase().contains(globalHadithQuery.toLowerCase()) || h['book']!.toLowerCase().contains(globalHadithQuery.toLowerCase()) || h['num']!.contains(globalHadithQuery)).toList()
+        : <Map<String, String>>[];
 
     return SafeArea(
       child: Padding(
@@ -1308,105 +916,108 @@ class _KitabScreenState extends State<KitabScreen> {
               decoration: BoxDecoration(color: kCard, borderRadius: BorderRadius.circular(16), border: Border.all(color: kBorder)),
               child: Row(children: [_segBtn('📖 AL-QURAN (114)', 0), _segBtn('📚 10 HADITH BOOKS', 1)]),
             ),
-            const SizedBox(height: 14),
-            Expanded(child: tab == 0 ? _buildQuranView(fS) : _buildHadithBooksGrid()),
+            const SizedBox(height: 12),
+            Expanded(
+              child: tab == 0
+                  ? Column(
+                      children: [
+                        TextField(onChanged: (v) => setState(() => qSearch = v), decoration: InputDecoration(hintText: 'Search Surah...', prefixIcon: Icon(Icons.search, color: kPrimary), filled: true, fillColor: kCard, border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)))),
+                        const SizedBox(height: 10),
+                        Expanded(
+                          child: loadingQuran
+                              ? Center(child: CircularProgressIndicator(color: kPrimary))
+                              : ListView.builder(
+                                  itemCount: fS.length,
+                                  itemBuilder: (_, i) => ListTile(
+                                    title: Text(fS[i]['englishName'], style: TextStyle(fontWeight: FontWeight.bold, color: kText)),
+                                    trailing: Text(fS[i]['name'], style: TextStyle(fontSize: 18, color: kPrimary)),
+                                    onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => SurahReaderPage(num: fS[i]['number'], name: fS[i]['englishName']))),
+                                  ),
+                                ),
+                        ),
+                      ],
+                    )
+                  : Column(
+                      children: [
+                        // SEARCH BAR DIRECTLY ABOVE HADITH BOOKS!
+                        TextField(
+                          onChanged: (v) => setState(() => globalHadithQuery = v),
+                          decoration: InputDecoration(
+                            hintText: '🔍 Search Hadith topic, word or # (e.g. prayer, charity, mother)...',
+                            prefixIcon: Icon(Icons.search_rounded, color: kPrimary),
+                            suffixIcon: isSearchingH ? IconButton(icon: Icon(Icons.clear, color: kMuted), onPressed: () => setState(() => globalHadithQuery = '')) : null,
+                            filled: true,
+                            fillColor: kCard,
+                            border: OutlineInputBorder(borderRadius: BorderRadius.circular(16)),
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        Expanded(
+                          child: isSearchingH
+                              ? ListView.builder(
+                                  itemCount: hResults.length,
+                                  itemBuilder: (_, i) {
+                                    final h = hResults[i];
+                                    return GestureDetector(
+                                      onTap: () => _openFullHadithModal(h),
+                                      child: Container(
+                                        margin: const EdgeInsets.only(bottom: 10),
+                                        padding: const EdgeInsets.all(14),
+                                        decoration: BoxDecoration(color: kCard, borderRadius: BorderRadius.circular(16), border: Border.all(color: kPrimary.withOpacity(0.4))),
+                                        child: Column(
+                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                          children: [
+                                            Row(
+                                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                              children: [
+                                                Text('📜 ${h['book']} • #${h['num']}', style: TextStyle(color: kPrimary, fontWeight: FontWeight.bold, fontSize: 11.5)),
+                                                Text('Tap for full →', style: TextStyle(color: kSecondary, fontSize: 10.5, fontWeight: FontWeight.bold)),
+                                              ],
+                                            ),
+                                            const SizedBox(height: 6),
+                                            Text(h['en']!, maxLines: 2, overflow: TextOverflow.ellipsis, style: TextStyle(fontSize: 13, color: kText)),
+                                          ],
+                                        ),
+                                      ),
+                                    );
+                                  },
+                                )
+                              : GridView.builder(
+                                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: 2, crossAxisSpacing: 12, mainAxisSpacing: 12, childAspectRatio: 1.1),
+                                  itemCount: hadithBooks.length,
+                                  itemBuilder: (ctx, i) {
+                                    final b = hadithBooks[i];
+                                    final Color c = b['col'] as Color;
+                                    return GestureDetector(
+                                      onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => HadithBookReaderPage(bookId: b['id'] as String, bookTitle: b['title'].toString().replaceAll('\n', ' '), maxSections: b['sec'] as int, accentColor: c))),
+                                      child: Container(
+                                        padding: const EdgeInsets.all(16),
+                                        decoration: BoxDecoration(color: kCard, borderRadius: BorderRadius.circular(22), border: Border.all(color: c.withOpacity(0.35))),
+                                        child: Column(
+                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                          children: [
+                                            Row(
+                                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                              children: [
+                                                Icon(b['ic'] as IconData, color: c, size: 26),
+                                                Text(b['count'] as String, style: TextStyle(color: c, fontWeight: FontWeight.w900, fontSize: 12)),
+                                              ],
+                                            ),
+                                            const Spacer(),
+                                            Text(b['title'] as String, style: TextStyle(fontSize: 14, fontWeight: FontWeight.w800, color: kText)),
+                                          ],
+                                        ),
+                                      ),
+                                    );
+                                  },
+                                ),
+                        ),
+                      ],
+                    ),
+            ),
           ],
         ),
       ),
-    );
-  }
-
-  Widget _buildQuranView(List fS) {
-    return Column(
-      children: [
-        TextField(
-          onChanged: (v) => setState(() => qSearch = v),
-          decoration: InputDecoration(
-            hintText: 'Search Surah name or number...',
-            prefixIcon: Icon(Icons.search, size: 18, color: kPrimary),
-            filled: true,
-            fillColor: kCard,
-            contentPadding: const EdgeInsets.symmetric(vertical: 10),
-            border: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: BorderSide(color: kBorder)),
-          ),
-        ),
-        const SizedBox(height: 12),
-        Expanded(
-          child: loadingQuran
-              ? Center(child: CircularProgressIndicator(color: kPrimary))
-              : ListView.builder(
-                  itemCount: fS.length,
-                  itemBuilder: (_, i) {
-                    final s = fS[i];
-                    return Container(
-                      margin: const EdgeInsets.only(bottom: 8),
-                      decoration: BoxDecoration(color: kCard, borderRadius: BorderRadius.circular(16), border: Border.all(color: kBorder)),
-                      child: ListTile(
-                        leading: Text('${s['number']}', style: TextStyle(fontFamily: 'serif', color: kPrimary, fontWeight: FontWeight.bold)),
-                        title: Text(s['englishName'], style: TextStyle(fontWeight: FontWeight.w700, color: kText)),
-                        subtitle: Text('${s['englishNameTranslation']} • ${s['numberOfAyahs']} Verses', style: TextStyle(fontSize: 11, color: kMuted)),
-                        trailing: Text(s['name'], style: TextStyle(fontSize: 18, color: kPrimary)),
-                        onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => SurahReaderPage(num: s['number'], name: s['englishName']))),
-                      ),
-                    );
-                  },
-                ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildHadithBooksGrid() {
-    return GridView.builder(
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: 2, crossAxisSpacing: 12, mainAxisSpacing: 12, childAspectRatio: 1.08),
-      itemCount: hadithBooks.length,
-      itemBuilder: (ctx, i) {
-        final b = hadithBooks[i];
-        final Color c = b['col'] as Color;
-        return GestureDetector(
-          onTap: () => Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (_) => HadithBookReaderPage(
-                bookId: b['id'] as String,
-                bookTitle: b['title'].toString().replaceAll('\n', ' '),
-                maxSections: b['sec'] as int,
-                accentColor: c,
-              ),
-            ),
-          ),
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(22),
-            child: Container(
-              decoration: BoxDecoration(color: kCard, borderRadius: BorderRadius.circular(22), border: Border.all(color: c.withOpacity(0.3), width: 1.2)),
-              child: Stack(
-                children: [
-                  Positioned(top: -22, right: -22, child: Container(width: 90, height: 90, decoration: BoxDecoration(color: c.withOpacity(0.08), shape: BoxShape.circle))),
-                  Padding(
-                    padding: const EdgeInsets.all(16),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Container(width: 44, height: 44, decoration: BoxDecoration(color: c.withOpacity(0.16), borderRadius: BorderRadius.circular(14)), child: Icon(b['ic'] as IconData, color: c, size: 24)),
-                            Container(padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4), decoration: BoxDecoration(color: c.withOpacity(0.15), borderRadius: BorderRadius.circular(12)), child: Text(b['count'] as String, style: TextStyle(color: c, fontWeight: FontWeight.w900, fontSize: 12))),
-                          ],
-                        ),
-                        const Spacer(),
-                        Text(b['title'] as String, style: TextStyle(fontSize: 14.5, fontWeight: FontWeight.w800, color: kText, height: 1.2)),
-                        const SizedBox(height: 8),
-                        Container(width: 32, height: 3.5, decoration: BoxDecoration(color: c, borderRadius: BorderRadius.circular(4))),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        );
-      },
     );
   }
 
@@ -1425,9 +1036,17 @@ class _KitabScreenState extends State<KitabScreen> {
   }
 }
 
+
+
+
+
+
+
+
+
+// ---------------- READERS, SETTINGS (WITH WIDGET ABOVE LANGUAGE!) & ADMIN PANEL ----------------
 class HadithBookReaderPage extends StatefulWidget {
-  final String bookId;
-  final String bookTitle;
+  final String bookId, bookTitle;
   final int maxSections;
   final Color accentColor;
   const HadithBookReaderPage({super.key, required this.bookId, required this.bookTitle, required this.maxSections, required this.accentColor});
@@ -1437,11 +1056,8 @@ class HadithBookReaderPage extends StatefulWidget {
 
 class _HadithBookReaderPageState extends State<HadithBookReaderPage> {
   int section = 1;
-  String hLang = 'eng';
-  List chapterHadiths = [], arabHadiths = [];
-  List? fullBookCache;
-  bool loading = true, loadingGlobalSearch = false;
-  String search = '';
+  List chapterHadiths = [];
+  bool loading = true;
 
   @override
   void initState() { super.initState(); _loadChapter(); }
@@ -1449,106 +1065,75 @@ class _HadithBookReaderPageState extends State<HadithBookReaderPage> {
   Future<void> _loadChapter() async {
     setState(() => loading = true);
     try {
-      bool single = widget.maxSections == 1;
-      String tUrl = single ? 'https://cdn.jsdelivr.net/gh/fawazahmed0/hadith-api@1/editions/$hLang-${widget.bookId}.json' : 'https://cdn.jsdelivr.net/gh/fawazahmed0/hadith-api@1/editions/$hLang-${widget.bookId}/sections/$section.json';
-      String aUrl = single ? 'https://cdn.jsdelivr.net/gh/fawazahmed0/hadith-api@1/editions/ara-${widget.bookId}.json' : 'https://cdn.jsdelivr.net/gh/fawazahmed0/hadith-api@1/editions/ara-${widget.bookId}/sections/$section.json';
-      final res = await Future.wait([http.get(Uri.parse(tUrl)), http.get(Uri.parse(aUrl))]);
-      if (res[0].statusCode == 200 && mounted) {
-        final td = json.decode(res[0].body);
-        final ad = res[1].statusCode == 200 ? json.decode(res[1].body) : null;
-        setState(() { chapterHadiths = td['hadiths'] ?? []; arabHadiths = ad != null ? (ad['hadiths'] ?? []) : []; loading = false; });
-      } else if (mounted) {
-        if (hLang == 'urd') { hLang = 'eng'; _loadChapter(); return; }
-        setState(() => loading = false);
-      }
+      String u = widget.maxSections == 1
+          ? 'https://cdn.jsdelivr.net/gh/fawazahmed0/hadith-api@1/editions/eng-${widget.bookId}.json'
+          : 'https://cdn.jsdelivr.net/gh/fawazahmed0/hadith-api@1/editions/eng-${widget.bookId}/sections/$section.json';
+      final r = await http.get(Uri.parse(u));
+      if (r.statusCode == 200 && mounted) setState(() { chapterHadiths = json.decode(r.body)['hadiths'] ?? []; loading = false; });
     } catch (_) { if (mounted) setState(() => loading = false); }
   }
 
-  Future<void> _ensureFullBookLoadedForSearch() async {
-    if (fullBookCache != null || loadingGlobalSearch) return;
-    setState(() => loadingGlobalSearch = true);
-    try {
-      final url = 'https://cdn.jsdelivr.net/gh/fawazahmed0/hadith-api@1/editions/$hLang-${widget.bookId}.min.json';
-      final r = await http.get(Uri.parse(url));
-      if (r.statusCode == 200 && mounted) {
-        final d = json.decode(r.body);
-        setState(() { fullBookCache = d['hadiths'] ?? []; loadingGlobalSearch = false; });
-      } else if (mounted) { setState(() => loadingGlobalSearch = false); }
-    } catch (_) { if (mounted) setState(() => loadingGlobalSearch = false); }
+  void _showFull(String num, String txt) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: kCard,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
+      builder: (_) => Padding(
+        padding: const EdgeInsets.all(22),
+        child: SingleChildScrollView(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('${widget.bookTitle} • Hadith #$num', style: TextStyle(color: widget.accentColor, fontWeight: FontWeight.bold)),
+              const SizedBox(height: 12),
+              Text(txt, style: TextStyle(fontSize: 15, fontFamily: 'serif', color: kText, height: 1.5)),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
-    final bool isSearchingGlobally = search.trim().isNotEmpty;
-    final List sourceList = (isSearchingGlobally && fullBookCache != null) ? fullBookCache! : chapterHadiths;
-    final filtered = sourceList.where((h) => (h['text']?.toString().toLowerCase() ?? '').contains(search.toLowerCase()) || (h['hadithnumber']?.toString() ?? '').contains(search)).take(150).toList();
-
     return Scaffold(
-      appBar: AppBar(
-        title: Text(widget.bookTitle, style: const TextStyle(fontFamily: 'serif', fontSize: 17)),
-        backgroundColor: kBg,
-        actions: [
-          TextButton(
-            onPressed: () { setState(() { hLang = hLang == 'eng' ? 'urd' : 'eng'; fullBookCache = null; }); _loadChapter(); },
-            child: Text(hLang == 'eng' ? 'اردو' : 'EN', style: TextStyle(color: kPrimary, fontWeight: FontWeight.bold)),
-          ),
-        ],
-      ),
+      appBar: AppBar(title: Text(widget.bookTitle), backgroundColor: kBg),
       body: Column(
         children: [
-          if (widget.maxSections > 1 && !isSearchingGlobally)
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
-              color: kCard,
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  IconButton(icon: Icon(Icons.chevron_left, color: kPrimary), onPressed: section > 1 ? () { setState(() => section--); _loadChapter(); } : null),
-                  Text('Chapter $section / ${widget.maxSections}', style: TextStyle(fontWeight: FontWeight.bold, color: kPrimary)),
-                  IconButton(icon: Icon(Icons.chevron_right, color: kPrimary), onPressed: section < widget.maxSections ? () { setState(() => section++); _loadChapter(); } : null),
-                ],
-              ),
+          if (widget.maxSections > 1)
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                IconButton(icon: Icon(Icons.chevron_left, color: kPrimary), onPressed: section > 1 ? () { setState(() => section--); _loadChapter(); } : null),
+                Text('Chapter $section / ${widget.maxSections}', style: TextStyle(color: kPrimary, fontWeight: FontWeight.bold)),
+                IconButton(icon: Icon(Icons.chevron_right, color: kPrimary), onPressed: section < widget.maxSections ? () { setState(() => section++); _loadChapter(); } : null),
+              ],
             ),
-          Padding(
-            padding: const EdgeInsets.all(12),
-            child: TextField(
-              onChanged: (v) { setState(() => search = v); if (v.trim().isNotEmpty) _ensureFullBookLoadedForSearch(); },
-              decoration: InputDecoration(
-                hintText: '🔍 Search across ALL ${widget.maxSections} Chapters...',
-                prefixIcon: Icon(Icons.search, size: 18, color: widget.accentColor),
-                suffixIcon: loadingGlobalSearch ? const Padding(padding: EdgeInsets.all(12), child: SizedBox(width: 14, height: 14, child: CircularProgressIndicator(strokeWidth: 2))) : null,
-                filled: true,
-                fillColor: kCard,
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
-              ),
-            ),
-          ),
           Expanded(
             child: loading
                 ? Center(child: CircularProgressIndicator(color: widget.accentColor))
                 : ListView.builder(
-                    padding: const EdgeInsets.symmetric(horizontal: 14),
-                    itemCount: filtered.length,
+                    padding: const EdgeInsets.all(14),
+                    itemCount: chapterHadiths.length,
                     itemBuilder: (_, i) {
-                      final h = filtered[i];
-                      final String txt = h['text']?.toString() ?? '';
+                      final h = chapterHadiths[i];
+                      final txt = h['text']?.toString() ?? '';
                       if (txt.isEmpty) return const SizedBox.shrink();
-                      String arab = (!isSearchingGlobally && i < arabHadiths.length) ? (arabHadiths[i]['text']?.toString() ?? '') : '';
-                      return Container(
-                        margin: const EdgeInsets.only(bottom: 12),
-                        padding: const EdgeInsets.all(16),
-                        decoration: BoxDecoration(color: kCard, borderRadius: BorderRadius.circular(18), border: Border.all(color: kBorder)),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.stretch,
-                          children: [
-                            Text('${widget.bookTitle} • Hadith #${h['hadithnumber']}', style: TextStyle(color: widget.accentColor, fontWeight: FontWeight.w800, fontSize: 11)),
-                            if (arab.isNotEmpty) ...[
-                              const SizedBox(height: 10),
-                              Text(arab, textAlign: TextAlign.right, style: TextStyle(fontSize: 21, fontWeight: FontWeight.bold, height: 1.6, color: kText)),
-                              Divider(color: kBorder, height: 20),
-                            ] else const SizedBox(height: 8),
-                            Text(txt, style: TextStyle(fontSize: 14, fontFamily: 'serif', color: kText.withOpacity(0.85), height: 1.5)),
-                          ],
+                      final num = h['hadithnumber']?.toString() ?? '';
+                      return GestureDetector(
+                        onTap: () => _showFull(num, txt),
+                        child: Container(
+                          margin: const EdgeInsets.only(bottom: 10),
+                          padding: const EdgeInsets.all(14),
+                          decoration: BoxDecoration(color: kCard, borderRadius: BorderRadius.circular(16), border: Border.all(color: kBorder)),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [Text('Hadith #$num', style: TextStyle(color: widget.accentColor, fontWeight: FontWeight.bold, fontSize: 12)), Text('Tap for full →', style: TextStyle(color: kSecondary, fontSize: 10.5))]),
+                              const SizedBox(height: 6),
+                              Text(txt, maxLines: 2, overflow: TextOverflow.ellipsis, style: TextStyle(color: kText, fontSize: 13.5)),
+                            ],
+                          ),
                         ),
                       );
                     },
@@ -1592,7 +1177,7 @@ class _SurahReaderPageState extends State<SurahReaderPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text(widget.name, style: const TextStyle(fontFamily: 'serif')), backgroundColor: kBg),
+      appBar: AppBar(title: Text(widget.name), backgroundColor: kBg),
       body: loading
           ? Center(child: CircularProgressIndicator(color: kPrimary))
           : ListView.builder(
@@ -1608,7 +1193,7 @@ class _SurahReaderPageState extends State<SurahReaderPage> {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Text('VERSE ${ar[i]['numberInSurah']}', style: TextStyle(fontSize: 10, color: kPrimary, fontWeight: FontWeight.w800)),
+                        Text('VERSE ${ar[i]['numberInSurah']}', style: TextStyle(fontSize: 10, color: kPrimary, fontWeight: FontWeight.bold)),
                         IconButton(
                           icon: Icon(playingIdx == i ? Icons.stop_circle_outlined : Icons.play_circle_outline, color: kSecondary),
                           onPressed: () {
@@ -1618,9 +1203,9 @@ class _SurahReaderPageState extends State<SurahReaderPage> {
                         ),
                       ],
                     ),
-                    Text(ar[i]['text'], textAlign: TextAlign.right, style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, height: 1.7, color: kText)),
-                    const SizedBox(height: 10),
-                    Text(tr[i]['text'], style: TextStyle(fontSize: 13.5, fontFamily: 'serif', color: kMuted, height: 1.4)),
+                    Text(ar[i]['text'], textAlign: TextAlign.right, style: TextStyle(fontSize: 23, fontWeight: FontWeight.bold, color: kText)),
+                    const SizedBox(height: 8),
+                    Text(tr[i]['text'], style: TextStyle(fontSize: 13.5, color: kMuted)),
                   ],
                 ),
               ),
@@ -1629,7 +1214,6 @@ class _SurahReaderPageState extends State<SurahReaderPage> {
   }
 }
 
-// ---------------- 5. SETTINGS, DEVELOPER PROFILE & SUPER ADMIN PANEL ----------------
 class SettingsProfileScreen extends StatefulWidget {
   final VoidCallback onRebuild;
   const SettingsProfileScreen({super.key, required this.onRebuild});
@@ -1638,34 +1222,60 @@ class SettingsProfileScreen extends StatefulWidget {
 }
 
 class _SettingsProfileScreenState extends State<SettingsProfileScreen> {
-  final TextEditingController feedbackCtrl = TextEditingController();
+  final feedbackCtrl = TextEditingController();
 
-  void _copySocial(String handle) {
-    Clipboard.setData(ClipboardData(text: handle));
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(backgroundColor: kPrimary, content: Text('Copied $handle!', style: const TextStyle(color: Colors.black, fontWeight: FontWeight.bold))));
-  }
-
-  void _openAdminPinDialog() {
-    final pinCtrl = TextEditingController();
+  void _openUserNameAndWidgets() {
+    final ctrl = TextEditingController(text: globalUserName);
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
         backgroundColor: kCard,
-        title: Text('🔐 Owner Admin Access', style: TextStyle(color: kPrimary, fontWeight: FontWeight.bold)),
-        content: TextField(controller: pinCtrl, obscureText: true, keyboardType: TextInputType.number, decoration: const InputDecoration(hintText: 'Enter Admin PIN')),
+        title: Text('👤 Enter Username for Widget', style: TextStyle(color: kPrimary, fontWeight: FontWeight.bold)),
+        content: TextField(controller: ctrl, decoration: const InputDecoration(hintText: 'Your Name')),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: kPrimary),
+            onPressed: () async {
+              String n = ctrl.text.trim();
+              if (n.isNotEmpty) {
+                final p = await SharedPreferences.getInstance();
+                await p.setString('user_name', n);
+                await p.setString('wp_user', 'SALAH RADAR • ${n.toUpperCase()}');
+                globalUserName = n;
+                await triggerNativeWidgetBroadcast();
+                widget.onRebuild();
+                setState(() {});
+              }
+              if (mounted) {
+                Navigator.pop(ctx);
+                Navigator.push(context, MaterialPageRoute(builder: (_) => const LiveAnimatedWidgetStudioPage()));
+              }
+            },
+            child: const Text('Save & Open Live Widgets', style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _openAdminPin() {
+    final pinC = TextEditingController();
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: kCard,
+        title: Text('🔐 Admin PIN (Default: 7860)', style: TextStyle(color: kPrimary)),
+        content: TextField(controller: pinC, obscureText: true, keyboardType: TextInputType.number),
+        actions: [
           ElevatedButton(
             style: ElevatedButton.styleFrom(backgroundColor: kPrimary),
             onPressed: () {
-              if (pinCtrl.text.trim() == adminPinCode) {
+              if (pinC.text.trim() == adminPinCode) {
                 Navigator.pop(ctx);
                 Navigator.push(context, MaterialPageRoute(builder: (_) => AdminDashboardPage(onRebuild: widget.onRebuild)));
-              } else {
-                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('❌ Invalid Admin PIN!')));
               }
             },
-            child: const Text('Unlock Panel', style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
+            child: const Text('Unlock', style: TextStyle(color: Colors.black)),
           ),
         ],
       ),
@@ -1678,39 +1288,40 @@ class _SettingsProfileScreenState extends State<SettingsProfileScreen> {
       child: ListView(
         padding: const EdgeInsets.fromLTRB(18, 16, 18, 100),
         children: [
+          // 1. TOP APP LOGO & HANDLES
           GestureDetector(
-            onLongPress: _openAdminPinDialog,
+            onLongPress: _openAdminPin,
             child: Container(
-              padding: const EdgeInsets.all(22),
-              decoration: BoxDecoration(gradient: LinearGradient(colors: [kPrimary.withOpacity(0.22), kCard]), borderRadius: BorderRadius.circular(26), border: Border.all(color: kPrimary.withOpacity(0.45))),
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(color: kCard, borderRadius: BorderRadius.circular(24), border: Border.all(color: kPrimary.withOpacity(0.45))),
               child: Column(
                 children: [
-                  Container(width: 68, height: 68, decoration: BoxDecoration(gradient: LinearGradient(colors: [kPrimary, kSecondary]), borderRadius: BorderRadius.circular(22)), child: const Icon(Icons.mosque_rounded, size: 36, color: Colors.black)),
-                  const SizedBox(height: 12),
-                  Text('NOOR ISLAMIC PRO', style: TextStyle(fontSize: 20, fontFamily: 'serif', fontWeight: FontWeight.w900, color: kText, letterSpacing: 1.2)),
-                  Text('All-in-One Daily Salah, Live Quran & Hadith Companion', style: TextStyle(fontSize: 11.5, color: kMuted)),
-                  const SizedBox(height: 14),
+                  Container(width: 60, height: 60, decoration: BoxDecoration(color: kPrimary, borderRadius: BorderRadius.circular(18)), child: const Icon(Icons.mosque_rounded, size: 32, color: Colors.black)),
+                  const SizedBox(height: 10),
+                  Text('NOOR ISLAMIC PRO', style: TextStyle(fontSize: 19, fontWeight: FontWeight.w900, color: kText)),
+                  const SizedBox(height: 10),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      _socialPill(Icons.camera_alt_outlined, adminAppInsta, () => _copySocial(adminAppInsta)),
-                      const SizedBox(width: 10),
-                      _socialPill(Icons.facebook_rounded, adminAppFb, () => _copySocial(adminAppFb)),
+                      Text('📸 $adminAppInsta', style: TextStyle(fontSize: 11, color: kPrimary, fontWeight: FontWeight.bold)),
+                      const SizedBox(width: 14),
+                      Text('📘 $adminAppFb', style: TextStyle(fontSize: 11, color: kSecondary, fontWeight: FontWeight.bold)),
                     ],
                   ),
                 ],
               ),
             ),
           ),
-          const SizedBox(height: 18),
+          const SizedBox(height: 14),
 
+          // 2. DARK / LIGHT MODE
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-            decoration: BoxDecoration(color: kCard, borderRadius: BorderRadius.circular(20), border: Border.all(color: kBorder)),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+            decoration: BoxDecoration(color: kCard, borderRadius: BorderRadius.circular(18), border: Border.all(color: kBorder)),
             child: SwitchListTile(
               contentPadding: EdgeInsets.zero,
               activeColor: kPrimary,
-              title: Text(isDarkMode ? '🌙 Dark Mode Active' : '☀️ Light Mode Active', style: TextStyle(fontWeight: FontWeight.bold, color: kText)),
+              title: Text(isDarkMode ? '🌙 Dark Theme' : '☀️ Light Theme', style: TextStyle(fontWeight: FontWeight.bold, color: kText)),
               value: isDarkMode,
               onChanged: (v) async {
                 final p = await SharedPreferences.getInstance();
@@ -1723,55 +1334,44 @@ class _SettingsProfileScreenState extends State<SettingsProfileScreen> {
           ),
           const SizedBox(height: 14),
 
-          Container(
-            padding: const EdgeInsets.all(18),
-            decoration: BoxDecoration(color: kCard, borderRadius: BorderRadius.circular(20), border: Border.all(color: kBorder)),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text('🎨 SELECT APP THEME COLOUR', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w900, color: kPrimary)),
-                const SizedBox(height: 12),
-                Wrap(
-                  spacing: 10,
-                  runSpacing: 10,
-                  children: List.generate(kAccentPalettes.length, (i) {
-                    final pal = kAccentPalettes[i];
-                    bool sel = accentIndex == i;
-                    return GestureDetector(
-                      onTap: () async {
-                        final p = await SharedPreferences.getInstance();
-                        await p.setInt('accent', i);
-                        accentIndex = i;
-                        widget.onRebuild();
-                        setState(() {});
-                      },
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                        decoration: BoxDecoration(color: (pal['primary'] as Color).withOpacity(0.16), borderRadius: BorderRadius.circular(14), border: Border.all(color: sel ? (pal['primary'] as Color) : kBorder, width: sel ? 2 : 1)),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            CircleAvatar(radius: 7, backgroundColor: pal['primary'] as Color),
-                            const SizedBox(width: 7),
-                            Text(pal['name'] as String, style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: kText)),
-                          ],
-                        ),
-                      ),
-                    );
-                  }),
-                ),
-              ],
+          // 🌟 3. USERNAME & LIVE WIDGET STUDIO (DIRECTLY ABOVE LANGUAGE AS REQUESTED!) 🌟
+          GestureDetector(
+            onTap: _openUserNameAndWidgets,
+            child: Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(colors: [kSecondary.withOpacity(0.22), kCard]),
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(color: kSecondary, width: 1.5),
+              ),
+              child: Row(
+                children: [
+                  CircleAvatar(backgroundColor: kSecondary, child: const Icon(Icons.widgets_rounded, color: Colors.black)),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text('⚡ User: $globalUserName • Live Widgets', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 14, color: kText)),
+                        Text('Tap to set Username & view Live Animated Widgets', style: TextStyle(fontSize: 11, color: kSecondary, fontWeight: FontWeight.bold)),
+                      ],
+                    ),
+                  ),
+                  Icon(Icons.arrow_forward_ios_rounded, size: 16, color: kSecondary),
+                ],
+              ),
             ),
           ),
           const SizedBox(height: 14),
 
+          // 4. LANGUAGE SELECTOR
           Container(
-            padding: const EdgeInsets.all(18),
-            decoration: BoxDecoration(color: kCard, borderRadius: BorderRadius.circular(20), border: Border.all(color: kBorder)),
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(color: kCard, borderRadius: BorderRadius.circular(18), border: Border.all(color: kBorder)),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('🌐 SELECT APP LANGUAGE', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w900, color: kPrimary)),
+                Text('🌐 APP LANGUAGE', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w900, color: kPrimary)),
                 const SizedBox(height: 10),
                 Row(
                   children: [
@@ -1788,9 +1388,9 @@ class _SettingsProfileScreenState extends State<SettingsProfileScreen> {
                           },
                           child: Container(
                             margin: const EdgeInsets.symmetric(horizontal: 3),
-                            padding: const EdgeInsets.symmetric(vertical: 10),
-                            decoration: BoxDecoration(color: appLang == l['c'] ? kPrimary : kCardAlt, borderRadius: BorderRadius.circular(12)),
-                            child: Center(child: Text(l['n']!, style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.bold, color: appLang == l['c'] ? Colors.black : kText))),
+                            padding: const EdgeInsets.symmetric(vertical: 9),
+                            decoration: BoxDecoration(color: appLang == l['c'] ? kPrimary : kCardAlt, borderRadius: BorderRadius.circular(10)),
+                            child: Center(child: Text(l['n']!, style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: appLang == l['c'] ? Colors.black : kText))),
                           ),
                         ),
                       ),
@@ -1801,38 +1401,56 @@ class _SettingsProfileScreenState extends State<SettingsProfileScreen> {
           ),
           const SizedBox(height: 14),
 
+          // 5. THEME COLOR PICKER
           Container(
-            padding: const EdgeInsets.all(20),
-            decoration: BoxDecoration(gradient: LinearGradient(colors: [kCardAlt, kCard]), borderRadius: BorderRadius.circular(24), border: Border.all(color: kSecondary.withOpacity(0.45), width: 1.4)),
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(color: kCard, borderRadius: BorderRadius.circular(18), border: Border.all(color: kBorder)),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('🎨 THEME COLOUR', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w900, color: kPrimary)),
+                const SizedBox(height: 10),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: List.generate(kAccentPalettes.length, (i) {
+                    final pal = kAccentPalettes[i];
+                    return GestureDetector(
+                      onTap: () async {
+                        final p = await SharedPreferences.getInstance();
+                        await p.setInt('accent', i);
+                        accentIndex = i;
+                        widget.onRebuild();
+                        setState(() {});
+                      },
+                      child: Chip(
+                        backgroundColor: (pal['primary'] as Color).withOpacity(0.2),
+                        avatar: CircleAvatar(backgroundColor: pal['primary'] as Color),
+                        label: Text(pal['name'] as String, style: TextStyle(fontSize: 11, color: kText)),
+                      ),
+                    );
+                  }),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 14),
+
+          // 6. FEEDBACK & DEVELOPER PROFILE
+          Container(
+            padding: const EdgeInsets.all(18),
+            decoration: BoxDecoration(color: kCard, borderRadius: BorderRadius.circular(22), border: Border.all(color: kBorder)),
             child: Column(
               children: [
-                Text('👨‍💻 DEVELOPED WITH ❤️ FOR THE UMMAH', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w900, color: kSecondary)),
-                const SizedBox(height: 12),
-                CircleAvatar(
-                  radius: 38,
-                  backgroundColor: kPrimary,
-                  backgroundImage: adminDevImage.trim().startsWith('http') ? NetworkImage(adminDevImage.trim()) : null,
-                  child: adminDevImage.trim().startsWith('http') ? null : const Icon(Icons.person_rounded, size: 40, color: Colors.black),
-                ),
-                const SizedBox(height: 10),
-                Text(adminDevName, style: TextStyle(fontSize: 17, fontWeight: FontWeight.w900, color: kText)),
+                CircleAvatar(radius: 34, backgroundColor: kPrimary, child: const Icon(Icons.person_rounded, size: 36, color: Colors.black)),
+                const SizedBox(height: 8),
+                Text(adminDevName, style: TextStyle(fontSize: 16, fontWeight: FontWeight.w900, color: kText)),
                 const SizedBox(height: 4),
-                Text(adminDevBio, textAlign: TextAlign.center, style: TextStyle(fontSize: 12, color: kMuted)),
+                Text(adminDevBio, textAlign: TextAlign.center, style: TextStyle(fontSize: 11.5, color: kMuted)),
+                const SizedBox(height: 8),
+                Text('📸 $adminDevInsta  •  📘 $adminDevFb', style: TextStyle(fontSize: 11, color: kSecondary, fontWeight: FontWeight.bold)),
                 const SizedBox(height: 12),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    _socialPill(Icons.camera_alt_outlined, adminDevInsta, () => _copySocial(adminDevInsta)),
-                    const SizedBox(width: 10),
-                    _socialPill(Icons.facebook_rounded, adminDevFb, () => _copySocial(adminDevFb)),
-                  ],
-                ),
-                const SizedBox(height: 12),
-                OutlinedButton.icon(
-                  onPressed: _openAdminPinDialog,
-                  icon: Icon(Icons.admin_panel_settings_rounded, size: 16, color: kPrimary),
-                  label: Text('Owner Admin Control Panel', style: TextStyle(fontSize: 11.5, color: kPrimary, fontWeight: FontWeight.bold)),
-                ),
+                OutlinedButton.icon(onPressed: _openAdminPin, icon: Icon(Icons.admin_panel_settings, size: 16, color: kPrimary), label: Text('Owner Admin Panel', style: TextStyle(color: kPrimary))),
               ],
             ),
           ),
@@ -1840,20 +1458,8 @@ class _SettingsProfileScreenState extends State<SettingsProfileScreen> {
       ),
     );
   }
-
-  Widget _socialPill(IconData ic, String handle, VoidCallback tap) {
-    return GestureDetector(
-      onTap: tap,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
-        decoration: BoxDecoration(color: kBg, borderRadius: BorderRadius.circular(20), border: Border.all(color: kBorder)),
-        child: Row(mainAxisSize: MainAxisSize.min, children: [Icon(ic, size: 15, color: kPrimary), const SizedBox(width: 6), Text(handle, style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: kText))]),
-      ),
-    );
-  }
 }
 
-// ---------------- 6. SUPER ADMIN DASHBOARD PAGE ----------------
 class AdminDashboardPage extends StatefulWidget {
   final VoidCallback onRebuild;
   const AdminDashboardPage({super.key, required this.onRebuild});
@@ -1862,174 +1468,53 @@ class AdminDashboardPage extends StatefulWidget {
 }
 
 class _AdminDashboardPageState extends State<AdminDashboardPage> {
-  late TextEditingController pinC, urlC, banTC, banMC, popTC, popBC, updVC, updUC;
-  late TextEditingController appIgC, appFbC, devNC, devBC, devImgC, devIgC, devFbC;
-  late TextEditingController ayRefC, ayArC, ayTrC, duRefC, duArC, duTrC;
+  final banTC = TextEditingController(text: adminBannerTitle);
+  final banMC = TextEditingController(text: adminBannerMsg);
+  final devNC = TextEditingController(text: adminDevName);
   bool sBan = adminShowBanner, sPop = adminShowPopup, sUpd = adminUpdateAvailable;
-  bool fAyah = adminForceCustomAyah, fDua = adminForceCustomDua;
-
-  @override
-  void initState() {
-    super.initState();
-    pinC = TextEditingController(text: adminPinCode);
-    urlC = TextEditingController(text: adminCloudUrl);
-    banTC = TextEditingController(text: adminBannerTitle);
-    banMC = TextEditingController(text: adminBannerMsg);
-    popTC = TextEditingController(text: adminPopupTitle);
-    popBC = TextEditingController(text: adminPopupBody);
-    updVC = TextEditingController(text: adminLatestVer);
-    updUC = TextEditingController(text: adminUpdateUrl);
-    appIgC = TextEditingController(text: adminAppInsta);
-    appFbC = TextEditingController(text: adminAppFb);
-    devNC = TextEditingController(text: adminDevName);
-    devBC = TextEditingController(text: adminDevBio);
-    devImgC = TextEditingController(text: adminDevImage);
-    devIgC = TextEditingController(text: adminDevInsta);
-    devFbC = TextEditingController(text: adminDevFb);
-    ayRefC = TextEditingController(text: liveAyahRef);
-    ayArC = TextEditingController(text: liveAyahArab);
-    ayTrC = TextEditingController(text: liveAyahTrans);
-    duRefC = TextEditingController(text: liveDuaRef);
-    duArC = TextEditingController(text: liveDuaArab);
-    duTrC = TextEditingController(text: liveDuaTrans);
-  }
-
-  Future<void> _saveAll() async {
-    final p = await SharedPreferences.getInstance();
-    await p.setString('adm_pin', pinC.text.trim());
-    await p.setString('adm_url', urlC.text.trim());
-    await p.setBool('adm_show_ban', sBan);
-    await p.setString('adm_ban_t', banTC.text.trim());
-    await p.setString('adm_ban_m', banMC.text.trim());
-    await p.setBool('adm_show_pop', sPop);
-    await p.setString('adm_pop_t', popTC.text.trim());
-    await p.setString('adm_pop_b', popBC.text.trim());
-    await p.setBool('adm_upd_on', sUpd);
-    await p.setString('adm_upd_v', updVC.text.trim());
-    await p.setString('adm_upd_u', updUC.text.trim());
-    await p.setString('adm_app_ig', appIgC.text.trim());
-    await p.setString('adm_app_fb', appFbC.text.trim());
-    await p.setString('adm_dev_n', devNC.text.trim());
-    await p.setString('adm_dev_b', devBC.text.trim());
-    await p.setString('adm_dev_img', devImgC.text.trim());
-    await p.setString('adm_dev_ig', devIgC.text.trim());
-    await p.setString('adm_dev_fb', devFbC.text.trim());
-    await p.setBool('adm_force_ayah', fAyah);
-    await p.setString('adm_ayah_ref', ayRefC.text.trim());
-    await p.setString('adm_ayah_ar', ayArC.text.trim());
-    await p.setString('adm_ayah_tr', ayTrC.text.trim());
-    await p.setBool('adm_force_dua', fDua);
-    await p.setString('adm_dua_ref', duRefC.text.trim());
-    await p.setString('adm_dua_ar', duArC.text.trim());
-    await p.setString('adm_dua_tr', duTrC.text.trim());
-
-    await fetchLiveDailyAyahAndDua();
-    widget.onRebuild();
-    if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(backgroundColor: kSecondary, content: const Text('✅ All Admin Controls Saved & Synced Live!', style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold))));
-    }
-  }
-
-  void _exportJson() {
-    final map = {
-      'show_banner': sBan,
-      'banner_title': banTC.text.trim(),
-      'banner_message': banMC.text.trim(),
-      'show_popup': sPop,
-      'popup_title': popTC.text.trim(),
-      'popup_body': popBC.text.trim(),
-      'update_available': sUpd,
-      'latest_version': updVC.text.trim(),
-      'update_url': updUC.text.trim(),
-      'app_insta': appIgC.text.trim(),
-      'app_fb': appFbC.text.trim(),
-      'dev_name': devNC.text.trim(),
-      'dev_bio': devBC.text.trim(),
-      'dev_image': devImgC.text.trim(),
-      'dev_insta': devIgC.text.trim(),
-      'dev_fb': devFbC.text.trim(),
-      'force_custom_ayah': fAyah,
-      'custom_ayah_ref': ayRefC.text.trim(),
-      'custom_ayah_arab': ayArC.text.trim(),
-      'custom_ayah_trans': ayTrC.text.trim(),
-      'force_custom_dua': fDua,
-      'custom_dua_ref': duRefC.text.trim(),
-      'custom_dua_arab': duArC.text.trim(),
-      'custom_dua_trans': duTrC.text.trim(),
-    };
-    Clipboard.setData(ClipboardData(text: const JsonEncoder.withIndent('  ').convert(map)));
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(backgroundColor: kPrimary, content: const Text('📋 Cloud JSON Copied! Paste in admin_config.json on GitHub!', style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold))));
-  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('👑 Super Admin Control Panel'),
-        backgroundColor: kBg,
-        actions: [IconButton(icon: Icon(Icons.copy_all_rounded, color: kPrimary), onPressed: _exportJson)],
-      ),
+      appBar: AppBar(title: const Text('👑 Admin Control Panel'), backgroundColor: kBg),
       body: ListView(
         padding: const EdgeInsets.all(18),
         children: [
-          _hdr('🔑 1. SECURITY & CLOUD SYNC URL'),
-          _inp(pinC, 'Admin Secret PIN (Default: 7860)'),
-          _inp(urlC, 'GitHub Raw URL for admin_config.json'),
-
-          _hdr('🔔 2. LIVE POPUP BROADCAST ALERT'),
-          SwitchListTile(title: const Text('Show Popup Dialog on App Startup'), activeColor: kPrimary, value: sPop, onChanged: (v) => setState(() => sPop = v)),
-          _inp(popTC, 'Popup Title (e.g. 🌙 Eid / Jummah Mubarak!)'),
-          _inp(popBC, 'Popup Broadcast Message'),
-
-          _hdr('🚀 3. OTA APP UPDATE PUSHER (NEW APK LINK)'),
-          SwitchListTile(title: const Text('Show "Update Available" Banner'), activeColor: kSecondary, value: sUpd, onChanged: (v) => setState(() => sUpd = v)),
-          _inp(updVC, 'New Version Name (e.g. v11.0 Pro)'),
-          _inp(updUC, 'Direct APK Download Link (Drive / GitHub)'),
-
-          _hdr('📢 4. HOME ANNOUNCEMENT BANNER'),
-          SwitchListTile(title: const Text('Show Home Top Banner'), activeColor: kPrimary, value: sBan, onChanged: (v) => setState(() => sBan = v)),
-          _inp(banTC, 'Banner Title'),
-          _inp(banMC, 'Banner Message'),
-
-          _hdr('✨ 5. CUSTOM AYAH & DUA OVERRIDE'),
-          SwitchListTile(title: const Text('Force Custom Ayah on Home & Widget'), activeColor: kPrimary, value: fAyah, onChanged: (v) => setState(() => fAyah = v)),
-          _inp(ayRefC, 'Custom Ayah Reference'),
-          _inp(ayArC, 'Custom Ayah Arabic'),
-          _inp(ayTrC, 'Custom Ayah Translation'),
-          SwitchListTile(title: const Text('Force Custom Daily Dua'), activeColor: kSecondary, value: fDua, onChanged: (v) => setState(() => fDua = v)),
-          _inp(duRefC, 'Custom Dua Reference'),
-          _inp(duArC, 'Custom Dua Arabic'),
-          _inp(duTrC, 'Custom Dua Translation'),
-
-          _hdr('👨‍💻 6. DEVELOPER PROFILE & SOCIAL HANDLES'),
-          _inp(devNC, 'Developer Name'),
-          _inp(devBC, 'Developer Bio / About'),
-          _inp(devImgC, 'Developer Photo URL (https://...)'),
-          _inp(devIgC, 'Developer Instagram'),
-          _inp(devFbC, 'Developer Facebook'),
-          _inp(appIgC, 'App Official Instagram'),
-          _inp(appFbC, 'App Official Facebook'),
+          SwitchListTile(title: const Text('Show Home Banner'), value: sBan, onChanged: (v) => setState(() => sBan = v)),
+          TextField(controller: banTC, decoration: const InputDecoration(labelText: 'Banner Title')),
+          TextField(controller: banMC, decoration: const InputDecoration(labelText: 'Banner Message')),
+          SwitchListTile(title: const Text('Show Startup Popup Alert'), value: sPop, onChanged: (v) => setState(() => sPop = v)),
+          SwitchListTile(title: const Text('Show APK Update Available'), value: sUpd, onChanged: (v) => setState(() => sUpd = v)),
+          TextField(controller: devNC, decoration: const InputDecoration(labelText: 'Developer Name')),
           const SizedBox(height: 16),
-
-          ElevatedButton.icon(
-            style: ElevatedButton.styleFrom(backgroundColor: kPrimary, padding: const EdgeInsets.symmetric(vertical: 15)),
-            onPressed: _saveAll,
-            icon: const Icon(Icons.bolt_rounded, color: Colors.black),
-            label: const Text('SAVE & APPLY ALL ADMIN CONTROLS', style: TextStyle(color: Colors.black, fontWeight: FontWeight.w900)),
-          ),
-          const SizedBox(height: 10),
-          OutlinedButton.icon(
-            onPressed: _exportJson,
-            icon: Icon(Icons.cloud_upload_rounded, color: kSecondary),
-            label: Text('Copy Cloud JSON for GitHub (admin_config.json)', style: TextStyle(color: kSecondary, fontWeight: FontWeight.bold)),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: kPrimary),
+            onPressed: () async {
+              final p = await SharedPreferences.getInstance();
+              await p.setBool('adm_show_ban', sBan);
+              await p.setString('adm_ban_t', banTC.text);
+              await p.setString('adm_ban_m', banMC.text);
+              await p.setBool('adm_show_pop', sPop);
+              await p.setBool('adm_upd_on', sUpd);
+              await p.setString('adm_dev_n', devNC.text);
+              adminShowBanner = sBan;
+              adminBannerTitle = banTC.text;
+              adminBannerMsg = banMC.text;
+              adminShowPopup = sPop;
+              adminUpdateAvailable = sUpd;
+              adminDevName = devNC.text;
+              widget.onRebuild();
+              if (mounted) Navigator.pop(context);
+            },
+            child: const Text('SAVE ADMIN SETTINGS', style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
           ),
         ],
       ),
     );
   }
-
-  Widget _hdr(String t) => Padding(padding: const EdgeInsets.only(top: 12, bottom: 6), child: Text(t, style: TextStyle(fontSize: 11, fontWeight: FontWeight.w900, color: kPrimary)));
-  Widget _inp(TextEditingController c, String l) => Padding(padding: const EdgeInsets.only(bottom: 8), child: TextField(controller: c, decoration: InputDecoration(labelText: l, filled: true, fillColor: kCard, border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)))));
 }
+
+
+
 
 
