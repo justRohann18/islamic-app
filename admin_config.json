@@ -14,3 +14,31 @@
   "custom_ayah_arab": "فَاذْكُرُونِي أَذْكُرْكُمْ وَاشْكُرُوا لِي وَلَا تَكْفُرُونِ",
   "custom_ayah_trans": "So remember Me; I will remember you. And be grateful to Me and do not deny Me."
 }
+
+
+{
+  "show_banner": true,
+  "banner_title": "Sirat Official Reminder",
+  "banner_message": "Recite Surah Al-Mulk before sleeping and track your five daily prayers.",
+  "show_popup": true,
+  "popup_title": "Sirat Broadcast",
+  "popup_body": "Assalamu Alaikum. May Allah accept your prayers and good deeds today.",
+  "update_available": false,
+  "latest_version": "v1.0.0 Official",
+  "update_url": "https://github.com/",
+  "force_custom_ayah": false,
+  "custom_ayah_ref": "At-Tawba • 9:13",
+  "custom_ayah_arab": "أَلَا تُقَٰتِلُونَ قَوْمًۭا نَّكَثُوٓا۟ أَيْمَٰنَهُمْ وَهَمُّوا۟ بِإِخْرَاجِ ٱلرَّسُولِ وَهُم بَدَءُوكُمْ أَوَّلَ مَرَّةٍ ۚ أَتَخْشَوْنَهُمْ ۚ فَٱللَّهُ أَحَقُّ أَن تَخْشَوْهُ إِن كُنتُم مُّؤْمِنِينَ",
+  "custom_ayah_trans": "\"Would you, perchance, fail to fight against people who have broken their solemn pledges, and have done all that they could to drive the Apostle away, and have been first to attack you? Do you hold them in awe? Nay, it is God alone of whom you ought to stand in awe, if you are [truly] believers!\"",
+  "force_custom_dua": false,
+  "custom_dua_ref": "Daily Dua • Al-Baqara 2:201",
+  "custom_dua_arab": "وَمِنْهُم مَّن يَقُولُ رَبَّنَآ ءَاتِنَا فِى ٱلدُّنْيَا حَسَنَةًۭ وَفِى ٱلْءَاخِرَةِ حَسَنَةًۭ وَقِنَا عَذَابَ ٱلنَّارِ",
+  "custom_dua_trans": "\"But there are among them such as pray, \"O our Sustainer! Grant us good in this world and good in the life to come, and keep us safe from suffering through the fire\":\"",
+  "app_insta": "@app_sirat",
+  "app_fb": "https://www.facebook.com/share/1Bz6Qs6BKV/",
+  "dev_name": "Jahidul Hassan",
+  "dev_bio": "Building modern, ad-free and authentic Islamic digital experiences as Sadaqah Jariyah.",
+  "dev_image": "https://res.cloudinary.com/dtz0urit6/image/upload/q_auto:best,f_jpg/cloudinary-tools-uploads/qqyjzvdifgw9hpxff3el",
+  "dev_insta": "@just.jahidulx",
+  "dev_fb": "fb.com/developer.sirat"
+}
