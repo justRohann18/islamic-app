@@ -1,4 +1,4 @@
-name: Build Android APK
+name: Build Sirat Official APK
 
 on:
   push:
@@ -18,17 +18,35 @@ jobs:
         with:
           channel: 'stable'
 
-      - name: Build Project with Quran.com Font, Alarms & Widgets
+      - name: Build Sirat v1.0.0 Official Release
         run: |
           cp lib/main.dart /tmp/main.dart
           rm -rf lib pubspec.yaml
-          flutter create . --project-name islamic_app --org com.noor
+          flutter create . --project-name islamic_app --org com.sirat
           cp /tmp/main.dart lib/main.dart
 
           mkdir -p assets/fonts
           curl -L -s "https://github.com/google/fonts/raw/main/ofl/amiriquran/AmiriQuran-Regular.ttf" -o assets/fonts/QuranFont.ttf
 
           mkdir -p android/app/src/main/res/layout android/app/src/main/res/xml android/app/src/main/res/drawable
+
+          cat << 'EOF' > android/app/src/main/res/drawable/ic_sirat_logo.xml
+          <?xml version="1.0" encoding="utf-8"?>
+          <vector xmlns:android="http://schemas.android.com/apk/res/android"
+              android:width="108dp"
+              android:height="108dp"
+              android:viewportWidth="108"
+              android:viewportHeight="108">
+              <path android:fillColor="#06120F" android:pathData="M0,0h108v108h-108z"/>
+              <path android:fillColor="#0E241E" android:pathData="M14,14h80v80h-80z"/>
+              <path android:strokeColor="#D6B36A" android:strokeWidth="2.8" android:fillColor="#091915"
+                  android:pathData="M28,88 L28,48 Q28,22 54,16 Q80,22 80,48 L80,88 Z"/>
+              <path android:fillColor="#2DD4BF"
+                  android:pathData="M42,88 L51,42 L57,42 L66,88 Z"/>
+              <path android:fillColor="#D6B36A"
+                  android:pathData="M54,24 L57,31 L64,34 L57,37 L54,44 L51,37 L44,34 L51,31 Z"/>
+          </vector>
+          EOF
 
           cat << 'EOF' > android/app/src/main/res/drawable/bg_wid_0.xml
           <?xml version="1.0" encoding="utf-8"?>
@@ -75,7 +93,7 @@ jobs:
               android:background="@drawable/bg_wid_0">
               <LinearLayout android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="5" android:orientation="vertical">
                   <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:gravity="center_vertical">
-                      <TextView android:id="@+id/wp_loc" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="NOOR" android:textColor="#D6B36A" android:textSize="11sp" android:textStyle="bold" />
+                      <TextView android:id="@+id/wp_loc" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="SIRAT" android:textColor="#D6B36A" android:textSize="11sp" android:textStyle="bold" />
                       <TextView android:id="@+id/wp_user" android:layout_width="wrap_content" android:layout_height="wrap_content" android:background="@drawable/bg_pro_pill" android:paddingLeft="8dp" android:paddingRight="8dp" android:paddingTop="2dp" android:paddingBottom="2dp" android:text="LIVE" android:textColor="#2DD4BF" android:textSize="9sp" android:textStyle="bold" />
                   </LinearLayout>
                   <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="8dp" android:text="NEXT PRAYER" android:textColor="#8E9E99" android:textSize="9sp" android:textStyle="bold" />
@@ -99,7 +117,7 @@ jobs:
               android:layout_width="match_parent" android:layout_height="match_parent"
               android:orientation="vertical" android:padding="16dp"
               android:gravity="center_vertical" android:background="@drawable/bg_wid_0">
-              <TextView android:id="@+id/wq_ref" android:layout_width="wrap_content" android:layout_height="wrap_content" android:background="@drawable/bg_pro_pill" android:paddingLeft="10dp" android:paddingRight="10dp" android:paddingTop="3dp" android:paddingBottom="3dp" android:text="DAILY QURAN VERSE" android:textColor="#D6B36A" android:textSize="9.5sp" android:textStyle="bold" />
+              <TextView android:id="@+id/wq_ref" android:layout_width="wrap_content" android:layout_height="wrap_content" android:background="@drawable/bg_pro_pill" android:paddingLeft="10dp" android:paddingRight="10dp" android:paddingTop="3dp" android:paddingBottom="3dp" android:text="SIRAT DAILY VERSE" android:textColor="#D6B36A" android:textSize="9.5sp" android:textStyle="bold" />
               <TextView android:id="@+id/wq_arab" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="8dp" android:gravity="right" android:text="فَإِنَّ مَعَ الْعُسْرِ يُسْرًا" android:textColor="#FFFFFF" android:textSize="22sp" android:textStyle="bold" />
               <TextView android:id="@+id/wq_hinglish" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="8dp" android:background="@drawable/bg_pro_pill" android:padding="8dp" android:fontFamily="serif" android:text="Indeed, with hardship comes ease." android:textColor="#2DD4BF" android:textSize="11.5sp" android:textStyle="italic" />
           </LinearLayout>
@@ -140,14 +158,14 @@ jobs:
               companion object {
                   fun showPrayerNotification(context: Context, prayer: String) {
                       val mgr = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-                      val chId = "noor_prayer_alerts"
+                      val chId = "sirat_prayer_alerts"
                       if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                          val ch = NotificationChannel(chId, "Prayer Time Alerts", NotificationManager.IMPORTANCE_HIGH)
+                          val ch = NotificationChannel(chId, "Sirat Prayer Alerts", NotificationManager.IMPORTANCE_HIGH)
                           mgr.createNotificationChannel(ch)
                       }
                       val notif = NotificationCompat.Builder(context, chId)
                           .setSmallIcon(android.R.drawable.ic_lock_idle_alarm)
-                          .setContentTitle("Time for \$prayer Prayer")
+                          .setContentTitle("Sirat • Time for \$prayer Prayer")
                           .setContentText("It is time for \$prayer. May Allah accept your prayers.")
                           .setPriority(NotificationCompat.PRIORITY_HIGH)
                           .setAutoCancel(true)
@@ -242,7 +260,7 @@ jobs:
                       }
                       val qViews = RemoteViews(context.packageName, R.layout.widget_quran).apply {
                           setInt(R.id.wq_root, "setBackgroundResource", bgRes)
-                          setTextViewText(R.id.wq_ref, prefs.getString("flutter.wq_ref", "DAILY QURAN VERSE"))
+                          setTextViewText(R.id.wq_ref, prefs.getString("flutter.wq_ref", "SIRAT DAILY VERSE"))
                           setTextViewText(R.id.wq_arab, prefs.getString("flutter.wq_arab", "فَإِنَّ مَعَ الْعُسْرِ يُسْرًا"))
                           setTextViewTextSize(R.id.wq_arab, TypedValue.COMPLEX_UNIT_SP, ayahSize)
                           setTextViewText(R.id.wq_hinglish, prefs.getString("flutter.wq_hing", "Indeed, with hardship comes ease."))
@@ -252,7 +270,7 @@ jobs:
                       val remSec = prefs.getLong("flutter.wp_rem_sec", 3600L)
                       val pViews = RemoteViews(context.packageName, R.layout.widget_prayer).apply {
                           setInt(R.id.wp_root, "setBackgroundResource", bgRes)
-                          setTextViewText(R.id.wp_loc, prefs.getString("flutter.wp_loc", "NOOR"))
+                          setTextViewText(R.id.wp_loc, prefs.getString("flutter.wp_loc", "SIRAT"))
                           setTextViewText(R.id.wp_user, prefs.getString("flutter.wp_user", "LIVE"))
                           setTextViewText(R.id.wp_next_name, prefs.getString("flutter.wp_next_name", "Dhuhr"))
                           setTextViewText(R.id.wp_next, prefs.getString("flutter.wp_next", "12:15 PM"))
@@ -285,8 +303,10 @@ jobs:
           }
           EOF
 
+          sed -i 's/android:label="[^"]*"/android:label="Sirat"/g' android/app/src/main/AndroidManifest.xml
+          sed -i 's/android:icon="[^"]*"/android:icon="@drawable\/ic_sirat_logo"/g' android/app/src/main/AndroidManifest.xml
           sed -i '/<manifest/a <uses-permission android:name="android.permission.INTERNET"/><uses-permission android:name="android.permission.POST_NOTIFICATIONS"/><uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM"/><uses-permission android:name="android.permission.USE_EXACT_ALARM"/>' android/app/src/main/AndroidManifest.xml
-          sed -i 's/<\/application>/<receiver android:name=".PrayerAlarmReceiver" android:exported="true"\/><receiver android:name=".QuranWidget" android:label="Noor Verse Widget" android:exported="true"><intent-filter><action android:name="android.appwidget.action.APPWIDGET_UPDATE"\/><\/intent-filter><meta-data android:name="android.appwidget.provider" android:resource="@xml\/info_quran"\/><\/receiver><receiver android:name=".PrayerWidget" android:label="Noor Dual-Pane Prayer Widget" android:exported="true"><intent-filter><action android:name="android.appwidget.action.APPWIDGET_UPDATE"\/><\/intent-filter><meta-data android:name="android.appwidget.provider" android:resource="@xml\/info_prayer"\/><\/receiver><\/application>/g' android/app/src/main/AndroidManifest.xml
+          sed -i 's/<\/application>/<receiver android:name=".PrayerAlarmReceiver" android:exported="true"\/><receiver android:name=".QuranWidget" android:label="Sirat Verse Widget" android:exported="true"><intent-filter><action android:name="android.appwidget.action.APPWIDGET_UPDATE"\/><\/intent-filter><meta-data android:name="android.appwidget.provider" android:resource="@xml\/info_quran"\/><\/receiver><receiver android:name=".PrayerWidget" android:label="Sirat Prayer Widget" android:exported="true"><intent-filter><action android:name="android.appwidget.action.APPWIDGET_UPDATE"\/><\/intent-filter><meta-data android:name="android.appwidget.provider" android:resource="@xml\/info_prayer"\/><\/receiver><\/application>/g' android/app/src/main/AndroidManifest.xml
 
           flutter pub add http shared_preferences audioplayers
           cat << 'EOF' >> pubspec.yaml
@@ -297,8 +317,8 @@ jobs:
           EOF
           flutter build apk --release
 
-      - name: Upload Android APK
+      - name: Upload Sirat Official APK
         uses: actions/upload-artifact@v4
         with:
-          name: Islamic-App-APK
+          name: Sirat-v1.0.0-Official-APK
           path: build/app/outputs/flutter-apk/app-release.apk
