@@ -89,7 +89,6 @@ class _MainShellState extends State<MainShell> {
 
   @override
   Widget build(BuildContext context) {
-    // Clean 4-Tab Architecture (Qibla & AI Removed as requested!)
     final pages = [
       InteractiveHomeScreen(onNav: _nav),
       const UniqueWidgetStudioScreen(),
@@ -157,7 +156,6 @@ class MihrabArchPainter extends CustomPainter {
       ..style = PaintingStyle.stroke
       ..strokeWidth = 1.5;
 
-    // Islamic Mihrab Arch Silhouette inside Hero Card
     final archPath = Path()
       ..moveTo(size.width * 0.12, size.height)
       ..lineTo(size.width * 0.12, size.height * 0.45)
@@ -166,7 +164,6 @@ class MihrabArchPainter extends CustomPainter {
       ..lineTo(size.width * 0.88, size.height);
     canvas.drawPath(archPath, p);
 
-    // Subtle Sun/Moon Horizon Glow
     canvas.drawCircle(
       Offset(size.width * 0.5, size.height * 0.25),
       size.width * 0.28,
@@ -198,7 +195,6 @@ class _InteractiveHomeScreenState extends State<InteractiveHomeScreen> {
   Map<String, String> times = {'Fajr': '04:15', 'Dhuhr': '12:15', 'Asr': '15:25', 'Maghrib': '16:45', 'Isha': '18:15'};
   Map<String, int> status = {'Fajr': 0, 'Dhuhr': 0, 'Asr': 0, 'Maghrib': 0, 'Isha': 0};
 
-  // Interactive Daily Engagement State (On-Home Tasbih, Sunnahs, Audio)
   int tasbihCount = 0;
   int zikrIdx = 0;
   final List<Map<String, String>> azkar = const [
@@ -352,7 +348,6 @@ class _InteractiveHomeScreenState extends State<InteractiveHomeScreen> {
       child: ListView(
         padding: const EdgeInsets.fromLTRB(18, 12, 18, 100),
         children: [
-          // 1. TOP BAR WITH LOCATION, HIJRI & QUICK SETTINGS
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
@@ -404,7 +399,7 @@ class _InteractiveHomeScreenState extends State<InteractiveHomeScreen> {
           ),
           const SizedBox(height: 16),
 
-          // 🌟 2. THE "GLOWING MIHRAB ARCH" HERO CARD (100% UNIQUE!) 🌟
+          // THE GLOWING MIHRAB ARCH HERO CARD
           ClipRRect(
             borderRadius: BorderRadius.circular(30),
             child: Container(
@@ -425,7 +420,6 @@ class _InteractiveHomeScreenState extends State<InteractiveHomeScreen> {
                     padding: const EdgeInsets.all(22),
                     child: Column(
                       children: [
-                        // Top Pill inside Arch
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 5),
                           decoration: BoxDecoration(
@@ -439,8 +433,6 @@ class _InteractiveHomeScreenState extends State<InteractiveHomeScreen> {
                           ),
                         ),
                         const SizedBox(height: 12),
-
-                        // Center Big Prayer Time & Live Countdown
                         Text(
                           formatClock(times[nextP]!),
                           style: const TextStyle(fontSize: 42, fontFamily: 'serif', fontWeight: FontWeight.w900, color: Colors.white, height: 1.05),
@@ -455,8 +447,6 @@ class _InteractiveHomeScreenState extends State<InteractiveHomeScreen> {
                           ],
                         ),
                         const SizedBox(height: 18),
-
-                        // Suhur / Sunrise / Iftar Ribbon + Daily Deen Ring
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
                           decoration: BoxDecoration(
@@ -492,7 +482,7 @@ class _InteractiveHomeScreenState extends State<InteractiveHomeScreen> {
           ),
           const SizedBox(height: 22),
 
-          // 🌟 3. INTERACTIVE 5-SALAH CHECK-IN CARDS (REGULAR DAILY USE!) 🌟
+          // INTERACTIVE 5-SALAH CHECK-IN CARDS
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
@@ -578,13 +568,12 @@ class _InteractiveHomeScreenState extends State<InteractiveHomeScreen> {
           ),
           const SizedBox(height: 22),
 
-          // 🌟 4. INTERACTIVE ON-HOME TASBIH & DAILY SUNNAH ENGINE 🌟
+          // INTERACTIVE ON-HOME TASBIH & DAILY SUNNAH ENGINE
           const Text('⚡ Daily Ibadah & Zikr Engine', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w900)),
           const SizedBox(height: 10),
 
           Row(
             children: [
-              // Left: Interactive Live Tasbih Counter right on Home Screen!
               Expanded(
                 flex: 5,
                 child: GestureDetector(
@@ -646,12 +635,10 @@ class _InteractiveHomeScreenState extends State<InteractiveHomeScreen> {
               ),
               const SizedBox(width: 12),
 
-              // Right: Quick Audio Tilawat + Hadith Vault Shortcuts
               Expanded(
                 flex: 5,
                 child: Column(
                   children: [
-                    // Quick Surah Al-Fatiha / Mulk Audio Card
                     GestureDetector(
                       onTap: () async {
                         if (isPlayingSurah) {
@@ -693,7 +680,6 @@ class _InteractiveHomeScreenState extends State<InteractiveHomeScreen> {
                       ),
                     ),
                     const SizedBox(height: 11),
-                    // 10 Hadith Books Vault Card
                     GestureDetector(
                       onTap: () => widget.onNav(3, sub: 1),
                       child: Container(
@@ -734,7 +720,7 @@ class _InteractiveHomeScreenState extends State<InteractiveHomeScreen> {
           ),
           const SizedBox(height: 16),
 
-          // 🌟 5. DAILY SUNNAH HABIT PILLS (1-TAP TOGGLE) 🌟
+          // DAILY SUNNAH HABIT PILLS
           Wrap(
             spacing: 8,
             runSpacing: 8,
@@ -770,7 +756,7 @@ class _InteractiveHomeScreenState extends State<InteractiveHomeScreen> {
           ),
           const SizedBox(height: 20),
 
-          // 🌟 6. DAILY QURANIC VERSE SPOTLIGHT (ARABIC + HINGLISH) 🌟
+          // DAILY QURANIC VERSE SPOTLIGHT
           Container(
             padding: const EdgeInsets.all(20),
             decoration: BoxDecoration(
@@ -902,7 +888,6 @@ class _UniqueWidgetStudioScreenState extends State<UniqueWidgetStudioScreen> {
           ),
           const SizedBox(height: 22),
 
-          // 🌟 WIDGET 1: "THE SALAH BOARDING-PASS / HORIZON TICKET" 🌟
           const Text('🕌 1. The Salah Horizon Pass (With 5-Node Progress Track)',
               style: TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: kMuted)),
           const SizedBox(height: 10),
@@ -959,7 +944,6 @@ class _UniqueWidgetStudioScreenState extends State<UniqueWidgetStudioScreen> {
                 ),
                 const SizedBox(height: 18),
 
-                // 5-Node Connected Progress Track inside Widget!
                 Container(
                   padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 10),
                   decoration: BoxDecoration(
@@ -983,7 +967,6 @@ class _UniqueWidgetStudioScreenState extends State<UniqueWidgetStudioScreen> {
           ),
           const SizedBox(height: 24),
 
-          // 🌟 WIDGET 2: "THE FLOATING GLASS CALLIGRAPHY FRAME" (ARABIC + HINGLISH) 🌟
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
@@ -1069,7 +1052,7 @@ class _UniqueWidgetStudioScreenState extends State<UniqueWidgetStudioScreen> {
             color: done ? sb : (current ? ac : Colors.white12),
             shape: BoxShape.circle,
           ),
-          child: Icon(done ? Icons.check : (current ? Icons.Schedule : Icons.circle), size: 12, color: (done || current) ? Colors.black : Colors.white38),
+          child: Icon(done ? Icons.check : (current ? Icons.schedule : Icons.circle), size: 12, color: (done || current) ? Colors.black : Colors.white38),
         ),
         const SizedBox(height: 5),
         Text(name, style: TextStyle(fontSize: 10, fontWeight: FontWeight.w800, color: current ? ac : Colors.white)),
@@ -1133,7 +1116,6 @@ class _AnalyticsLedgerScreenState extends State<AnalyticsLedgerScreen> {
           ),
           const SizedBox(height: 16),
 
-          // Monthly Heatmap Grid
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(color: kCard, borderRadius: BorderRadius.circular(22), border: Border.all(color: kBorder)),
@@ -1165,7 +1147,6 @@ class _AnalyticsLedgerScreenState extends State<AnalyticsLedgerScreen> {
           ),
           const SizedBox(height: 16),
 
-          // Qaza-e-Umri Bank
           Container(
             padding: const EdgeInsets.all(18),
             decoration: BoxDecoration(color: kCard, borderRadius: BorderRadius.circular(22), border: Border.all(color: kBorder)),
@@ -1212,7 +1193,6 @@ class _AnalyticsLedgerScreenState extends State<AnalyticsLedgerScreen> {
           ),
           const SizedBox(height: 16),
 
-          // Zakat Calculator
           Container(
             padding: const EdgeInsets.all(18),
             decoration: BoxDecoration(color: kCard, borderRadius: BorderRadius.circular(22), border: Border.all(color: kBorder)),
