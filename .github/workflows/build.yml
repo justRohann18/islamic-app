@@ -184,6 +184,7 @@ jobs:
           import android.content.ComponentName
           import android.content.Context
           import android.content.Intent
+          import android.net.Uri
           import android.os.Build
           import android.os.SystemClock
           import android.util.TypedValue
@@ -203,6 +204,14 @@ jobs:
                       when (call.method) {
                           "refreshWidgets" -> {
                               pushWidgetsDirectly(applicationContext)
+                              result.success(true)
+                          }
+                          "openUrl" -> {
+                              val url = call.argument<String>("url") ?: "https://instagram.com"
+                              try {
+                                  val i = Intent(Intent.ACTION_VIEW, Uri.parse(url)).apply { addFlags(Intent.FLAG_ACTIVITY_NEW_TASK) }
+                                  applicationContext.startActivity(i)
+                              } catch (_: Exception) {}
                               result.success(true)
                           }
                           "testNotification" -> {
