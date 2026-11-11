@@ -24,21 +24,21 @@ int widgetAyahSize = 22;
 
 String adminPinCode = '7860';
 bool adminShowBanner = true;
-String adminBannerTitle = 'Noor Official Reminder';
+String adminBannerTitle = 'Sirat Official Reminder';
 String adminBannerMsg = 'Recite Surah Al-Mulk before sleeping and track your five daily prayers.';
 bool adminShowPopup = false;
-String adminPopupTitle = 'Special Islamic Broadcast';
+String adminPopupTitle = 'Sirat Broadcast';
 String adminPopupBody = 'Assalamu Alaikum. May Allah accept your prayers and good deeds today.';
 bool adminUpdateAvailable = false;
-String adminLatestVer = 'v13.0 Pro';
+String adminLatestVer = 'v1.0.0 Official';
 String adminUpdateUrl = 'https://github.com/';
 
-String adminAppInsta = '@noor.islamic.app';
-String adminAppFb = 'fb.com/NoorIslamicApp';
+String adminAppInsta = '@sirat.islamic.app';
+String adminAppFb = 'fb.com/SiratIslamicApp';
 String adminDevName = 'Lead Creator & Developer';
 String adminDevBio = 'Building modern, ad-free and authentic Islamic digital experiences as Sadaqah Jariyah.';
-String adminDevInsta = '@developer.noor';
-String adminDevFb = 'fb.com/developer.noor';
+String adminDevInsta = '@developer.sirat';
+String adminDevFb = 'fb.com/developer.sirat';
 
 final List<Map<String, dynamic>> kAccentPalettes = [
   {'name': 'Champagne Gold', 'primary': const Color(0xFFD6B36A), 'sec': const Color(0xFF2DD4BF)},
@@ -66,11 +66,55 @@ String liveDuaRef = 'Quranic Dua • 2:201';
 String liveDuaArab = 'رَبَّنَا آتِنَا فِي الدُّنْيَا حَسَنَةً وَفِي الْآخِرَةِ حَسَنَةً وَقِنَا عَذَابَ النَّارِ';
 String liveDuaTrans = '"Our Lord, grant us good in this world and good in the Hereafter."';
 
+// Custom Generated "SIRAT" (The Straight Path) Vector Emblem
+class SiratLogoPainter extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    final w = size.width, h = size.height;
+    final bgRect = RRect.fromRectAndRadius(Rect.fromLTWH(0, 0, w, h), Radius.circular(w * 0.26));
+    canvas.drawRRect(bgRect, Paint()..color = const Color(0xFF071713));
+    canvas.drawRRect(bgRect, Paint()..color = const Color(0xFFD6B36A)..style = PaintingStyle.stroke..strokeWidth = 2.2);
+
+    // Mihrab Arch
+    final arch = Path()
+      ..moveTo(w * 0.22, h * 0.85)
+      ..lineTo(w * 0.22, h * 0.45)
+      ..quadraticBezierTo(w * 0.22, h * 0.18, w * 0.5, h * 0.12)
+      ..quadraticBezierTo(w * 0.78, h * 0.18, w * 0.78, h * 0.45)
+      ..lineTo(w * 0.78, h * 0.85)
+      ..close();
+    canvas.drawPath(arch, Paint()..color = const Color(0xFFD6B36A)..style = PaintingStyle.stroke..strokeWidth = 2.0);
+
+    // Ascending Straight Path ("Sirat")
+    final path = Path()
+      ..moveTo(w * 0.36, h * 0.85)
+      ..lineTo(w * 0.47, h * 0.38)
+      ..lineTo(w * 0.53, h * 0.38)
+      ..lineTo(w * 0.64, h * 0.85)
+      ..close();
+    canvas.drawPath(path, Paint()..color = const Color(0xFF2DD4BF));
+
+    // Guiding 4-Point Star at the Summit
+    final star = Path()
+      ..moveTo(w * 0.5, h * 0.19)
+      ..lineTo(w * 0.53, h * 0.26)
+      ..lineTo(w * 0.60, h * 0.29)
+      ..lineTo(w * 0.53, h * 0.32)
+      ..lineTo(w * 0.5, h * 0.39)
+      ..lineTo(w * 0.47, h * 0.32)
+      ..lineTo(w * 0.40, h * 0.29)
+      ..lineTo(w * 0.47, h * 0.26)
+      ..close();
+    canvas.drawPath(star, Paint()..color = const Color(0xFFD6B36A));
+  }
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+}
+
 class SocialLogoPainter extends CustomPainter {
   final bool isInstagram;
   final Color color;
   SocialLogoPainter({required this.isInstagram, required this.color});
-
   @override
   void paint(Canvas canvas, Size size) {
     final p = Paint()..color = color..style = PaintingStyle.stroke..strokeWidth = 1.8..strokeCap = StrokeCap.round;
@@ -81,13 +125,7 @@ class SocialLogoPainter extends CustomPainter {
       canvas.drawCircle(Offset(w * 0.72, h * 0.28), w * 0.05, Paint()..color = color);
     } else {
       canvas.drawCircle(Offset(w * 0.5, h * 0.5), w * 0.42, p);
-      final fPath = Path()
-        ..moveTo(w * 0.62, h * 0.28)
-        ..lineTo(w * 0.52, h * 0.28)
-        ..quadraticBezierTo(w * 0.44, h * 0.28, w * 0.44, h * 0.38)
-        ..lineTo(w * 0.44, h * 0.78)
-        ..moveTo(w * 0.35, h * 0.50)
-        ..lineTo(w * 0.60, h * 0.50);
+      final fPath = Path()..moveTo(w * 0.62, h * 0.28)..lineTo(w * 0.52, h * 0.28)..quadraticBezierTo(w * 0.44, h * 0.28, w * 0.44, h * 0.38)..lineTo(w * 0.44, h * 0.78)..moveTo(w * 0.35, h * 0.50)..lineTo(w * 0.60, h * 0.50);
       canvas.drawPath(fPath, p);
     }
   }
@@ -161,6 +199,8 @@ class NoorSuperApp extends StatefulWidget {
 }
 
 class _NoorSuperAppState extends State<NoorSuperApp> {
+  bool showOnboarding = false;
+
   @override
   void initState() {
     super.initState();
@@ -173,6 +213,7 @@ class _NoorSuperAppState extends State<NoorSuperApp> {
         globalUserName = p.getString('user_name') ?? 'Mumin';
         widgetThemeIdx = p.getInt('wid_theme') ?? 0;
         widgetAyahSize = p.getInt('wid_size') ?? 22;
+        showOnboarding = !(p.getBool('sirat_onboarded') ?? false);
       });
       await fetchLiveDailyAyahAndDua();
       if (mounted) setState(() {});
@@ -183,14 +224,130 @@ class _NoorSuperAppState extends State<NoorSuperApp> {
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      title: 'NOOR',
+      title: 'Sirat',
       theme: ThemeData(
         brightness: isDarkMode ? Brightness.dark : Brightness.light,
         scaffoldBackgroundColor: kBg,
         primaryColor: kPrimary,
         cardColor: kCard,
       ),
-      home: MainShell(onAppRebuild: () => setState(() {})),
+      home: showOnboarding
+          ? SiratOnboardingFlashcards(onFinish: () => setState(() => showOnboarding = false))
+          : MainShell(onAppRebuild: () => setState(() {})),
+    );
+  }
+}
+
+// Interactive 4-Slide Flashcard Onboarding for New Users!
+class SiratOnboardingFlashcards extends StatefulWidget {
+  final VoidCallback onFinish;
+  const SiratOnboardingFlashcards({super.key, required this.onFinish});
+  @override
+  State<SiratOnboardingFlashcards> createState() => _SiratOnboardingFlashcardsState();
+}
+
+class _SiratOnboardingFlashcardsState extends State<SiratOnboardingFlashcards> {
+  final PageController _pc = PageController();
+  int page = 0;
+  final nameC = TextEditingController(text: 'Mumin');
+  final cityC = TextEditingController(text: 'Barpaka');
+
+  final List<Map<String, dynamic>> cards = const [
+    {'tag': 'WELCOME TO SIRAT', 'title': 'Your Companion on\nthe Straight Path', 'sub': 'An architectural, ad-free Islamic ecosystem crafted for daily Salah discipline, Quranic reflection, and authentic Sunnah.', 'ic': Icons.mosque_outlined},
+    {'tag': 'PRECISION SALAH & ALARMS', 'title': 'Dual-Pane Live Timer\n& Prayer Alerts', 'sub': 'Track your 5 daily prayers in Jamaat or On-Time. Hold any prayer time to set your local Masjid schedule and receive exact prayer notifications.', 'ic': Icons.notifications_active_outlined},
+    {'tag': 'QURAN.COM SCRIPT & HADITH', 'title': '114 Surahs & 36,000+\nAuthentic Hadiths', 'sub': 'Read the Noble Quran in authentic Uthmani calligraphy with audio recitation, and search globally across 10 major Hadith collections.', 'ic': Icons.menu_book_rounded},
+    {'tag': 'HOME WIDGETS & PERSONALIZE', 'title': 'Live Wallpaper Widgets\n& Spiritual Streak', 'sub': 'Sync dual-pane countdown and daily verse widgets directly to your phone home screen. Enter your name and city below to begin.', 'ic': Icons.layers_outlined},
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: kBg,
+      body: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Row(children: [SizedBox(width: 28, height: 28, child: CustomPaint(painter: SiratLogoPainter())), const SizedBox(width: 8), Text('SIRAT', style: TextStyle(fontWeight: FontWeight.w900, letterSpacing: 1.5, color: kPrimary))]),
+                  Row(
+                    children: List.generate(4, (i) => Container(width: page == i ? 22 : 7, height: 7, margin: const EdgeInsets.only(left: 5), decoration: BoxDecoration(color: page == i ? kPrimary : kBorder, borderRadius: BorderRadius.circular(6)))),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 20),
+              Expanded(
+                child: PageView.builder(
+                  controller: _pc,
+                  onPageChanged: (i) => setState(() => page = i),
+                  itemCount: cards.length,
+                  itemBuilder: (_, i) {
+                    final c = cards[i];
+                    return Container(
+                      margin: const EdgeInsets.symmetric(vertical: 10),
+                      padding: const EdgeInsets.all(26),
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(colors: [kCardAlt, kCard], begin: Alignment.topLeft, end: Alignment.bottomRight),
+                        borderRadius: BorderRadius.circular(28),
+                        border: Border.all(color: kPrimary.withOpacity(0.45), width: 1.5),
+                      ),
+                      child: SingleChildScrollView(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            if (i == 0)
+                              Center(child: SizedBox(width: 84, height: 84, child: CustomPaint(painter: SiratLogoPainter())))
+                            else
+                              Container(padding: const EdgeInsets.all(16), decoration: BoxDecoration(color: kPrimary.withOpacity(0.15), borderRadius: BorderRadius.circular(20)), child: Icon(c['ic'] as IconData, size: 36, color: kPrimary)),
+                            const SizedBox(height: 24),
+                            Text(c['tag'] as String, style: TextStyle(fontSize: 10.5, fontWeight: FontWeight.w900, color: kSecondary, letterSpacing: 1.4)),
+                            const SizedBox(height: 8),
+                            Text(c['title'] as String, style: TextStyle(fontSize: 26, fontFamily: 'serif', fontWeight: FontWeight.bold, color: kText, height: 1.2)),
+                            const SizedBox(height: 14),
+                            Text(c['sub'] as String, style: TextStyle(fontSize: 13.5, color: kMuted, height: 1.55)),
+                            if (i == 3) ...[
+                              const SizedBox(height: 20),
+                              TextField(controller: nameC, decoration: InputDecoration(labelText: 'Your Name', filled: true, fillColor: kBg, border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)))),
+                              const SizedBox(height: 10),
+                              TextField(controller: cityC, decoration: InputDecoration(labelText: 'Your City / Town', filled: true, fillColor: kBg, border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)))),
+                            ],
+                          ],
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              ),
+              const SizedBox(height: 16),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  style: ElevatedButton.styleFrom(backgroundColor: kPrimary, padding: const EdgeInsets.symmetric(vertical: 16), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18))),
+                  onPressed: () async {
+                    if (page < 3) {
+                      _pc.nextPage(duration: const Duration(milliseconds: 280), curve: Curves.easeOut);
+                    } else {
+                      final p = await SharedPreferences.getInstance();
+                      await p.setBool('sirat_onboarded', true);
+                      if (nameC.text.trim().isNotEmpty) {
+                        globalUserName = nameC.text.trim();
+                        await p.setString('user_name', globalUserName);
+                      }
+                      if (cityC.text.trim().isNotEmpty) {
+                        await p.setString('loc', cityC.text.trim());
+                      }
+                      widget.onFinish();
+                    }
+                  },
+                  child: Text(page < 3 ? 'NEXT FLASHCARD' : 'BEGIN MY SIRAT JOURNEY', style: const TextStyle(color: Colors.black, fontWeight: FontWeight.w900, letterSpacing: 0.8)),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }
@@ -253,6 +410,11 @@ class _MainShellState extends State<MainShell> {
     );
   }
 }
+
+
+
+
+
 
 
 
@@ -806,6 +968,7 @@ class _LiveAnimatedWidgetStudioPageState extends State<LiveAnimatedWidgetStudioP
 
 
 
+
 // ---------------- 3. ENHANCED EXECUTIVE STREAK TAB & 4. KITAB TAB ----------------
 class UniqueStreakScreen extends StatefulWidget {
   const UniqueStreakScreen({super.key});
@@ -1222,8 +1385,7 @@ class _KitabScreenState extends State<KitabScreen> {
 
 
 
-
-// ---------------- READERS, SETTINGS (VECTOR BRAND LOGOS!) & ADMIN PANEL ----------------
+// ---------------- READERS, SIRAT SETTINGS (CUSTOM LOGO + FLASHCARDS) & ADMIN PANEL ----------------
 class HadithBookReaderPage extends StatefulWidget {
   final String bookId, bookTitle;
   final int maxSections;
@@ -1382,8 +1544,8 @@ class _SurahReaderPageState extends State<SurahReaderPage> {
                         ),
                       ],
                     ),
-                    Text(ar[i]['text'], textAlign: TextAlign.right, style: TextStyle(fontSize: 23, fontWeight: FontWeight.bold, color: kText)),
-                    const SizedBox(height: 8),
+                    Text(ar[i]['text'], textAlign: TextAlign.right, style: TextStyle(fontSize: 26, fontFamily: 'QuranFont', color: kText, height: 1.85)),
+                    const SizedBox(height: 10),
                     Text(tr[i]['text'], style: TextStyle(fontSize: 13.5, color: kMuted)),
                   ],
                 ),
@@ -1486,18 +1648,19 @@ class _SettingsProfileScreenState extends State<SettingsProfileScreen> {
       child: ListView(
         padding: const EdgeInsets.fromLTRB(18, 16, 18, 100),
         children: [
-          // 1. TOP APP LOGO & VECTOR SOCIAL HANDLES
+          // 1. SIRAT CUSTOM VECTOR LOGO & SOCIAL HANDLES
           GestureDetector(
             onLongPress: _openAdminPin,
             child: Container(
-              padding: const EdgeInsets.all(20),
-              decoration: BoxDecoration(color: kCard, borderRadius: BorderRadius.circular(22), border: Border.all(color: kPrimary.withOpacity(0.45))),
+              padding: const EdgeInsets.all(22),
+              decoration: BoxDecoration(color: kCard, borderRadius: BorderRadius.circular(24), border: Border.all(color: kPrimary.withOpacity(0.45))),
               child: Column(
                 children: [
-                  Container(width: 58, height: 58, decoration: BoxDecoration(color: kPrimary, borderRadius: BorderRadius.circular(16)), child: const Icon(Icons.mosque_outlined, size: 30, color: Colors.black)),
-                  const SizedBox(height: 10),
-                  Text('NOOR ARCHITECTURAL', style: TextStyle(fontSize: 18, fontFamily: 'serif', fontWeight: FontWeight.w900, color: kText, letterSpacing: 1.2)),
+                  SizedBox(width: 72, height: 72, child: CustomPaint(painter: SiratLogoPainter())),
                   const SizedBox(height: 12),
+                  Text('SIRAT', style: TextStyle(fontSize: 22, fontFamily: 'serif', fontWeight: FontWeight.w900, color: kText, letterSpacing: 2.5)),
+                  Text('The Straight Path • v1.0.0 Official', style: TextStyle(fontSize: 11, color: kMuted)),
+                  const SizedBox(height: 14),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
@@ -1546,8 +1709,8 @@ class _SettingsProfileScreenState extends State<SettingsProfileScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text('User: $globalUserName • Home Widgets', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 13.5, color: kText)),
-                        Text('Tap to set Username and sync Dual-Pane Widgets', style: TextStyle(fontSize: 11, color: kSecondary, fontWeight: FontWeight.bold)),
+                        Text('User: $globalUserName • Sirat Widgets', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 13.5, color: kText)),
+                        Text('Tap to set Username, Widget Theme & Ayah Size', style: TextStyle(fontSize: 11, color: kSecondary, fontWeight: FontWeight.bold)),
                       ],
                     ),
                   ),
@@ -1630,7 +1793,7 @@ class _SettingsProfileScreenState extends State<SettingsProfileScreen> {
           ),
           const SizedBox(height: 14),
 
-          // 6. DEVELOPER PROFILE WITH VECTOR INSTA & FB LOGOS
+          // 6. DEVELOPER PROFILE & REPLAY FLASHCARDS
           Container(
             padding: const EdgeInsets.all(18),
             decoration: BoxDecoration(color: kCard, borderRadius: BorderRadius.circular(22), border: Border.all(color: kBorder)),
@@ -1651,7 +1814,22 @@ class _SettingsProfileScreenState extends State<SettingsProfileScreen> {
                   ],
                 ),
                 const SizedBox(height: 12),
-                OutlinedButton.icon(onPressed: _openAdminPin, icon: Icon(Icons.lock_outline_rounded, size: 15, color: kPrimary), label: Text('Owner Admin Panel', style: TextStyle(color: kPrimary, fontSize: 12))),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    OutlinedButton.icon(
+                      onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => SiratOnboardingFlashcards(onFinish: () => Navigator.pop(context)))),
+                      icon: Icon(Icons.style_outlined, size: 15, color: kSecondary),
+                      label: Text('Intro Flashcards', style: TextStyle(color: kSecondary, fontSize: 11.5)),
+                    ),
+                    const SizedBox(width: 8),
+                    OutlinedButton.icon(
+                      onPressed: _openAdminPin,
+                      icon: Icon(Icons.lock_outline_rounded, size: 15, color: kPrimary),
+                      label: Text('Admin Panel', style: TextStyle(color: kPrimary, fontSize: 11.5)),
+                    ),
+                  ],
+                ),
               ],
             ),
           ),
@@ -1677,7 +1855,7 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Owner Admin Control Panel'), backgroundColor: kBg),
+      appBar: AppBar(title: const Text('Sirat Owner Admin Panel'), backgroundColor: kBg),
       body: ListView(
         padding: const EdgeInsets.all(18),
         children: [
@@ -1714,6 +1892,3 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
     );
   }
 }
-
-
-
