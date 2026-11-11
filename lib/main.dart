@@ -418,7 +418,6 @@ class _MainShellState extends State<MainShell> {
 
 
 
-
 // ---------------- 1. HOMEPAGE (QURAN.COM FONT + ALARMS) & 2. WIDGET STUDIO (SIZE + THEME) ----------------
 class InteractiveHomeScreen extends StatefulWidget {
   final Function(int, {int sub}) onNav;
@@ -962,6 +961,9 @@ class _LiveAnimatedWidgetStudioPageState extends State<LiveAnimatedWidgetStudioP
 
 
 
+
+
+
 // ---------------- 3. ENHANCED EXECUTIVE STREAK TAB & 4. KITAB TAB ----------------
 class UniqueStreakScreen extends StatefulWidget {
   const UniqueStreakScreen({super.key});
@@ -1372,11 +1374,85 @@ class _KitabScreenState extends State<KitabScreen> {
 
 
 
-// ---------------- EXTRA ADMIN STATE, READERS & SECRET LOGO-HOLD SETTINGS ----------------
+
+
+// ---------------- EXTRA ADMIN STATE, READERS & DIRECT SOCIAL REDIRECT SETTINGS ----------------
 String adminDevImage = '';
 bool adminForceCustomAyah = false;
 bool adminForceCustomDua = false;
 bool adminMaintenanceMode = false;
+
+// Directly opens Instagram or Facebook App / Browser when user taps handle!
+Future<void> openSocialProfile(bool isInstagram, String handleOrUrl) async {
+  String clean = handleOrUrl.trim();
+  String finalUrl = clean;
+  if (!clean.startsWith('http://') && !clean.startsWith('https://')) {
+    clean = clean.replaceAll('@', '');
+    if (isInstagram) {
+      clean = clean.replaceAll('instagram.com/', '').replaceAll('www.instagram.com/', '');
+      finalUrl = 'https://www.instagram.com/$clean';
+    } else {
+      clean = clean.replaceAll('fb.com/', '').replaceAll('facebook.com/', '').replaceAll('www.facebook.com/', '');
+      finalUrl = 'https://www.facebook.com/$clean';
+    }
+  }
+  try {
+    await _widgetChannel.invokeMethod('openUrl', {'url': finalUrl});
+  } catch (_) {}
+}
+
+// Fetches live admin_config.json from justRohann18/islamic-app (with zero cache delay!)
+Future<void> syncFromGitHubCloudGlobal() async {
+  try {
+    final p = await SharedPreferences.getInstance();
+    adminPinCode = p.getString('adm_pin') ?? adminPinCode;
+    adminDevImage = p.getString('adm_dev_img') ?? adminDevImage;
+    adminAppInsta = p.getString('adm_app_ig') ?? adminAppInsta;
+    adminAppFb = p.getString('adm_app_fb') ?? adminAppFb;
+    adminDevInsta = p.getString('adm_dev_ig') ?? adminDevInsta;
+    adminDevFb = p.getString('adm_dev_fb') ?? adminDevFb;
+    adminDevName = p.getString('adm_dev_n') ?? adminDevName;
+    adminDevBio = p.getString('adm_dev_b') ?? adminDevBio;
+
+    final ts = DateTime.now().millisecondsSinceEpoch;
+    final urls = [
+      'https://api.github.com/repos/justRohann18/islamic-app/contents/admin_config.json?t=$ts',
+      'https://raw.githubusercontent.com/justRohann18/islamic-app/main/admin_config.json?t=$ts',
+    ];
+
+    for (var u in urls) {
+      final r = await http.get(Uri.parse(u), headers: {'Accept': 'application/vnd.github.v3.raw'});
+      if (r.statusCode == 200 && r.body.trim().startsWith('{')) {
+        final d = json.decode(r.body);
+        adminShowBanner = d['show_banner'] ?? adminShowBanner;
+        adminBannerTitle = d['banner_title'] ?? adminBannerTitle;
+        adminBannerMsg = d['banner_message'] ?? adminBannerMsg;
+        adminShowPopup = d['show_popup'] ?? adminShowPopup;
+        adminPopupTitle = d['popup_title'] ?? adminPopupTitle;
+        adminPopupBody = d['popup_body'] ?? adminPopupBody;
+        adminUpdateAvailable = d['update_available'] ?? adminUpdateAvailable;
+        adminLatestVer = d['latest_version'] ?? adminLatestVer;
+        adminUpdateUrl = d['update_url'] ?? adminUpdateUrl;
+        adminAppInsta = d['app_insta'] ?? adminAppInsta;
+        adminAppFb = d['app_fb'] ?? adminAppFb;
+        adminDevName = d['dev_name'] ?? adminDevName;
+        adminDevBio = d['dev_bio'] ?? adminDevBio;
+        adminDevImage = d['dev_image'] ?? adminDevImage;
+        adminDevInsta = d['dev_insta'] ?? adminDevInsta;
+        adminDevFb = d['dev_fb'] ?? adminDevFb;
+
+        await p.setString('adm_dev_n', adminDevName);
+        await p.setString('adm_dev_b', adminDevBio);
+        await p.setString('adm_dev_img', adminDevImage);
+        await p.setString('adm_dev_ig', adminDevInsta);
+        await p.setString('adm_dev_fb', adminDevFb);
+        await p.setString('adm_app_ig', adminAppInsta);
+        await p.setString('adm_app_fb', adminAppFb);
+        break;
+      }
+    }
+  } catch (_) {}
+}
 
 class HadithBookReaderPage extends StatefulWidget {
   final String bookId, bookTitle;
@@ -1558,43 +1634,9 @@ class _SettingsProfileScreenState extends State<SettingsProfileScreen> {
   @override
   void initState() {
     super.initState();
-    _syncFromGitHubCloud();
-  }
-
-  Future<void> _syncFromGitHubCloud() async {
-    try {
-      final p = await SharedPreferences.getInstance();
-      adminPinCode = p.getString('adm_pin') ?? adminPinCode;
-      adminDevImage = p.getString('adm_dev_img') ?? adminDevImage;
-      adminAppInsta = p.getString('adm_app_ig') ?? adminAppInsta;
-      adminAppFb = p.getString('adm_app_fb') ?? adminAppFb;
-      adminDevInsta = p.getString('adm_dev_ig') ?? adminDevInsta;
-      adminDevFb = p.getString('adm_dev_fb') ?? adminDevFb;
-      adminDevBio = p.getString('adm_dev_b') ?? adminDevBio;
-
-      const cloudUrl = 'https://raw.githubusercontent.com/justRohan18/islamic-app/main/admin_config.json';
-      final r = await http.get(Uri.parse('$cloudUrl?t=${DateTime.now().millisecondsSinceEpoch}'));
-      if (r.statusCode == 200) {
-        final d = json.decode(r.body);
-        adminShowBanner = d['show_banner'] ?? adminShowBanner;
-        adminBannerTitle = d['banner_title'] ?? adminBannerTitle;
-        adminBannerMsg = d['banner_message'] ?? adminBannerMsg;
-        adminShowPopup = d['show_popup'] ?? adminShowPopup;
-        adminPopupTitle = d['popup_title'] ?? adminPopupTitle;
-        adminPopupBody = d['popup_body'] ?? adminPopupBody;
-        adminUpdateAvailable = d['update_available'] ?? adminUpdateAvailable;
-        adminLatestVer = d['latest_version'] ?? adminLatestVer;
-        adminUpdateUrl = d['update_url'] ?? adminUpdateUrl;
-        adminAppInsta = d['app_insta'] ?? adminAppInsta;
-        adminAppFb = d['app_fb'] ?? adminAppFb;
-        adminDevName = d['dev_name'] ?? adminDevName;
-        adminDevBio = d['dev_bio'] ?? adminDevBio;
-        adminDevImage = d['dev_image'] ?? adminDevImage;
-        adminDevInsta = d['dev_insta'] ?? adminDevInsta;
-        adminDevFb = d['dev_fb'] ?? adminDevFb;
-        if (mounted) { setState(() {}); widget.onRebuild(); }
-      }
-    } catch (_) {}
+    syncFromGitHubCloudGlobal().then((_) {
+      if (mounted) { setState(() {}); widget.onRebuild(); }
+    });
   }
 
   void _openUserNameAndWidgets() {
@@ -1631,7 +1673,6 @@ class _SettingsProfileScreenState extends State<SettingsProfileScreen> {
     );
   }
 
-  // Secret Hold on SIRAT Logo opens PIN Dialog (Hidden from regular users!)
   void _openSecretAdminPin() {
     HapticFeedback.heavyImpact();
     final pinC = TextEditingController();
@@ -1658,12 +1699,10 @@ class _SettingsProfileScreenState extends State<SettingsProfileScreen> {
     );
   }
 
+  // Tapping Instagram or Facebook directly redirects to Instagram/Facebook App!
   Widget _brandBadge(bool isInsta, String handle) {
     return GestureDetector(
-      onTap: () {
-        Clipboard.setData(ClipboardData(text: handle));
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(backgroundColor: kPrimary, content: Text('Copied $handle', style: const TextStyle(color: Colors.black))));
-      },
+      onTap: () => openSocialProfile(isInsta, handle),
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
         decoration: BoxDecoration(color: kBg, borderRadius: BorderRadius.circular(14), border: Border.all(color: kBorder)),
@@ -1673,6 +1712,8 @@ class _SettingsProfileScreenState extends State<SettingsProfileScreen> {
             SizedBox(width: 16, height: 16, child: CustomPaint(painter: SocialLogoPainter(isInstagram: isInsta, color: isInsta ? kPrimary : kSecondary))),
             const SizedBox(width: 7),
             Text(handle, style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: kText)),
+            const SizedBox(width: 4),
+            Icon(Icons.open_in_new_rounded, size: 11, color: kMuted),
           ],
         ),
       ),
@@ -1686,7 +1727,6 @@ class _SettingsProfileScreenState extends State<SettingsProfileScreen> {
       child: ListView(
         padding: const EdgeInsets.fromLTRB(18, 16, 18, 100),
         children: [
-          // HOLD THIS SIRAT LOGO CARD TO OPEN SECRET ADMIN PANEL!
           GestureDetector(
             onLongPress: _openSecretAdminPin,
             child: Container(
@@ -1816,7 +1856,6 @@ class _SettingsProfileScreenState extends State<SettingsProfileScreen> {
           ),
           const SizedBox(height: 14),
 
-          // DEVELOPER CARD (NO VISIBLE ADMIN BUTTON HERE!)
           Container(
             padding: const EdgeInsets.all(18),
             decoration: BoxDecoration(color: kCard, borderRadius: BorderRadius.circular(22), border: Border.all(color: kBorder)),
@@ -2106,3 +2145,5 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
     );
   }
 }
+
+
