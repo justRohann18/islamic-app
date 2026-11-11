@@ -9,25 +9,42 @@ import 'package:audioplayers/audioplayers.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
-  SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
-    statusBarColor: Colors.transparent,
-    statusBarIconBrightness: Brightness.light,
-  ));
-  runApp(const NoorDailyApp());
+  runApp(const NoorSuperApp());
 }
 
-// ---------------- WARM DESERT & EMERALD LUXURY PALETTE ----------------
-const Color kBg = Color(0xFF080C0B);
-const Color kCard = Color(0xFF111917);
-const Color kCardAlt = Color(0xFF192622);
-const Color kBorder = Color(0xFF243832);
-const Color kAmber = Color(0xFFF59E0B);
-const Color kGold = Color(0xFFFBBF24);
-const Color kMint = Color(0xFF2DD4BF);
-const Color kMuted = Color(0xFF8E9E99);
+const MethodChannel _widgetChannel = MethodChannel('com.noor/widgets');
 
+bool isDarkMode = true;
+int accentIndex = 0;
 String appLang = 'en';
 bool use12Hour = true;
+
+final List<Map<String, dynamic>> kAccentPalettes = [
+  {'name': 'Amber Gold', 'primary': const Color(0xFFF59E0B), 'sec': const Color(0xFF2DD4BF)},
+  {'name': 'Emerald Mint', 'primary': const Color(0xFF10B981), 'sec': const Color(0xFFFBBF24)},
+  {'name': 'Royal Sapphire', 'primary': const Color(0xFF38BDF8), 'sec': const Color(0xFF818CF8)},
+  {'name': 'Amethyst Velvet', 'primary': const Color(0xFFA855F7), 'sec': const Color(0xFFF472B6)},
+  {'name': 'Rose Ruby', 'primary': const Color(0xFFF43F5E), 'sec': const Color(0xFFFBBF24)},
+  {'name': 'Cyan Ocean', 'primary': const Color(0xFF06B6D4), 'sec': const Color(0xFF34D399)},
+];
+
+Color get kPrimary => kAccentPalettes[accentIndex]['primary'] as Color;
+Color get kSecondary => kAccentPalettes[accentIndex]['sec'] as Color;
+Color get kBg => isDarkMode ? const Color(0xFF080C0B) : const Color(0xFFF4F6F5);
+Color get kCard => isDarkMode ? const Color(0xFF111917) : const Color(0xFFFFFFFF);
+Color get kCardAlt => isDarkMode ? const Color(0xFF192622) : const Color(0xFFE6F0EC);
+Color get kBorder => isDarkMode ? const Color(0xFF243832) : const Color(0xFFD0DFD9);
+Color get kText => isDarkMode ? Colors.white : const Color(0xFF0F172A);
+Color get kMuted => isDarkMode ? const Color(0xFF8E9E99) : const Color(0xFF64748B);
+
+String liveAyahRef = 'Surah Ash-Sharh • 94:5';
+String liveAyahArab = 'فَإِنَّ مَعَ الْعُسْرِ يُسْرًا';
+String liveAyahTrans = '"Indeed, with hardship comes ease."';
+String liveAyahAudio = 'https://cdn.islamic.network/quran/audio/128/ar.alafasy/6095.mp3';
+
+String liveDuaRef = 'Quranic Rabbanah Dua • 2:201';
+String liveDuaArab = 'رَبَّنَا آتِنَا فِي الدُّنْيَا حَسَنَةً وَفِي الْآخِرَةِ حَسَنَةً وَقِنَا عَذَابَ النَّارِ';
+String liveDuaTrans = '"Our Lord! Grant us good in this world and good in the Hereafter, and protect us from the Fire."';
 
 String formatClock(String raw) {
   if (!raw.contains(':')) return raw;
@@ -46,26 +63,99 @@ String formatClock(String raw) {
 
 String getDateKey(DateTime d) => "${d.year}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}";
 
-class NoorDailyApp extends StatelessWidget {
-  const NoorDailyApp({super.key});
+String tr(String en, String hi, String ur, String ro) {
+  if (appLang == 'hi') return hi;
+  if (appLang == 'ur') return ur;
+  if (appLang == 'ro') return ro;
+  return en;
+}
+
+Future<void> triggerNativeWidgetBroadcast() async {
+  try {
+    await _widgetChannel.invokeMethod('refreshWidgets');
+  } catch (_) {}
+}
+
+Future<void> fetchLiveDailyAyahAndDua({bool forceRandom = false}) async {
+  try {
+    final now = DateTime.now();
+    int dayOfYear = now.difference(DateTime(now.year, 1, 1)).inDays + 1;
+    int ayahNum = forceRandom ? (math.Random().nextInt(6200) + 10) : ((dayOfYear * 37 + now.year) % 6220) + 7;
+    String ed = appLang == 'hi' ? 'hi.hindi' : (appLang == 'ur' ? 'ur.jalandhry' : 'en.asad');
+
+    final r = await http.get(Uri.parse('https://api.alquran.cloud/v1/ayah/$ayahNum/editions/ar.alafasy,$ed'));
+    if (r.statusCode == 200) {
+      final d = json.decode(r.body)['data'];
+      liveAyahArab = d[0]['text'];
+      liveAyahAudio = d[0]['audio'] ?? liveAyahAudio;
+      liveAyahTrans = '"${d[1]['text']}"';
+      liveAyahRef = '${d[0]['surah']['englishName']} • ${d[0]['surah']['number']}:${d[0]['numberInSurah']}';
+    }
+
+    const duaAyahNumbers = [208, 293, 301, 1750, 2373, 2935, 3189, 4153, 5150];
+    int duaAyah = duaAyahNumbers[(forceRandom ? math.Random().nextInt(9) : dayOfYear) % duaAyahNumbers.length];
+    final dr = await http.get(Uri.parse('https://api.alquran.cloud/v1/ayah/$duaAyah/editions/ar.alafasy,$ed'));
+    if (dr.statusCode == 200) {
+      final dd = json.decode(dr.body)['data'];
+      liveDuaArab = dd[0]['text'];
+      liveDuaTrans = '"${dd[1]['text']}"';
+      liveDuaRef = 'Daily Dua • ${dd[0]['surah']['englishName']} ${dd[0]['surah']['number']}:${dd[0]['numberInSurah']}';
+    }
+
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('wq_ref', '✨ $liveAyahRef');
+    await prefs.setString('wq_arab', liveAyahArab);
+    await prefs.setString('wq_hing', liveAyahTrans);
+    await triggerNativeWidgetBroadcast();
+  } catch (_) {}
+}
+
+class NoorSuperApp extends StatefulWidget {
+  const NoorSuperApp({super.key});
+  @override
+  State<NoorSuperApp> createState() => _NoorSuperAppState();
+}
+
+class _NoorSuperAppState extends State<NoorSuperApp> {
+  @override
+  void initState() {
+    super.initState();
+    _initPrefs();
+  }
+
+  Future<void> _initPrefs() async {
+    final p = await SharedPreferences.getInstance();
+    setState(() {
+      isDarkMode = p.getBool('dark') ?? true;
+      accentIndex = p.getInt('accent') ?? 0;
+      appLang = p.getString('lang') ?? 'en';
+      use12Hour = p.getBool('use12') ?? true;
+    });
+    await fetchLiveDailyAyahAndDua();
+    if (mounted) setState(() {});
+  }
+
+  void _rebuildApp() => setState(() {});
+
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       title: 'NOOR',
       theme: ThemeData(
-        brightness: Brightness.dark,
+        brightness: isDarkMode ? Brightness.dark : Brightness.light,
         scaffoldBackgroundColor: kBg,
-        primaryColor: kAmber,
+        primaryColor: kPrimary,
         cardColor: kCard,
       ),
-      home: const MainShell(),
+      home: MainShell(onAppRebuild: _rebuildApp),
     );
   }
 }
 
 class MainShell extends StatefulWidget {
-  const MainShell({super.key});
+  final VoidCallback onAppRebuild;
+  const MainShell({super.key, required this.onAppRebuild});
   @override
   State<MainShell> createState() => _MainShellState();
 }
@@ -74,26 +164,16 @@ class _MainShellState extends State<MainShell> {
   int idx = 0;
   int kitSub = 0;
 
-  @override
-  void initState() {
-    super.initState();
-    SharedPreferences.getInstance().then((p) {
-      setState(() {
-        appLang = p.getString('lang') ?? 'en';
-        use12Hour = p.getBool('use12') ?? true;
-      });
-    });
-  }
-
   void _nav(int i, {int sub = 0}) => setState(() { idx = i; kitSub = sub; });
 
   @override
   Widget build(BuildContext context) {
     final pages = [
-      InteractiveHomeScreen(onNav: _nav),
-      const UniqueWidgetStudioScreen(),
-      const AnalyticsLedgerScreen(),
+      InteractiveHomeScreen(onNav: _nav, onRebuild: widget.onAppRebuild),
+      UniqueWidgetStudioScreen(onRebuild: widget.onAppRebuild),
+      const UniqueStreakScreen(),
       KitabScreen(initTab: kitSub),
+      SettingsProfileScreen(onRebuild: widget.onAppRebuild),
     ];
 
     return Scaffold(
@@ -101,21 +181,21 @@ class _MainShellState extends State<MainShell> {
       body: pages[idx],
       bottomNavigationBar: Container(
         height: 66,
-        margin: const EdgeInsets.fromLTRB(20, 0, 20, 16),
-        padding: const EdgeInsets.symmetric(horizontal: 10),
+        margin: const EdgeInsets.fromLTRB(14, 0, 14, 14),
+        padding: const EdgeInsets.symmetric(horizontal: 6),
         decoration: BoxDecoration(
-          color: const Color(0xFF0E1614).withOpacity(0.96),
+          color: kCard.withOpacity(0.96),
           borderRadius: BorderRadius.circular(28),
           border: Border.all(color: kBorder, width: 1.2),
-          boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.65), blurRadius: 25, offset: const Offset(0, 10))],
         ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceAround,
           children: [
-            _navPill(0, Icons.wb_twilight_rounded, 'Today'),
-            _navPill(1, Icons.auto_awesome_mosaic_rounded, 'Widgets'),
-            _navPill(2, Icons.insights_rounded, 'Streak'),
-            _navPill(3, Icons.menu_book_rounded, 'Kitab'),
+            _navPill(0, Icons.wb_twilight_rounded, tr('Today', 'आज', 'آج', 'Today')),
+            _navPill(1, Icons.widgets_rounded, tr('Widgets', 'विजेट', 'ویجٹ', 'Widgets')),
+            _navPill(2, Icons.local_fire_department_rounded, tr('Streak', 'स्ट्रीक', 'اسٹریک', 'Streak')),
+            _navPill(3, Icons.menu_book_rounded, tr('Kitab', 'किताब', 'کتاب', 'Kitab')),
+            _navPill(4, Icons.settings_rounded, tr('Settings', 'सेटिंग्स', 'ترتیبات', 'Settings')),
           ],
         ),
       ),
@@ -128,17 +208,17 @@ class _MainShellState extends State<MainShell> {
       onTap: () { HapticFeedback.selectionClick(); setState(() => idx = i); },
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
-        padding: EdgeInsets.symmetric(horizontal: sel ? 18 : 12, vertical: 10),
+        padding: EdgeInsets.symmetric(horizontal: sel ? 13 : 9, vertical: 9),
         decoration: BoxDecoration(
-          gradient: sel ? const LinearGradient(colors: [kAmber, Color(0xFFD97706)]) : null,
+          color: sel ? kPrimary : Colors.transparent,
           borderRadius: BorderRadius.circular(20),
         ),
         child: Row(
           children: [
-            Icon(ic, size: 20, color: sel ? Colors.black : kMuted),
+            Icon(ic, size: 19, color: sel ? Colors.black : kMuted),
             if (sel) ...[
-              const SizedBox(width: 7),
-              Text(label, style: const TextStyle(color: Colors.black, fontSize: 12.5, fontWeight: FontWeight.w900)),
+              const SizedBox(width: 5),
+              Text(label, style: const TextStyle(color: Colors.black, fontSize: 11.5, fontWeight: FontWeight.w900)),
             ],
           ],
         ),
@@ -147,38 +227,43 @@ class _MainShellState extends State<MainShell> {
   }
 }
 
-// ---------------- MIHRAB ARCH & CELESTIAL RAYS PAINTER ----------------
 class MihrabArchPainter extends CustomPainter {
+  final Color col;
+  MihrabArchPainter(this.col);
   @override
   void paint(Canvas canvas, Size size) {
-    final p = Paint()
-      ..color = kAmber.withOpacity(0.14)
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 1.5;
-
-    final archPath = Path()
+    final p = Paint()..color = col.withOpacity(0.18)..style = PaintingStyle.stroke..strokeWidth = 1.6;
+    final arch = Path()
       ..moveTo(size.width * 0.12, size.height)
       ..lineTo(size.width * 0.12, size.height * 0.45)
       ..quadraticBezierTo(size.width * 0.12, size.height * 0.08, size.width * 0.5, size.height * 0.02)
       ..quadraticBezierTo(size.width * 0.88, size.height * 0.08, size.width * 0.88, size.height * 0.45)
       ..lineTo(size.width * 0.88, size.height);
-    canvas.drawPath(archPath, p);
-
-    canvas.drawCircle(
-      Offset(size.width * 0.5, size.height * 0.25),
-      size.width * 0.28,
-      Paint()..color = kAmber.withOpacity(0.05),
-    );
+    canvas.drawPath(arch, p);
   }
-
   @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => true;
 }
 
-// ---------------- 1. NEW ENGAGING DAILY HABIT HOMEPAGE ----------------
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+// ---------------- 1. ENGAGING DAILY HABIT HOMEPAGE ----------------
 class InteractiveHomeScreen extends StatefulWidget {
   final Function(int, {int sub}) onNav;
-  const InteractiveHomeScreen({super.key, required this.onNav});
+  final VoidCallback onRebuild;
+  const InteractiveHomeScreen({super.key, required this.onNav, required this.onRebuild});
   @override
   State<InteractiveHomeScreen> createState() => _InteractiveHomeScreenState();
 }
@@ -204,22 +289,15 @@ class _InteractiveHomeScreenState extends State<InteractiveHomeScreen> {
     {'ar': 'أَسْتَغْفِرُ اللَّهَ', 'en': 'Astaghfirullah'},
   ];
 
-  Map<String, bool> habits = {
-    'Morning Adhkar': false,
-    'Surah Al-Mulk': false,
-    'Istighfar 100x': false,
-    'Sleep in Wudu': false,
-  };
-
   final AudioPlayer audioPlayer = AudioPlayer();
-  bool isPlayingSurah = false;
+  bool isPlayingAyah = false;
 
   @override
   void initState() {
     super.initState();
     _load();
     timer = Timer.periodic(const Duration(seconds: 1), (_) => _tick());
-    audioPlayer.onPlayerComplete.listen((_) => mounted ? setState(() => isPlayingSurah = false) : null);
+    audioPlayer.onPlayerComplete.listen((_) => mounted ? setState(() => isPlayingAyah = false) : null);
   }
 
   @override
@@ -265,9 +343,6 @@ class _InteractiveHomeScreenState extends State<InteractiveHomeScreen> {
         status[pr] = p.getInt('st_${tKey}_$pr') ?? 0;
         if (manual) times[pr] = p.getString('mt_$pr') ?? times[pr]!;
       }
-      for (var h in habits.keys.toList()) {
-        habits[h] = p.getBool('hb_${tKey}_$h') ?? false;
-      }
     });
     if (!manual) _fetchAPI();
     _syncWidgetPrefs();
@@ -280,7 +355,8 @@ class _InteractiveHomeScreenState extends State<InteractiveHomeScreen> {
     await p.setString('wp_next', formatClock(times[nextP]!));
     await p.setString(
         'wp_strip',
-        'Fajr ${formatClock(times['Fajr']!).split(' ')[0]} • Dhuhr ${formatClock(times['Dhuhr']!).split(' ')[0]} • Asr ${formatClock(times['Asr']!).split(' ')[0]} • Mag ${formatClock(times['Maghrib']!).split(' ')[0]} • Isha ${formatClock(times['Isha']!).split(' ')[0]}');
+        'Fajr ${formatClock(times['Fajr']!).split(' ')[0]}  •  Dhuhr ${formatClock(times['Dhuhr']!).split(' ')[0]}  •  Asr ${formatClock(times['Asr']!).split(' ')[0]}  •  Mag ${formatClock(times['Maghrib']!).split(' ')[0]}  •  Isha ${formatClock(times['Isha']!).split(' ')[0]}');
+    await triggerNativeWidgetBroadcast();
   }
 
   Future<void> _fetchAPI() async {
@@ -305,12 +381,12 @@ class _InteractiveHomeScreenState extends State<InteractiveHomeScreen> {
       context: context,
       builder: (ctx) => AlertDialog(
         backgroundColor: kCard,
-        title: const Text('Set City / Village', style: TextStyle(color: kGold)),
+        title: Text('Set City / Village', style: TextStyle(color: kPrimary)),
         content: TextField(controller: ctrl, decoration: const InputDecoration(hintText: 'e.g. Barpaka, Rupahi, Delhi')),
         actions: [
           TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
           ElevatedButton(
-            style: ElevatedButton.styleFrom(backgroundColor: kAmber),
+            style: ElevatedButton.styleFrom(backgroundColor: kPrimary),
             onPressed: () async {
               String pl = ctrl.text.trim();
               Navigator.pop(ctx);
@@ -318,7 +394,7 @@ class _InteractiveHomeScreenState extends State<InteractiveHomeScreen> {
                 final p = await SharedPreferences.getInstance();
                 await p.setString('loc', pl);
                 try {
-                  final r = await http.get(Uri.parse('https://nominatim.openstreetmap.org/search?q=$pl&format=json&limit=1'), headers: {'User-Agent': 'NoorDaily/1.0'});
+                  final r = await http.get(Uri.parse('https://nominatim.openstreetmap.org/search?q=$pl&format=json&limit=1'), headers: {'User-Agent': 'NoorSuper/1.0'});
                   if (r.statusCode == 200) {
                     final l = json.decode(r.body) as List;
                     if (l.isNotEmpty) {
@@ -340,8 +416,6 @@ class _InteractiveHomeScreenState extends State<InteractiveHomeScreen> {
   @override
   Widget build(BuildContext context) {
     int salahDone = status.values.where((s) => s > 0 && s < 4).length;
-    int habitsDone = habits.values.where((v) => v).length;
-    double dailyDeenScore = ((salahDone + habitsDone) / 9.0).clamp(0.0, 1.0);
 
     return SafeArea(
       bottom: false,
@@ -355,25 +429,13 @@ class _InteractiveHomeScreenState extends State<InteractiveHomeScreen> {
                 onTap: _editLoc,
                 child: Row(
                   children: [
-                    Container(
-                      padding: const EdgeInsets.all(8),
-                      decoration: BoxDecoration(
-                        gradient: const LinearGradient(colors: [kAmber, Color(0xFFD97706)]),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: const Icon(Icons.place_rounded, size: 16, color: Colors.black),
-                    ),
+                    Container(padding: const EdgeInsets.all(8), decoration: BoxDecoration(color: kPrimary, borderRadius: BorderRadius.circular(12)), child: const Icon(Icons.place_rounded, size: 16, color: Colors.black)),
                     const SizedBox(width: 10),
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Row(
-                          children: [
-                            Text(loc, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w900)),
-                            const Icon(Icons.arrow_drop_down, size: 18, color: kAmber),
-                          ],
-                        ),
-                        Text('🌙 $hijri', style: const TextStyle(fontSize: 11, color: kGold, fontWeight: FontWeight.w600)),
+                        Row(children: [Text(loc, style: TextStyle(fontSize: 16, fontWeight: FontWeight.w900, color: kText)), Icon(Icons.arrow_drop_down, size: 18, color: kPrimary)]),
+                        Text('🌙 $hijri', style: TextStyle(fontSize: 11, color: kPrimary, fontWeight: FontWeight.w600)),
                       ],
                     ),
                   ],
@@ -399,77 +461,49 @@ class _InteractiveHomeScreenState extends State<InteractiveHomeScreen> {
           ),
           const SizedBox(height: 16),
 
-          // THE GLOWING MIHRAB ARCH HERO CARD
           ClipRRect(
             borderRadius: BorderRadius.circular(30),
             child: Container(
               decoration: BoxDecoration(
-                gradient: const LinearGradient(
-                  colors: [Color(0xFF281A0E), Color(0xFF0E1D19), Color(0xFF09110F)],
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                ),
+                gradient: LinearGradient(colors: [kPrimary.withOpacity(0.22), kCardAlt, kCard], begin: Alignment.topCenter, end: Alignment.bottomCenter),
                 borderRadius: BorderRadius.circular(30),
-                border: Border.all(color: kAmber.withOpacity(0.45), width: 1.5),
-                boxShadow: [BoxShadow(color: kAmber.withOpacity(0.12), blurRadius: 28, offset: const Offset(0, 10))],
+                border: Border.all(color: kPrimary.withOpacity(0.5), width: 1.5),
               ),
               child: Stack(
                 children: [
-                  Positioned.fill(child: CustomPaint(painter: MihrabArchPainter())),
+                  Positioned.fill(child: CustomPaint(painter: MihrabArchPainter(kPrimary))),
                   Padding(
                     padding: const EdgeInsets.all(22),
                     child: Column(
                       children: [
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 5),
-                          decoration: BoxDecoration(
-                            color: Colors.black45,
-                            borderRadius: BorderRadius.circular(20),
-                            border: Border.all(color: kAmber.withOpacity(0.5)),
-                          ),
-                          child: Text(
-                            'UPCOMING SALAH • ${nextP.toUpperCase()}',
-                            style: const TextStyle(color: kGold, fontSize: 10.5, fontWeight: FontWeight.w900, letterSpacing: 1.2),
-                          ),
+                          decoration: BoxDecoration(color: Colors.black26, borderRadius: BorderRadius.circular(20), border: Border.all(color: kPrimary.withOpacity(0.5))),
+                          child: Text('UPCOMING SALAH • ${nextP.toUpperCase()}', style: TextStyle(color: kPrimary, fontSize: 10.5, fontWeight: FontWeight.w900, letterSpacing: 1.2)),
                         ),
                         const SizedBox(height: 12),
-                        Text(
-                          formatClock(times[nextP]!),
-                          style: const TextStyle(fontSize: 42, fontFamily: 'serif', fontWeight: FontWeight.w900, color: Colors.white, height: 1.05),
-                        ),
+                        Text(formatClock(times[nextP]!), style: TextStyle(fontSize: 42, fontFamily: 'serif', fontWeight: FontWeight.w900, color: kText, height: 1.05)),
                         const SizedBox(height: 6),
                         Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            const Icon(Icons.timer_outlined, size: 15, color: kMint),
+                            Icon(Icons.timer_outlined, size: 15, color: kSecondary),
                             const SizedBox(width: 5),
-                            Text('Starts in $countdown', style: const TextStyle(color: kMint, fontSize: 13.5, fontWeight: FontWeight.w800)),
+                            Text('Starts in $countdown', style: TextStyle(color: kSecondary, fontSize: 13.5, fontWeight: FontWeight.w800)),
                           ],
                         ),
                         const SizedBox(height: 18),
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-                          decoration: BoxDecoration(
-                            color: Colors.black.withOpacity(0.45),
-                            borderRadius: BorderRadius.circular(20),
-                            border: Border.all(color: Colors.white10),
-                          ),
+                          decoration: BoxDecoration(color: kBg.withOpacity(0.55), borderRadius: BorderRadius.circular(20), border: Border.all(color: kBorder)),
                           child: Row(
                             mainAxisAlignment: MainAxisAlignment.spaceAround,
                             children: [
                               _archStat('🌙 SUHUR', formatClock(times['Fajr']!)),
-                              Container(width: 1, height: 24, color: Colors.white12),
+                              Container(width: 1, height: 24, color: kBorder),
                               _archStat('🌅 SUNRISE', formatClock(sunrise)),
-                              Container(width: 1, height: 24, color: Colors.white12),
+                              Container(width: 1, height: 24, color: kBorder),
                               _archStat('🌇 IFTAR', formatClock(times['Maghrib']!)),
-                              Container(width: 1, height: 24, color: Colors.white12),
-                              Column(
-                                children: [
-                                  const Text('🔥 TODAY', style: TextStyle(fontSize: 9.5, color: kMuted, fontWeight: FontWeight.bold)),
-                                  const SizedBox(height: 2),
-                                  Text('${(dailyDeenScore * 100).toInt()}% Done', style: const TextStyle(fontSize: 12, color: kGold, fontWeight: FontWeight.w900)),
-                                ],
-                              ),
                             ],
                           ),
                         ),
@@ -482,12 +516,11 @@ class _InteractiveHomeScreenState extends State<InteractiveHomeScreen> {
           ),
           const SizedBox(height: 22),
 
-          // INTERACTIVE 5-SALAH CHECK-IN CARDS
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text('🕌 Daily Salah Check-In', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w900)),
-              Text('$salahDone/5 Offered • Tap to Log / Hold Time', style: const TextStyle(fontSize: 11, color: kGold, fontWeight: FontWeight.bold)),
+              Text(tr('🕌 Daily Salah Check-In', '🕌 आज की नमाज़ चेक-इन', '🕌 آج کی نماز چیک ان', '🕌 Daily Salah Check-In'), style: TextStyle(fontSize: 16, fontWeight: FontWeight.w900, color: kText)),
+              Text('$salahDone/5 Offered • Hold Time to Edit', style: TextStyle(fontSize: 11, color: kPrimary, fontWeight: FontWeight.bold)),
             ],
           ),
           const SizedBox(height: 10),
@@ -496,8 +529,8 @@ class _InteractiveHomeScreenState extends State<InteractiveHomeScreen> {
             children: prayers.map((pr) {
               bool isN = pr == nextP;
               int st = status[pr] ?? 0;
-              final stCols = [Colors.white24, kMint, const Color(0xFF38BDF8), kAmber, const Color(0xFFEF4444)];
-              final stTags = ['Tap +', 'Jamaat', 'OnTime', 'Qaza', 'Missed'];
+              final stCols = [kMuted, kSecondary, const Color(0xFF38BDF8), kPrimary, const Color(0xFFEF4444)];
+              final stTags = ['Tap +', 'Jamaat', 'OnTime', 'Late', 'Missed'];
               final prIcons = {
                 'Fajr': Icons.wb_twilight_rounded,
                 'Dhuhr': Icons.wb_sunny_rounded,
@@ -532,32 +565,22 @@ class _InteractiveHomeScreenState extends State<InteractiveHomeScreen> {
                     margin: const EdgeInsets.symmetric(horizontal: 3),
                     padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 4),
                     decoration: BoxDecoration(
-                      gradient: st > 0 && st < 4
-                          ? LinearGradient(colors: [stCols[st].withOpacity(0.28), kCard], begin: Alignment.topCenter, end: Alignment.bottomCenter)
-                          : (isN ? const LinearGradient(colors: [Color(0xFF291D12), kCard], begin: Alignment.topCenter, end: Alignment.bottomCenter) : null),
-                      color: (st == 0 && !isN) ? kCard : null,
+                      color: st > 0 ? stCols[st].withOpacity(0.16) : (isN ? kCardAlt : kCard),
                       borderRadius: BorderRadius.circular(20),
-                      border: Border.all(
-                        color: st > 0 ? stCols[st] : (isN ? kAmber : kBorder),
-                        width: (st > 0 || isN) ? 1.6 : 1.0,
-                      ),
+                      border: Border.all(color: st > 0 ? stCols[st] : (isN ? kPrimary : kBorder), width: (st > 0 || isN) ? 1.6 : 1.0),
                     ),
                     child: Column(
                       children: [
-                        Icon(
-                          st > 0 && st < 4 ? Icons.check_circle_rounded : prIcons[pr],
-                          size: 20,
-                          color: st > 0 ? stCols[st] : (isN ? kAmber : kMuted),
-                        ),
+                        Icon(st > 0 && st < 4 ? Icons.check_circle_rounded : prIcons[pr], size: 20, color: st > 0 ? stCols[st] : (isN ? kPrimary : kMuted)),
                         const SizedBox(height: 8),
-                        Text(pr, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: isN ? kGold : Colors.white)),
+                        Text(pr, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: isN ? kPrimary : kText)),
                         const SizedBox(height: 3),
-                        Text(formatClock(times[pr]!).split(' ')[0], style: const TextStyle(fontSize: 10.5, fontFamily: 'serif', color: Colors.white70, fontWeight: FontWeight.bold)),
+                        Text(formatClock(times[pr]!).split(' ')[0], style: TextStyle(fontSize: 10.5, fontFamily: 'serif', color: kMuted, fontWeight: FontWeight.bold)),
                         const SizedBox(height: 8),
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2.5),
                           decoration: BoxDecoration(color: stCols[st].withOpacity(0.18), borderRadius: BorderRadius.circular(8)),
-                          child: Text(stTags[st], style: TextStyle(fontSize: 8.5, fontWeight: FontWeight.w900, color: st == 0 ? Colors.white60 : stCols[st])),
+                          child: Text(stTags[st], style: TextStyle(fontSize: 8.5, fontWeight: FontWeight.w900, color: st == 0 ? kMuted : stCols[st])),
                         ),
                       ],
                     ),
@@ -568,14 +591,9 @@ class _InteractiveHomeScreenState extends State<InteractiveHomeScreen> {
           ),
           const SizedBox(height: 22),
 
-          // INTERACTIVE ON-HOME TASBIH & DAILY SUNNAH ENGINE
-          const Text('⚡ Daily Ibadah & Zikr Engine', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w900)),
-          const SizedBox(height: 10),
-
           Row(
             children: [
               Expanded(
-                flex: 5,
                 child: GestureDetector(
                   onTap: () async {
                     HapticFeedback.lightImpact();
@@ -584,200 +602,116 @@ class _InteractiveHomeScreenState extends State<InteractiveHomeScreen> {
                     await p.setInt('home_tasbih', tasbihCount);
                   },
                   child: Container(
-                    height: 165,
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      gradient: const LinearGradient(colors: [Color(0xFF142E28), kCard], begin: Alignment.topLeft, end: Alignment.bottomRight),
-                      borderRadius: BorderRadius.circular(24),
-                      border: Border.all(color: kMint.withOpacity(0.45), width: 1.4),
-                    ),
+                    height: 135,
+                    padding: const EdgeInsets.all(14),
+                    decoration: BoxDecoration(color: kCard, borderRadius: BorderRadius.circular(22), border: Border.all(color: kSecondary.withOpacity(0.45), width: 1.4)),
                     child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            GestureDetector(
-                              onTap: () => setState(() => zikrIdx = (zikrIdx + 1) % azkar.length),
-                              child: Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                                decoration: BoxDecoration(color: Colors.black38, borderRadius: BorderRadius.circular(10)),
-                                child: Text('${azkar[zikrIdx]['en']} ↻', style: const TextStyle(fontSize: 10, color: kMint, fontWeight: FontWeight.bold)),
-                              ),
-                            ),
-                            GestureDetector(
-                              onTap: () async {
-                                final p = await SharedPreferences.getInstance();
-                                setState(() => tasbihCount = 0);
-                                await p.setInt('home_tasbih', 0);
-                              },
-                              child: const Icon(Icons.refresh_rounded, size: 16, color: kMuted),
-                            ),
+                            GestureDetector(onTap: () => setState(() => zikrIdx = (zikrIdx + 1) % azkar.length), child: Text('${azkar[zikrIdx]['en']} ↻', style: TextStyle(fontSize: 10.5, color: kSecondary, fontWeight: FontWeight.bold))),
+                            GestureDetector(onTap: () async { final p = await SharedPreferences.getInstance(); setState(() => tasbihCount = 0); await p.setInt('home_tasbih', 0); }, child: Icon(Icons.refresh_rounded, size: 16, color: kMuted)),
                           ],
                         ),
-                        Center(
-                          child: Column(
-                            children: [
-                              Text(azkar[zikrIdx]['ar']!, style: const TextStyle(fontSize: 22, color: kGold, fontWeight: FontWeight.bold)),
-                              const SizedBox(height: 2),
-                              Text('$tasbihCount', style: const TextStyle(fontSize: 34, fontFamily: 'serif', fontWeight: FontWeight.w900, color: Colors.white)),
-                            ],
-                          ),
-                        ),
-                        const Center(
-                          child: Text('TAP CARD TO COUNT 📿', style: TextStyle(fontSize: 9.5, color: kMint, fontWeight: FontWeight.w900, letterSpacing: 0.8)),
-                        ),
+                        Text(azkar[zikrIdx]['ar']!, style: TextStyle(fontSize: 20, color: kPrimary, fontWeight: FontWeight.bold)),
+                        Text('$tasbihCount', style: TextStyle(fontSize: 28, fontFamily: 'serif', fontWeight: FontWeight.w900, color: kText)),
+                        Text('TAP TO COUNT 📿', style: TextStyle(fontSize: 9, color: kSecondary, fontWeight: FontWeight.w900)),
                       ],
                     ),
                   ),
                 ),
               ),
               const SizedBox(width: 12),
-
               Expanded(
-                flex: 5,
-                child: Column(
-                  children: [
-                    GestureDetector(
-                      onTap: () async {
-                        if (isPlayingSurah) {
-                          await audioPlayer.stop();
-                          setState(() => isPlayingSurah = false);
-                        } else {
-                          setState(() => isPlayingSurah = true);
-                          await audioPlayer.play(UrlSource('https://cdn.islamic.network/quran/audio/128/ar.alafasy/1.mp3'));
-                        }
-                      },
-                      child: Container(
-                        height: 77,
-                        padding: const EdgeInsets.all(12),
-                        decoration: BoxDecoration(
-                          color: kCard,
-                          borderRadius: BorderRadius.circular(20),
-                          border: Border.all(color: isPlayingSurah ? kAmber : kBorder),
-                        ),
-                        child: Row(
+                child: GestureDetector(
+                  onTap: () => widget.onNav(3, sub: 1),
+                  child: Container(
+                    height: 135,
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(color: kCard, borderRadius: BorderRadius.circular(22), border: Border.all(color: kPrimary.withOpacity(0.45), width: 1.4)),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Icon(Icons.library_books_rounded, color: kPrimary, size: 28),
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            CircleAvatar(
-                              radius: 20,
-                              backgroundColor: kAmber,
-                              child: Icon(isPlayingSurah ? Icons.stop_rounded : Icons.play_arrow_rounded, color: Colors.black, size: 24),
-                            ),
-                            const SizedBox(width: 10),
-                            const Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Text('Quick Tilawat', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 13)),
-                                  Text('Listen Mishary Alafasy', style: TextStyle(fontSize: 10.5, color: kMuted)),
-                                ],
-                              ),
-                            ),
+                            Text('10 Hadith Books', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 15, color: kText)),
+                            const SizedBox(height: 4),
+                            Text('Search All 36,000+ Hadiths Globally', style: TextStyle(fontSize: 11, color: kMuted)),
                           ],
                         ),
-                      ),
+                      ],
                     ),
-                    const SizedBox(height: 11),
-                    GestureDetector(
-                      onTap: () => widget.onNav(3, sub: 1),
-                      child: Container(
-                        height: 77,
-                        padding: const EdgeInsets.all(12),
-                        decoration: BoxDecoration(
-                          color: kCard,
-                          borderRadius: BorderRadius.circular(20),
-                          border: Border.all(color: kBorder),
-                        ),
-                        child: Row(
-                          children: [
-                            Container(
-                              width: 40,
-                              height: 40,
-                              decoration: BoxDecoration(color: kGold.withOpacity(0.15), borderRadius: BorderRadius.circular(12)),
-                              child: const Icon(Icons.library_books_rounded, color: kGold, size: 20),
-                            ),
-                            const SizedBox(width: 10),
-                            const Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Text('10 Hadith Books', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 13)),
-                                  Text('Bukhari, Muslim & More', style: TextStyle(fontSize: 10.5, color: kMuted)),
-                                ],
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ],
+                  ),
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 16),
-
-          // DAILY SUNNAH HABIT PILLS
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: habits.keys.map((h) {
-              bool done = habits[h] ?? false;
-              return GestureDetector(
-                onTap: () async {
-                  HapticFeedback.selectionClick();
-                  final p = await SharedPreferences.getInstance();
-                  final tKey = getDateKey(DateTime.now());
-                  await p.setBool('hb_${tKey}_$h', !done);
-                  setState(() => habits[h] = !done);
-                },
-                child: AnimatedContainer(
-                  duration: const Duration(milliseconds: 180),
-                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
-                  decoration: BoxDecoration(
-                    color: done ? kMint.withOpacity(0.18) : kCard,
-                    borderRadius: BorderRadius.circular(20),
-                    border: Border.all(color: done ? kMint : kBorder),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(done ? Icons.check_circle_rounded : Icons.radio_button_unchecked, size: 15, color: done ? kMint : kMuted),
-                      const SizedBox(width: 6),
-                      Text(h, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: done ? Colors.white : Colors.white70)),
-                    ],
-                  ),
-                ),
-              );
-            }).toList(),
-          ),
           const SizedBox(height: 20),
 
-          // DAILY QURANIC VERSE SPOTLIGHT
           Container(
             padding: const EdgeInsets.all(20),
-            decoration: BoxDecoration(
-              gradient: const LinearGradient(colors: [Color(0xFF1A1610), kCard]),
-              borderRadius: BorderRadius.circular(24),
-              border: Border.all(color: kAmber.withOpacity(0.35)),
-            ),
-            child: const Column(
+            decoration: BoxDecoration(color: kCard, borderRadius: BorderRadius.circular(24), border: Border.all(color: kPrimary.withOpacity(0.4))),
+            child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text('✨ AYAH OF THE DAY', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w900, color: kAmber, letterSpacing: 1.2)),
-                    Text('Surah Ash-Sharh • 94:5', style: TextStyle(fontSize: 11, color: kMuted)),
+                    Row(children: [Icon(Icons.auto_awesome, size: 15, color: kPrimary), const SizedBox(width: 6), Text('LIVE AYAH OF THE DAY', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w900, color: kPrimary, letterSpacing: 1))]),
+                    Row(
+                      children: [
+                        GestureDetector(
+                          onTap: () async {
+                            if (isPlayingAyah) { await audioPlayer.stop(); setState(() => isPlayingAyah = false); }
+                            else { setState(() => isPlayingAyah = true); await audioPlayer.play(UrlSource(liveAyahAudio)); }
+                          },
+                          child: Icon(isPlayingAyah ? Icons.stop_circle : Icons.volume_up_rounded, size: 20, color: kSecondary),
+                        ),
+                        const SizedBox(width: 12),
+                        GestureDetector(
+                          onTap: () async {
+                            await fetchLiveDailyAyahAndDua(forceRandom: true);
+                            if (mounted) setState(() {});
+                          },
+                          child: Text('New Live Ayah ↻', style: TextStyle(fontSize: 11, color: kPrimary, fontWeight: FontWeight.bold)),
+                        ),
+                      ],
+                    ),
                   ],
                 ),
-                SizedBox(height: 12),
-                Text('فَإِنَّ مَعَ الْعُسْرِ يُسْرًا', textAlign: TextAlign.right, style: TextStyle(fontSize: 26, fontWeight: FontWeight.bold, color: Colors.white)),
-                SizedBox(height: 8),
-                Text('"Beshak, har mushkil ke sath aasani hai."', style: TextStyle(fontSize: 13.5, color: kMint, fontWeight: FontWeight.w700, fontStyle: FontStyle.italic)),
+                const SizedBox(height: 6),
+                Text(liveAyahRef, style: TextStyle(fontSize: 11, color: kMuted, fontWeight: FontWeight.bold)),
+                const SizedBox(height: 12),
+                Text(liveAyahArab, textAlign: TextAlign.right, style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: kText, height: 1.5)),
+                const SizedBox(height: 10),
+                Text(liveAyahTrans, style: TextStyle(fontSize: 13.5, fontFamily: 'serif', color: kSecondary, fontStyle: FontStyle.italic, height: 1.4)),
+              ],
+            ),
+          ),
+          const SizedBox(height: 14),
+
+          Container(
+            padding: const EdgeInsets.all(20),
+            decoration: BoxDecoration(color: kCard, borderRadius: BorderRadius.circular(24), border: Border.all(color: kSecondary.withOpacity(0.4))),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text('🤲 LIVE QURANIC DUA OF THE DAY', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w900, color: kSecondary, letterSpacing: 1)),
+                    Text(liveDuaRef, style: TextStyle(fontSize: 10.5, color: kMuted)),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                Text(liveDuaArab, textAlign: TextAlign.right, style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: kText, height: 1.5)),
+                const SizedBox(height: 10),
+                Text(liveDuaTrans, style: TextStyle(fontSize: 13, fontFamily: 'serif', color: kMuted, height: 1.4)),
               ],
             ),
           ),
@@ -792,7 +726,7 @@ class _InteractiveHomeScreenState extends State<InteractiveHomeScreen> {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
         decoration: BoxDecoration(color: kCard, borderRadius: BorderRadius.circular(12), border: Border.all(color: kBorder)),
-        child: Text(txt, style: const TextStyle(fontSize: 10.5, fontWeight: FontWeight.w900, color: kGold)),
+        child: Text(txt, style: TextStyle(fontSize: 10.5, fontWeight: FontWeight.w900, color: kPrimary)),
       ),
     );
   }
@@ -800,167 +734,115 @@ class _InteractiveHomeScreenState extends State<InteractiveHomeScreen> {
   Widget _archStat(String label, String val) {
     return Column(
       children: [
-        Text(label, style: const TextStyle(fontSize: 9, color: kMuted, fontWeight: FontWeight.w800)),
+        Text(label, style: TextStyle(fontSize: 9, color: kMuted, fontWeight: FontWeight.w800)),
         const SizedBox(height: 3),
-        Text(val, style: const TextStyle(fontSize: 12, color: Colors.white, fontWeight: FontWeight.w900)),
+        Text(val, style: TextStyle(fontSize: 12, color: kText, fontWeight: FontWeight.w900)),
       ],
     );
   }
 }
 
-// ---------------- 2. NEW ULTRA-COOL "TICKET & CALLIGRAPHY FRAME" WIDGET STUDIO ----------------
+// ---------------- 2. IDENTICAL APP & HOME SCREEN WIDGET STUDIO ----------------
 class UniqueWidgetStudioScreen extends StatefulWidget {
-  const UniqueWidgetStudioScreen({super.key});
+  final VoidCallback onRebuild;
+  const UniqueWidgetStudioScreen({super.key, required this.onRebuild});
   @override
   State<UniqueWidgetStudioScreen> createState() => _UniqueWidgetStudioScreenState();
 }
 
 class _UniqueWidgetStudioScreenState extends State<UniqueWidgetStudioScreen> {
-  int themeIdx = 0;
-  int verseIdx = 0;
+  String loc = '🕌 NOOR • BARPAKA';
+  String nextP = 'Dhuhr';
+  String nextTime = '12:15 PM';
+  String stripText = 'Fajr 04:15  •  Dhuhr 12:15  •  Asr 03:25  •  Mag 04:45  •  Isha 06:15';
 
-  final List<Map<String, dynamic>> styles = const [
-    {'name': 'Desert Amber', 'c1': Color(0xFF281A0E), 'c2': Color(0xFF0A110F), 'accent': Color(0xFFF59E0B), 'sub': Color(0xFF2DD4BF)},
-    {'name': 'Emerald Noir', 'c1': Color(0xFF0B2E26), 'c2': Color(0xFF06100E), 'accent': Color(0xFF2DD4BF), 'sub': Color(0xFFFBBF24)},
-    {'name': 'Royal Velvet', 'c1': Color(0xFF1E1B4B), 'c2': Color(0xFF090A14), 'accent': Color(0xFF818CF8), 'sub': Color(0xFFF59E0B)},
-  ];
+  @override
+  void initState() {
+    super.initState();
+    _loadCurrentWidgetData();
+  }
 
-  final List<Map<String, String>> verses = const [
-    {'ref': 'SURAH ASH-SHARH • 94:5', 'ar': 'فَإِنَّ مَعَ الْعُسْرِ يُسْرًا', 'hi': '"Beshak, har mushkil ke sath aasani hai."'},
-    {'ref': 'SURAH AR-RA\'D • 13:28', 'ar': 'أَلَا بِذِكْرِ اللَّهِ تَطْمَئِنُّ الْقُلُوبُ', 'hi': '"Sun lo! Allah ke zikr hi se dilon ko sukoon milta hai."'},
-    {'ref': 'SURAH AL-BAQARAH • 2:152', 'ar': 'فَاذْكُرُونِي أَذْكُرْكُمْ', 'hi': '"Tum mujhe yaad rakho, main tumhe yaad rakhunga."'},
-    {'ref': 'SURAH AT-TALAQ • 65:3', 'ar': 'وَمَن يَتَوَكَّلْ عَلَى اللَّهِ فَهُوَ حَسْبُهُ', 'hi': '"Aur jo Allah par bharosa rakhe, Allah uske liye kaafi hai."'},
-  ];
-
-  Future<void> _syncToDevice() async {
+  Future<void> _loadCurrentWidgetData() async {
     final p = await SharedPreferences.getInstance();
-    final v = verses[verseIdx];
-    await p.setString('wq_ref', '✨ ${v['ref']}');
-    await p.setString('wq_arab', v['ar']!);
-    await p.setString('wq_hing', v['hi']!);
+    setState(() {
+      loc = p.getString('wp_loc') ?? '🕌 NOOR • BARPAKA';
+      nextP = p.getString('wp_next_name') ?? 'Dhuhr';
+      nextTime = p.getString('wp_next') ?? '12:15 PM';
+      stripText = p.getString('wp_strip') ?? stripText;
+    });
+  }
+
+  Future<void> _syncAndBroadcast() async {
+    final p = await SharedPreferences.getInstance();
+    await p.setString('wq_ref', '✨ $liveAyahRef');
+    await p.setString('wq_arab', liveAyahArab);
+    await p.setString('wq_hing', liveAyahTrans);
+    await triggerNativeWidgetBroadcast();
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(backgroundColor: kCardAlt, content: Text('✅ Synced! Long-press your Phone Wallpaper -> Widgets -> Add Noor Widgets!')),
+        SnackBar(
+          backgroundColor: kPrimary,
+          content: const Text('✅ Live Broadcast Sent! Your Phone Home Screen Widget is now 100% identical!', style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
+        ),
       );
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    final st = styles[themeIdx];
-    final v = verses[verseIdx];
-    final Color ac = st['accent'] as Color;
-    final Color sb = st['sub'] as Color;
-
     return SafeArea(
       child: ListView(
         padding: const EdgeInsets.fromLTRB(18, 14, 18, 100),
         children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              const Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text('✨ NEXT-GEN WIDGET LAB', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w900, color: kAmber, letterSpacing: 1.4)),
-                  Text('StandBy & Ticket Widgets', style: TextStyle(fontSize: 22, fontFamily: 'serif', fontWeight: FontWeight.bold)),
-                ],
-              ),
-              Row(
-                children: List.generate(styles.length, (i) {
-                  bool sel = themeIdx == i;
-                  return GestureDetector(
-                    onTap: () => setState(() => themeIdx = i),
-                    child: Container(
-                      width: 28,
-                      height: 28,
-                      margin: const EdgeInsets.only(left: 8),
-                      decoration: BoxDecoration(
-                        color: styles[i]['c1'] as Color,
-                        shape: BoxShape.circle,
-                        border: Border.all(color: sel ? kGold : Colors.white24, width: sel ? 2.5 : 1),
-                      ),
-                    ),
-                  );
-                }),
-              ),
-            ],
-          ),
-          const SizedBox(height: 22),
+          Text('✨ LIVE HOME SCREEN WIDGETS', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w900, color: kPrimary, letterSpacing: 1.4)),
+          const SizedBox(height: 4),
+          Text('100% Identical on App & Phone', style: TextStyle(fontSize: 22, fontFamily: 'serif', fontWeight: FontWeight.bold, color: kText)),
+          const SizedBox(height: 18),
 
-          const Text('🕌 1. The Salah Horizon Pass (With 5-Node Progress Track)',
-              style: TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: kMuted)),
+          Text('🕌 1. Noor Salah Pass Widget (Exact Phone Preview)', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: kMuted)),
           const SizedBox(height: 10),
-
           Container(
-            padding: const EdgeInsets.all(20),
+            padding: const EdgeInsets.all(18),
             decoration: BoxDecoration(
-              gradient: LinearGradient(colors: [st['c1'] as Color, st['c2'] as Color], begin: Alignment.topLeft, end: Alignment.bottomRight),
-              borderRadius: BorderRadius.circular(28),
-              border: Border.all(color: ac.withOpacity(0.55), width: 1.6),
-              boxShadow: [BoxShadow(color: ac.withOpacity(0.15), blurRadius: 24, offset: const Offset(0, 10))],
+              gradient: const LinearGradient(colors: [Color(0xFF24170D), Color(0xFF0E1A16), Color(0xFF080C0B)]),
+              borderRadius: BorderRadius.circular(26),
+              border: Border.all(color: const Color(0xFFF59E0B), width: 1.8),
             ),
             child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Row(
-                      children: [
-                        Container(width: 8, height: 8, decoration: BoxDecoration(color: sb, shape: BoxShape.circle)),
-                        const SizedBox(width: 7),
-                        Text('NOOR SALAH PASS • 1448 AH', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w900, color: ac, letterSpacing: 1)),
-                      ],
-                    ),
+                    Text(loc, style: const TextStyle(color: Color(0xFFF59E0B), fontSize: 11, fontWeight: FontWeight.bold)),
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
-                      decoration: BoxDecoration(color: Colors.black45, borderRadius: BorderRadius.circular(12), border: Border.all(color: sb.withOpacity(0.4))),
-                      child: Text('SUHUR 04:14 • IFTAR 04:45', style: TextStyle(fontSize: 9, fontWeight: FontWeight.w900, color: sb)),
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                      decoration: BoxDecoration(color: const Color(0xFF15221E), borderRadius: BorderRadius.circular(14), border: Border.all(color: const Color(0xFF2DD4BF))),
+                      child: const Text('🌙 SUHUR & IFTAR LIVE', style: TextStyle(color: Color(0xFF2DD4BF), fontSize: 9, fontWeight: FontWeight.bold)),
                     ),
                   ],
                 ),
-                const SizedBox(height: 16),
-
+                const SizedBox(height: 10),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   crossAxisAlignment: CrossAxisAlignment.end,
                   children: [
-                    const Column(
+                    Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text('UPCOMING PRAYER', style: TextStyle(fontSize: 9.5, color: Colors.white54, fontWeight: FontWeight.bold, letterSpacing: 1.2)),
-                        SizedBox(height: 2),
-                        Text('Dhuhr', style: TextStyle(fontSize: 32, fontWeight: FontWeight.w900, color: Colors.white, height: 1.05)),
+                        const Text('UPCOMING SALAH', style: TextStyle(color: Color(0xFF8E9E99), fontSize: 9, fontWeight: FontWeight.bold)),
+                        Text(nextP, style: const TextStyle(color: Colors.white, fontSize: 26, fontWeight: FontWeight.bold)),
                       ],
                     ),
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.end,
-                      children: [
-                        Text('12:15 PM', style: TextStyle(fontSize: 26, fontFamily: 'serif', fontWeight: FontWeight.bold, color: ac)),
-                        Text('Starts in -02h 14m', style: TextStyle(fontSize: 11, color: sb, fontWeight: FontWeight.w800)),
-                      ],
-                    ),
+                    Text(nextTime, style: const TextStyle(color: Color(0xFFF59E0B), fontSize: 24, fontFamily: 'serif', fontWeight: FontWeight.bold)),
                   ],
                 ),
-                const SizedBox(height: 18),
-
+                const SizedBox(height: 12),
                 Container(
-                  padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 10),
-                  decoration: BoxDecoration(
-                    color: Colors.black.withOpacity(0.45),
-                    borderRadius: BorderRadius.circular(18),
-                    border: Border.all(color: Colors.white10),
-                  ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceAround,
-                    children: [
-                      _widgetNode('Fajr', '04:15', true, false, ac, sb),
-                      _widgetNode('Dhuhr', '12:15', false, true, ac, sb),
-                      _widgetNode('Asr', '03:25', false, false, ac, sb),
-                      _widgetNode('Maghrib', '04:45', false, false, ac, sb),
-                      _widgetNode('Isha', '06:15', false, false, ac, sb),
-                    ],
-                  ),
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(color: const Color(0xFF15221E), borderRadius: BorderRadius.circular(16), border: Border.all(color: const Color(0xFF2DD4BF))),
+                  child: Text(stripText, textAlign: TextAlign.center, style: const TextStyle(color: Colors.white, fontSize: 10.5, fontWeight: FontWeight.bold)),
                 ),
               ],
             ),
@@ -970,57 +852,39 @@ class _UniqueWidgetStudioScreenState extends State<UniqueWidgetStudioScreen> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text('📖 2. Floating Glass Verse Frame (Arabic + Hinglish)',
-                  style: TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: kMuted)),
+              Text('📖 2. Noor Live Verse Widget (Exact Phone Preview)', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: kMuted)),
               GestureDetector(
-                onTap: () { setState(() => verseIdx = (verseIdx + 1) % verses.length); _syncToDevice(); },
-                child: Text('Switch Ayah ↻', style: TextStyle(fontSize: 12, color: ac, fontWeight: FontWeight.w900)),
+                onTap: () async {
+                  await fetchLiveDailyAyahAndDua(forceRandom: true);
+                  if (mounted) setState(() {});
+                },
+                child: Text('Load New API Verse ↻', style: TextStyle(fontSize: 11.5, color: kPrimary, fontWeight: FontWeight.bold)),
               ),
             ],
           ),
           const SizedBox(height: 10),
-
           Container(
-            padding: const EdgeInsets.all(22),
+            padding: const EdgeInsets.all(18),
             decoration: BoxDecoration(
-              gradient: LinearGradient(colors: [st['c1'] as Color, st['c2'] as Color], begin: Alignment.topRight, end: Alignment.bottomLeft),
-              borderRadius: BorderRadius.circular(28),
-              border: Border.all(color: ac.withOpacity(0.55), width: 1.6),
-              boxShadow: [BoxShadow(color: ac.withOpacity(0.15), blurRadius: 24, offset: const Offset(0, 10))],
+              gradient: const LinearGradient(colors: [Color(0xFF24170D), Color(0xFF0E1A16), Color(0xFF080C0B)]),
+              borderRadius: BorderRadius.circular(26),
+              border: Border.all(color: const Color(0xFFF59E0B), width: 1.8),
             ),
             child: Column(
               children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                      decoration: BoxDecoration(color: Colors.black45, borderRadius: BorderRadius.circular(12), border: Border.all(color: ac.withOpacity(0.4))),
-                      child: Text('✨ ${v['ref']}', style: TextStyle(fontSize: 9.5, fontWeight: FontWeight.w900, color: ac, letterSpacing: 0.8)),
-                    ),
-                    Icon(Icons.format_quote_rounded, color: ac, size: 22),
-                  ],
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
+                  decoration: BoxDecoration(color: const Color(0xFF15221E), borderRadius: BorderRadius.circular(14), border: Border.all(color: const Color(0xFF2DD4BF))),
+                  child: Text('✨ $liveAyahRef', style: const TextStyle(color: Color(0xFFF59E0B), fontSize: 10, fontWeight: FontWeight.bold)),
                 ),
-                const SizedBox(height: 16),
-                Text(
-                  v['ar']!,
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: Colors.white, height: 1.4),
-                ),
-                const SizedBox(height: 14),
+                const SizedBox(height: 10),
+                Text(liveAyahArab, textAlign: TextAlign.center, style: const TextStyle(color: Colors.white, fontSize: 22, fontWeight: FontWeight.bold)),
+                const SizedBox(height: 10),
                 Container(
                   width: double.infinity,
-                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                  decoration: BoxDecoration(
-                    color: Colors.black.withOpacity(0.45),
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: sb.withOpacity(0.35)),
-                  ),
-                  child: Text(
-                    v['hi']!,
-                    textAlign: TextAlign.center,
-                    style: TextStyle(fontSize: 13.5, fontFamily: 'serif', fontStyle: FontStyle.italic, fontWeight: FontWeight.bold, color: sb),
-                  ),
+                  padding: const EdgeInsets.all(9),
+                  decoration: BoxDecoration(color: const Color(0xFF15221E), borderRadius: BorderRadius.circular(16), border: Border.all(color: const Color(0xFF2DD4BF))),
+                  child: Text(liveAyahTrans, textAlign: TextAlign.center, style: const TextStyle(color: Color(0xFF2DD4BF), fontSize: 12, fontFamily: 'serif', fontStyle: FontStyle.italic)),
                 ),
               ],
             ),
@@ -1028,52 +892,36 @@ class _UniqueWidgetStudioScreenState extends State<UniqueWidgetStudioScreen> {
           const SizedBox(height: 22),
 
           ElevatedButton.icon(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: kAmber,
-              padding: const EdgeInsets.symmetric(vertical: 15),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
-            ),
-            onPressed: _syncToDevice,
-            icon: const Icon(Icons.bolt_rounded, color: Colors.black),
-            label: const Text('ACTIVATE & SYNC BOTH WIDGETS TO PHONE', style: TextStyle(color: Colors.black, fontWeight: FontWeight.w900, fontSize: 12.5)),
+            style: ElevatedButton.styleFrom(backgroundColor: kPrimary, padding: const EdgeInsets.symmetric(vertical: 15), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18))),
+            onPressed: _syncAndBroadcast,
+            icon: const Icon(Icons.sync_rounded, color: Colors.black),
+            label: const Text('INSTANT SYNC TO PHONE HOME SCREEN', style: TextStyle(color: Colors.black, fontWeight: FontWeight.w900, fontSize: 12.5)),
           ),
         ],
       ),
     );
   }
-
-  Widget _widgetNode(String name, String time, bool done, bool current, Color ac, Color sb) {
-    return Column(
-      children: [
-        Container(
-          width: 20,
-          height: 20,
-          decoration: BoxDecoration(
-            color: done ? sb : (current ? ac : Colors.white12),
-            shape: BoxShape.circle,
-          ),
-          child: Icon(done ? Icons.check : (current ? Icons.schedule : Icons.circle), size: 12, color: (done || current) ? Colors.black : Colors.white38),
-        ),
-        const SizedBox(height: 5),
-        Text(name, style: TextStyle(fontSize: 10, fontWeight: FontWeight.w800, color: current ? ac : Colors.white)),
-        Text(time, style: const TextStyle(fontSize: 9.5, color: Colors.white60)),
-      ],
-    );
-  }
 }
 
-// ---------------- 3. STREAK, ANALYTICS, QAZA & ZAKAT LEDGER ----------------
-class AnalyticsLedgerScreen extends StatefulWidget {
-  const AnalyticsLedgerScreen({super.key});
+
+
+
+
+
+
+
+
+
+// ---------------- 3. UNIQUE STREAK, BADGES & CONSISTENCY TAB ----------------
+class UniqueStreakScreen extends StatefulWidget {
+  const UniqueStreakScreen({super.key});
   @override
-  State<AnalyticsLedgerScreen> createState() => _AnalyticsLedgerScreenState();
+  State<UniqueStreakScreen> createState() => _UniqueStreakScreenState();
 }
 
-class _AnalyticsLedgerScreenState extends State<AnalyticsLedgerScreen> {
+class _UniqueStreakScreenState extends State<UniqueStreakScreen> {
   SharedPreferences? prefs;
   final prayers = ['Fajr', 'Dhuhr', 'Asr', 'Maghrib', 'Isha'];
-  final g = TextEditingController(), s = TextEditingController(), c = TextEditingController();
-  double zakat = 0;
 
   @override
   void initState() {
@@ -1087,34 +935,122 @@ class _AnalyticsLedgerScreenState extends State<AnalyticsLedgerScreen> {
   Widget build(BuildContext context) {
     final now = DateTime.now();
     int daysInM = DateUtils.getDaysInMonth(now.year, now.month);
-    int mAda = 0, mJamaat = 0;
+    int mAda = 0, mJamaat = 0, perfectDays = 0;
+    Map<String, int> pCounts = {'Fajr': 0, 'Dhuhr': 0, 'Asr': 0, 'Maghrib': 0, 'Isha': 0};
+
     for (int i = 1; i <= daysInM; i++) {
       final dt = DateTime(now.year, now.month, i);
+      int dayC = 0;
       for (var p in prayers) {
         int s = _st(dt, p);
-        if (s > 0 && s < 4) mAda++;
+        if (s > 0 && s < 4) {
+          mAda++;
+          dayC++;
+          pCounts[p] = (pCounts[p] ?? 0) + 1;
+        }
         if (s == 1) mJamaat++;
       }
+      if (dayC == 5) perfectDays++;
     }
-    int qTotal = prayers.fold(0, (a, p) => a + (prefs?.getInt('qb_$p') ?? 0));
+
+    int activeStreak = 0;
+    for (int i = 0; i < 30; i++) {
+      final dt = now.subtract(Duration(days: i));
+      int c = prayers.where((p) { int s = _st(dt, p); return s > 0 && s < 4; }).length;
+      if (c > 0) activeStreak++;
+      else if (i > 0) break;
+    }
+
+    int passedDays = math.max(1, now.day);
 
     return SafeArea(
       child: ListView(
         padding: const EdgeInsets.fromLTRB(18, 14, 18, 100),
         children: [
-          const Text('🔥 STREAK & SPIRITUAL LEDGER', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w900, color: kAmber, letterSpacing: 1.4)),
+          Text('🔥 SPIRITUAL STREAK & MILESTONES', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w900, color: kPrimary, letterSpacing: 1.4)),
           const SizedBox(height: 4),
-          const Text('Monthly Consistency & Qaza', style: TextStyle(fontSize: 22, fontFamily: 'serif', fontWeight: FontWeight.bold)),
+          Text('Your Daily Salah Journey', style: TextStyle(fontSize: 22, fontFamily: 'serif', fontWeight: FontWeight.bold, color: kText)),
           const SizedBox(height: 16),
 
+          Container(
+            padding: const EdgeInsets.all(22),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(colors: [kPrimary.withOpacity(0.25), kCard]),
+              borderRadius: BorderRadius.circular(26),
+              border: Border.all(color: kPrimary.withOpacity(0.5), width: 1.5),
+            ),
+            child: Row(
+              children: [
+                Container(
+                  width: 78,
+                  height: 78,
+                  decoration: BoxDecoration(color: kPrimary.withOpacity(0.2), shape: BoxShape.circle, border: Border.all(color: kPrimary, width: 2.5)),
+                  child: Center(child: Text('🔥 $activeStreak', style: TextStyle(fontSize: 24, fontWeight: FontWeight.w900, color: kText))),
+                ),
+                const SizedBox(width: 18),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text('$activeStreak DAY ACTIVE STREAK', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w900, color: kPrimary)),
+                      const SizedBox(height: 4),
+                      Text('$mAda Prayers Offered • $mJamaat in Jamaat • $perfectDays Perfect 5/5 Days', style: TextStyle(fontSize: 12, color: kMuted, height: 1.4)),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 18),
+
+          Text('🏆 SPIRITUAL ACHIEVEMENT BADGES', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w900, color: kMuted)),
+          const SizedBox(height: 10),
           Row(
             children: [
-              Expanded(child: _kpi('THIS MONTH ADA', '$mAda', 'of ${daysInM * 5} prayers', kMint)),
-              const SizedBox(width: 10),
-              Expanded(child: _kpi('IN JAMAAT', '$mJamaat', '27x Reward Prayers', kAmber)),
+              _badgeCard('🌅 Fajr Warrior', (pCounts['Fajr'] ?? 0) >= 3, '3+ Fajr on time'),
+              const SizedBox(width: 8),
+              _badgeCard('🕌 Jamaat Star', mJamaat >= 5, '5+ in Jamaat'),
+              const SizedBox(width: 8),
+              _badgeCard('👑 5/5 Master', perfectDays >= 1, 'Full 5/5 Day'),
             ],
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 18),
+
+          Container(
+            padding: const EdgeInsets.all(18),
+            decoration: BoxDecoration(color: kCard, borderRadius: BorderRadius.circular(22), border: Border.all(color: kBorder)),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('📊 PRAYER-BY-PRAYER STRENGTH', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w900, color: kPrimary)),
+                const SizedBox(height: 12),
+                ...prayers.map((p) {
+                  int c = pCounts[p] ?? 0;
+                  double ratio = (c / passedDays).clamp(0.0, 1.0);
+                  return Padding(
+                    padding: const EdgeInsets.only(bottom: 10),
+                    child: Column(
+                      children: [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(p, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: kText)),
+                            Text('${(ratio * 100).toInt()}% ($c/$passedDays days)', style: TextStyle(fontSize: 11.5, color: kSecondary, fontWeight: FontWeight.bold)),
+                          ],
+                        ),
+                        const SizedBox(height: 5),
+                        ClipRRect(
+                          borderRadius: BorderRadius.circular(6),
+                          child: LinearProgressIndicator(value: ratio, minHeight: 7, backgroundColor: kBg, valueColor: AlwaysStoppedAnimation<Color>(kSecondary)),
+                        ),
+                      ],
+                    ),
+                  );
+                }).toList(),
+              ],
+            ),
+          ),
+          const SizedBox(height: 18),
 
           Container(
             padding: const EdgeInsets.all(16),
@@ -1122,7 +1058,7 @@ class _AnalyticsLedgerScreenState extends State<AnalyticsLedgerScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text('🗓️ 30-DAY CONSISTENCY HEATMAP', style: TextStyle(fontSize: 10.5, fontWeight: FontWeight.w800, color: kMuted)),
+                Text('🗓️ MONTHLY STREAK HEATMAP', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w900, color: kMuted)),
                 const SizedBox(height: 12),
                 GridView.builder(
                   shrinkWrap: true,
@@ -1134,109 +1070,40 @@ class _AnalyticsLedgerScreenState extends State<AnalyticsLedgerScreen> {
                     int count = prayers.where((p) { int s = _st(dt, p); return s > 0 && s < 4; }).length;
                     return Container(
                       decoration: BoxDecoration(
-                        color: count == 5 ? kMint.withOpacity(0.35) : (count > 0 ? kCardAlt : kBg),
+                        color: count == 5 ? kSecondary.withOpacity(0.35) : (count > 0 ? kCardAlt : kBg),
                         borderRadius: BorderRadius.circular(8),
-                        border: Border.all(color: count == 5 ? kMint : kBorder),
+                        border: Border.all(color: count == 5 ? kSecondary : kBorder),
                       ),
-                      child: Center(child: Text('${i + 1}', style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold))),
+                      child: Center(child: Text('${i + 1}', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: kText))),
                     );
                   },
                 ),
               ],
             ),
           ),
-          const SizedBox(height: 16),
-
-          Container(
-            padding: const EdgeInsets.all(18),
-            decoration: BoxDecoration(color: kCard, borderRadius: BorderRadius.circular(22), border: Border.all(color: kBorder)),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    const Text('🏦 QAZA-E-UMRI BANK', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w900, color: kAmber)),
-                    Text('$qTotal Pending', style: const TextStyle(fontSize: 12, color: kMint, fontWeight: FontWeight.bold)),
-                  ],
-                ),
-                const SizedBox(height: 10),
-                ElevatedButton(
-                  style: ElevatedButton.styleFrom(backgroundColor: kCardAlt),
-                  onPressed: () async {
-                    for (var p in prayers) { await prefs?.setInt('qb_$p', (prefs?.getInt('qb_$p') ?? 0) + 30); }
-                    setState(() {});
-                  },
-                  child: const Text('+ Add 1 Month (30 Days) Missed Qaza', style: TextStyle(color: Colors.white, fontSize: 12)),
-                ),
-                ...prayers.map((p) {
-                  int v = prefs?.getInt('qb_$p') ?? 0;
-                  return Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(p, style: const TextStyle(fontWeight: FontWeight.bold)),
-                      Row(
-                        children: [
-                          Text('$v', style: const TextStyle(color: kGold, fontWeight: FontWeight.bold)),
-                          const SizedBox(width: 10),
-                          TextButton(
-                            onPressed: () async { await prefs?.setInt('qb_$p', math.max(0, v - 1)); setState(() {}); },
-                            child: const Text('-1 Paid ✅', style: TextStyle(color: kMint)),
-                          ),
-                        ],
-                      ),
-                    ],
-                  );
-                }).toList(),
-              ],
-            ),
-          ),
-          const SizedBox(height: 16),
-
-          Container(
-            padding: const EdgeInsets.all(18),
-            decoration: BoxDecoration(color: kCard, borderRadius: BorderRadius.circular(22), border: Border.all(color: kBorder)),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text('🧮 ZAKAT CALCULATOR (2.5%)', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w900, color: kAmber)),
-                TextField(controller: g, keyboardType: TextInputType.number, decoration: const InputDecoration(labelText: 'Gold Value (₹)')),
-                TextField(controller: s, keyboardType: TextInputType.number, decoration: const InputDecoration(labelText: 'Silver Value (₹)')),
-                TextField(controller: c, keyboardType: TextInputType.number, decoration: const InputDecoration(labelText: 'Cash / Savings (₹)')),
-                const SizedBox(height: 12),
-                ElevatedButton(
-                  style: ElevatedButton.styleFrom(backgroundColor: kAmber),
-                  onPressed: () => setState(() => zakat = ((double.tryParse(g.text) ?? 0) + (double.tryParse(s.text) ?? 0) + (double.tryParse(c.text) ?? 0)) * 0.025),
-                  child: const Text('Calculate Zakat', style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
-                ),
-                const SizedBox(height: 8),
-                Text('Payable Zakat: ₹ ${zakat.toStringAsFixed(2)}', style: const TextStyle(color: kMint, fontSize: 16, fontWeight: FontWeight.bold)),
-              ],
-            ),
-          ),
         ],
       ),
     );
   }
 
-  Widget _kpi(String label, String val, String sub, Color col) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(color: kCard, borderRadius: BorderRadius.circular(20), border: Border.all(color: kBorder)),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(label, style: const TextStyle(fontSize: 9.5, fontWeight: FontWeight.w800, color: kMuted)),
-          const SizedBox(height: 6),
-          Text(val, style: TextStyle(fontSize: 26, fontFamily: 'serif', fontWeight: FontWeight.bold, color: col)),
-          Text(sub, style: const TextStyle(fontSize: 11, color: Colors.white60)),
-        ],
+  Widget _badgeCard(String title, bool unlocked, String sub) {
+    return Expanded(
+      child: Container(
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(color: unlocked ? kPrimary.withOpacity(0.18) : kCard, borderRadius: BorderRadius.circular(18), border: Border.all(color: unlocked ? kPrimary : kBorder)),
+        child: Column(
+          children: [
+            Text(title, textAlign: TextAlign.center, style: TextStyle(fontWeight: FontWeight.w900, fontSize: 11.5, color: unlocked ? kPrimary : kMuted)),
+            const SizedBox(height: 4),
+            Text(unlocked ? 'UNLOCKED ✓' : sub, style: TextStyle(fontSize: 9.5, color: unlocked ? kSecondary : kMuted, fontWeight: FontWeight.bold)),
+          ],
+        ),
       ),
     );
   }
 }
 
-// ---------------- 4. QURAN (114) & 10-BOOK HADITH VAULT ----------------
+// ---------------- 4. QURAN & 10-BOOK HADITH VAULT (GLOBAL SEARCH!) ----------------
 class KitabScreen extends StatefulWidget {
   final int initTab;
   const KitabScreen({super.key, this.initTab = 0});
@@ -1306,17 +1173,17 @@ class _KitabScreenState extends State<KitabScreen> {
           onChanged: (v) => setState(() => qSearch = v),
           decoration: InputDecoration(
             hintText: 'Search Surah name or number...',
-            prefixIcon: const Icon(Icons.search, size: 18, color: kAmber),
+            prefixIcon: Icon(Icons.search, size: 18, color: kPrimary),
             filled: true,
             fillColor: kCard,
             contentPadding: const EdgeInsets.symmetric(vertical: 10),
-            border: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: const BorderSide(color: kBorder)),
+            border: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: BorderSide(color: kBorder)),
           ),
         ),
         const SizedBox(height: 12),
         Expanded(
           child: loadingQuran
-              ? const Center(child: CircularProgressIndicator(color: kAmber))
+              ? Center(child: CircularProgressIndicator(color: kPrimary))
               : ListView.builder(
                   itemCount: fS.length,
                   itemBuilder: (_, i) {
@@ -1325,10 +1192,10 @@ class _KitabScreenState extends State<KitabScreen> {
                       margin: const EdgeInsets.only(bottom: 8),
                       decoration: BoxDecoration(color: kCard, borderRadius: BorderRadius.circular(16), border: Border.all(color: kBorder)),
                       child: ListTile(
-                        leading: Text('${s['number']}', style: const TextStyle(fontFamily: 'serif', color: kAmber, fontWeight: FontWeight.bold)),
-                        title: Text(s['englishName'], style: const TextStyle(fontWeight: FontWeight.w700)),
-                        subtitle: Text('${s['englishNameTranslation']} • ${s['numberOfAyahs']} Verses', style: const TextStyle(fontSize: 11, color: kMuted)),
-                        trailing: Text(s['name'], style: const TextStyle(fontSize: 18, color: kGold)),
+                        leading: Text('${s['number']}', style: TextStyle(fontFamily: 'serif', color: kPrimary, fontWeight: FontWeight.bold)),
+                        title: Text(s['englishName'], style: TextStyle(fontWeight: FontWeight.w700, color: kText)),
+                        subtitle: Text('${s['englishNameTranslation']} • ${s['numberOfAyahs']} Verses', style: TextStyle(fontSize: 11, color: kMuted)),
+                        trailing: Text(s['name'], style: TextStyle(fontSize: 18, color: kPrimary)),
                         onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => SurahReaderPage(num: s['number'], name: s['englishName']))),
                       ),
                     );
@@ -1378,7 +1245,7 @@ class _KitabScreenState extends State<KitabScreen> {
                           ],
                         ),
                         const Spacer(),
-                        Text(b['title'] as String, style: const TextStyle(fontSize: 14.5, fontWeight: FontWeight.w800, color: Colors.white, height: 1.2)),
+                        Text(b['title'] as String, style: TextStyle(fontSize: 14.5, fontWeight: FontWeight.w800, color: kText, height: 1.2)),
                         const SizedBox(height: 8),
                         Container(width: 32, height: 3.5, decoration: BoxDecoration(color: c, borderRadius: BorderRadius.circular(4))),
                       ],
@@ -1401,7 +1268,7 @@ class _KitabScreenState extends State<KitabScreen> {
         child: Container(
           padding: const EdgeInsets.symmetric(vertical: 10),
           decoration: BoxDecoration(color: sel ? kCardAlt : Colors.transparent, borderRadius: BorderRadius.circular(12)),
-          child: Center(child: Text(lb, style: TextStyle(fontSize: 11, fontWeight: FontWeight.w900, color: sel ? kGold : kMuted))),
+          child: Center(child: Text(lb, style: TextStyle(fontSize: 11, fontWeight: FontWeight.w900, color: sel ? kPrimary : kMuted))),
         ),
       ),
     );
@@ -1421,12 +1288,16 @@ class HadithBookReaderPage extends StatefulWidget {
 class _HadithBookReaderPageState extends State<HadithBookReaderPage> {
   int section = 1;
   String hLang = 'eng';
-  List transHadiths = [], arabHadiths = [];
-  bool loading = true;
+  List chapterHadiths = [], arabHadiths = [];
+  List? fullBookCache;
+  bool loading = true, loadingGlobalSearch = false;
   String search = '';
 
   @override
-  void initState() { super.initState(); _loadChapter(); }
+  void initState() {
+    super.initState();
+    _loadChapter();
+  }
 
   Future<void> _loadChapter() async {
     setState(() => loading = true);
@@ -1438,47 +1309,105 @@ class _HadithBookReaderPageState extends State<HadithBookReaderPage> {
       if (res[0].statusCode == 200 && mounted) {
         final td = json.decode(res[0].body);
         final ad = res[1].statusCode == 200 ? json.decode(res[1].body) : null;
-        setState(() { transHadiths = td['hadiths'] ?? []; arabHadiths = ad != null ? (ad['hadiths'] ?? []) : []; loading = false; });
+        setState(() {
+          chapterHadiths = td['hadiths'] ?? [];
+          arabHadiths = ad != null ? (ad['hadiths'] ?? []) : [];
+          loading = false;
+        });
       } else if (mounted) {
         if (hLang == 'urd') { hLang = 'eng'; _loadChapter(); return; }
         setState(() => loading = false);
       }
-    } catch (_) { if (mounted) setState(() => loading = false); }
+    } catch (_) {
+      if (mounted) setState(() => loading = false);
+    }
+  }
+
+  Future<void> _ensureFullBookLoadedForSearch() async {
+    if (fullBookCache != null || loadingGlobalSearch) return;
+    setState(() => loadingGlobalSearch = true);
+    try {
+      final url = 'https://cdn.jsdelivr.net/gh/fawazahmed0/hadith-api@1/editions/$hLang-${widget.bookId}.min.json';
+      final r = await http.get(Uri.parse(url));
+      if (r.statusCode == 200 && mounted) {
+        final d = json.decode(r.body);
+        setState(() {
+          fullBookCache = d['hadiths'] ?? [];
+          loadingGlobalSearch = false;
+        });
+      } else if (mounted) {
+        setState(() => loadingGlobalSearch = false);
+      }
+    } catch (_) {
+      if (mounted) setState(() => loadingGlobalSearch = false);
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    final filtered = transHadiths.where((h) => (h['text']?.toString().toLowerCase() ?? '').contains(search.toLowerCase()) || (h['hadithnumber']?.toString() ?? '').contains(search)).toList();
+    final bool isSearchingGlobally = search.trim().isNotEmpty;
+    final List sourceList = (isSearchingGlobally && fullBookCache != null) ? fullBookCache! : chapterHadiths;
+
+    final filtered = sourceList.where((h) {
+      final t = h['text']?.toString().toLowerCase() ?? '';
+      final n = h['hadithnumber']?.toString() ?? '';
+      return t.contains(search.toLowerCase()) || n.contains(search);
+    }).take(150).toList();
+
     return Scaffold(
       appBar: AppBar(
         title: Text(widget.bookTitle, style: const TextStyle(fontFamily: 'serif', fontSize: 17)),
         backgroundColor: kBg,
         actions: [
-          TextButton(onPressed: () { setState(() => hLang = hLang == 'eng' ? 'urd' : 'eng'); _loadChapter(); }, child: Text(hLang == 'eng' ? 'اردو' : 'EN', style: const TextStyle(color: kGold, fontWeight: FontWeight.bold))),
+          TextButton(
+            onPressed: () {
+              setState(() { hLang = hLang == 'eng' ? 'urd' : 'eng'; fullBookCache = null; });
+              _loadChapter();
+            },
+            child: Text(hLang == 'eng' ? 'اردو' : 'EN', style: TextStyle(color: kPrimary, fontWeight: FontWeight.bold)),
+          ),
         ],
       ),
       body: Column(
         children: [
-          if (widget.maxSections > 1)
+          if (widget.maxSections > 1 && !isSearchingGlobally)
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
               color: kCard,
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  IconButton(icon: const Icon(Icons.chevron_left, color: kGold), onPressed: section > 1 ? () { setState(() => section--); _loadChapter(); } : null),
-                  Text('Chapter $section / ${widget.maxSections}', style: const TextStyle(fontWeight: FontWeight.bold, color: kGold)),
-                  IconButton(icon: const Icon(Icons.chevron_right, color: kGold), onPressed: section < widget.maxSections ? () { setState(() => section++); _loadChapter(); } : null),
+                  IconButton(icon: Icon(Icons.chevron_left, color: kPrimary), onPressed: section > 1 ? () { setState(() => section--); _loadChapter(); } : null),
+                  Text('Chapter $section / ${widget.maxSections}', style: TextStyle(fontWeight: FontWeight.bold, color: kPrimary)),
+                  IconButton(icon: Icon(Icons.chevron_right, color: kPrimary), onPressed: section < widget.maxSections ? () { setState(() => section++); _loadChapter(); } : null),
                 ],
               ),
             ),
           Padding(
             padding: const EdgeInsets.all(12),
             child: TextField(
-              onChanged: (v) => setState(() => search = v),
-              decoration: InputDecoration(hintText: 'Search Hadith # or keyword...', prefixIcon: Icon(Icons.search, size: 18, color: widget.accentColor), filled: true, fillColor: kCard, border: OutlineInputBorder(borderRadius: BorderRadius.circular(14))),
+              onChanged: (v) {
+                setState(() => search = v);
+                if (v.trim().isNotEmpty) _ensureFullBookLoadedForSearch();
+              },
+              decoration: InputDecoration(
+                hintText: '🔍 Search across ALL ${widget.maxSections} Chapters...',
+                prefixIcon: Icon(Icons.search, size: 18, color: widget.accentColor),
+                suffixIcon: loadingGlobalSearch ? const Padding(padding: EdgeInsets.all(12), child: SizedBox(width: 14, height: 14, child: CircularProgressIndicator(strokeWidth: 2))) : null,
+                filled: true,
+                fillColor: kCard,
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
+              ),
             ),
           ),
+          if (isSearchingGlobally)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 8),
+              child: Text(
+                loadingGlobalSearch ? 'Searching all ${widget.maxSections} chapters...' : 'Found ${filtered.length} matches across entire ${widget.bookTitle}',
+                style: TextStyle(fontSize: 11, color: kSecondary, fontWeight: FontWeight.bold),
+              ),
+            ),
           Expanded(
             child: loading
                 ? Center(child: CircularProgressIndicator(color: widget.accentColor))
@@ -1489,7 +1418,7 @@ class _HadithBookReaderPageState extends State<HadithBookReaderPage> {
                       final h = filtered[i];
                       final String txt = h['text']?.toString() ?? '';
                       if (txt.isEmpty) return const SizedBox.shrink();
-                      String arab = i < arabHadiths.length ? (arabHadiths[i]['text']?.toString() ?? '') : '';
+                      String arab = (!isSearchingGlobally && i < arabHadiths.length) ? (arabHadiths[i]['text']?.toString() ?? '') : '';
                       return Container(
                         margin: const EdgeInsets.only(bottom: 12),
                         padding: const EdgeInsets.all(16),
@@ -1497,13 +1426,13 @@ class _HadithBookReaderPageState extends State<HadithBookReaderPage> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.stretch,
                           children: [
-                            Text('${widget.bookTitle} • #${h['hadithnumber']}', style: TextStyle(color: widget.accentColor, fontWeight: FontWeight.w800, fontSize: 11)),
+                            Text('${widget.bookTitle} • Hadith #${h['hadithnumber']}', style: TextStyle(color: widget.accentColor, fontWeight: FontWeight.w800, fontSize: 11)),
                             if (arab.isNotEmpty) ...[
                               const SizedBox(height: 10),
-                              Text(arab, textAlign: TextAlign.right, style: const TextStyle(fontSize: 21, fontWeight: FontWeight.bold, height: 1.6)),
-                              const Divider(color: kBorder, height: 20),
+                              Text(arab, textAlign: TextAlign.right, style: TextStyle(fontSize: 21, fontWeight: FontWeight.bold, height: 1.6, color: kText)),
+                              Divider(color: kBorder, height: 20),
                             ] else const SizedBox(height: 8),
-                            Text(txt, style: const TextStyle(fontSize: 14, fontFamily: 'serif', color: Colors.white70, height: 1.5)),
+                            Text(txt, style: TextStyle(fontSize: 14, fontFamily: 'serif', color: kText.withOpacity(0.85), height: 1.5)),
                           ],
                         ),
                       );
@@ -1533,7 +1462,8 @@ class _SurahReaderPageState extends State<SurahReaderPage> {
   @override
   void initState() {
     super.initState();
-    http.get(Uri.parse('https://api.alquran.cloud/v1/surah/${widget.num}/editions/ar.alafasy,en.asad')).then((r) {
+    String ed = appLang == 'hi' ? 'hi.hindi' : (appLang == 'ur' ? 'ur.jalandhry' : 'en.asad');
+    http.get(Uri.parse('https://api.alquran.cloud/v1/surah/${widget.num}/editions/ar.alafasy,$ed')).then((r) {
       if (r.statusCode == 200 && mounted) {
         final d = json.decode(r.body)['data'];
         setState(() { ar = d[0]['ayahs']; tr = d[1]['ayahs']; loading = false; });
@@ -1549,23 +1479,23 @@ class _SurahReaderPageState extends State<SurahReaderPage> {
     return Scaffold(
       appBar: AppBar(title: Text(widget.name, style: const TextStyle(fontFamily: 'serif')), backgroundColor: kBg),
       body: loading
-          ? const Center(child: CircularProgressIndicator(color: kAmber))
+          ? Center(child: CircularProgressIndicator(color: kPrimary))
           : ListView.builder(
               padding: const EdgeInsets.all(16),
               itemCount: ar.length,
               itemBuilder: (_, i) => Container(
                 margin: const EdgeInsets.only(bottom: 12),
                 padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(color: kCard, borderRadius: BorderRadius.circular(16), border: Border.all(color: playingIdx == i ? kAmber : kBorder)),
+                decoration: BoxDecoration(color: kCard, borderRadius: BorderRadius.circular(16), border: Border.all(color: playingIdx == i ? kPrimary : kBorder)),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Text('VERSE ${ar[i]['numberInSurah']}', style: const TextStyle(fontSize: 10, color: kAmber, fontWeight: FontWeight.w800)),
+                        Text('VERSE ${ar[i]['numberInSurah']}', style: TextStyle(fontSize: 10, color: kPrimary, fontWeight: FontWeight.w800)),
                         IconButton(
-                          icon: Icon(playingIdx == i ? Icons.stop_circle_outlined : Icons.play_circle_outline, color: kMint),
+                          icon: Icon(playingIdx == i ? Icons.stop_circle_outlined : Icons.play_circle_outline, color: kSecondary),
                           onPressed: () {
                             if (playingIdx == i) { player.stop(); setState(() => playingIdx = null); }
                             else { setState(() => playingIdx = i); player.play(UrlSource(ar[i]['audio'])); }
@@ -1573,9 +1503,9 @@ class _SurahReaderPageState extends State<SurahReaderPage> {
                         ),
                       ],
                     ),
-                    Text(ar[i]['text'], textAlign: TextAlign.right, style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold, height: 1.7)),
+                    Text(ar[i]['text'], textAlign: TextAlign.right, style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, height: 1.7, color: kText)),
                     const SizedBox(height: 10),
-                    Text(tr[i]['text'], style: const TextStyle(fontSize: 13.5, fontFamily: 'serif', color: Colors.white70, height: 1.4)),
+                    Text(tr[i]['text'], style: TextStyle(fontSize: 13.5, fontFamily: 'serif', color: kMuted, height: 1.4)),
                   ],
                 ),
               ),
@@ -1583,3 +1513,262 @@ class _SurahReaderPageState extends State<SurahReaderPage> {
     );
   }
 }
+
+// ---------------- 5. SETTINGS, THEME CUSTOMIZER & DEVELOPER PROFILE TAB ----------------
+class SettingsProfileScreen extends StatefulWidget {
+  final VoidCallback onRebuild;
+  const SettingsProfileScreen({super.key, required this.onRebuild});
+  @override
+  State<SettingsProfileScreen> createState() => _SettingsProfileScreenState();
+}
+
+class _SettingsProfileScreenState extends State<SettingsProfileScreen> {
+  final TextEditingController feedbackCtrl = TextEditingController();
+
+  void _copySocial(String handle) {
+    Clipboard.setData(ClipboardData(text: handle));
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(backgroundColor: kPrimary, content: Text('Copied $handle!', style: const TextStyle(color: Colors.black, fontWeight: FontWeight.bold))),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return SafeArea(
+      child: ListView(
+        padding: const EdgeInsets.fromLTRB(18, 16, 18, 100),
+        children: [
+          Container(
+            padding: const EdgeInsets.all(22),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(colors: [kPrimary.withOpacity(0.22), kCard]),
+              borderRadius: BorderRadius.circular(26),
+              border: Border.all(color: kPrimary.withOpacity(0.45)),
+            ),
+            child: Column(
+              children: [
+                Container(
+                  width: 68,
+                  height: 68,
+                  decoration: BoxDecoration(gradient: LinearGradient(colors: [kPrimary, kSecondary]), borderRadius: BorderRadius.circular(22)),
+                  child: const Icon(Icons.mosque_rounded, size: 36, color: Colors.black),
+                ),
+                const SizedBox(height: 12),
+                Text('NOOR ISLAMIC PRO', style: TextStyle(fontSize: 20, fontFamily: 'serif', fontWeight: FontWeight.w900, color: kText, letterSpacing: 1.2)),
+                Text('All-in-One Daily Salah, Live Quran & Hadith Companion', style: TextStyle(fontSize: 11.5, color: kMuted)),
+                const SizedBox(height: 14),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    _socialPill(Icons.camera_alt_outlined, '@noor.islamic.app', () => _copySocial('@noor.islamic.app')),
+                    const SizedBox(width: 10),
+                    _socialPill(Icons.facebook_rounded, 'fb.com/NoorIslamicApp', () => _copySocial('fb.com/NoorIslamicApp')),
+                  ],
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 20),
+
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            decoration: BoxDecoration(color: kCard, borderRadius: BorderRadius.circular(20), border: Border.all(color: kBorder)),
+            child: SwitchListTile(
+              contentPadding: EdgeInsets.zero,
+              activeColor: kPrimary,
+              title: Text(isDarkMode ? '🌙 Dark Mode Active' : '☀️ Light Mode Active', style: TextStyle(fontWeight: FontWeight.bold, color: kText)),
+              subtitle: Text('Switch between Dark Obsidian and Clean Light theme', style: TextStyle(fontSize: 11.5, color: kMuted)),
+              value: isDarkMode,
+              onChanged: (v) async {
+                final p = await SharedPreferences.getInstance();
+                await p.setBool('dark', v);
+                isDarkMode = v;
+                widget.onRebuild();
+                setState(() {});
+              },
+            ),
+          ),
+          const SizedBox(height: 16),
+
+          Container(
+            padding: const EdgeInsets.all(18),
+            decoration: BoxDecoration(color: kCard, borderRadius: BorderRadius.circular(20), border: Border.all(color: kBorder)),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('🎨 SELECT APP THEME COLOUR', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w900, color: kPrimary, letterSpacing: 1)),
+                const SizedBox(height: 12),
+                Wrap(
+                  spacing: 10,
+                  runSpacing: 10,
+                  children: List.generate(kAccentPalettes.length, (i) {
+                    final pal = kAccentPalettes[i];
+                    bool sel = accentIndex == i;
+                    return GestureDetector(
+                      onTap: () async {
+                        final p = await SharedPreferences.getInstance();
+                        await p.setInt('accent', i);
+                        accentIndex = i;
+                        widget.onRebuild();
+                        setState(() {});
+                      },
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                        decoration: BoxDecoration(
+                          color: (pal['primary'] as Color).withOpacity(0.16),
+                          borderRadius: BorderRadius.circular(14),
+                          border: Border.all(color: sel ? (pal['primary'] as Color) : kBorder, width: sel ? 2 : 1),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            CircleAvatar(radius: 7, backgroundColor: pal['primary'] as Color),
+                            const SizedBox(width: 7),
+                            Text(pal['name'] as String, style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: kText)),
+                          ],
+                        ),
+                      ),
+                    );
+                  }),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 16),
+
+          Container(
+            padding: const EdgeInsets.all(18),
+            decoration: BoxDecoration(color: kCard, borderRadius: BorderRadius.circular(20), border: Border.all(color: kBorder)),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('🌐 SELECT APP LANGUAGE', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w900, color: kPrimary, letterSpacing: 1)),
+                const SizedBox(height: 10),
+                Row(
+                  children: [
+                    for (var l in [{'c': 'en', 'n': 'English'}, {'c': 'hi', 'n': 'हिंदी'}, {'c': 'ur', 'n': 'اردو'}, {'c': 'ro', 'n': 'Hinglish'}])
+                      Expanded(
+                        child: GestureDetector(
+                          onTap: () async {
+                            final p = await SharedPreferences.getInstance();
+                            await p.setString('lang', l['c']!);
+                            appLang = l['c']!;
+                            await fetchLiveDailyAyahAndDua();
+                            widget.onRebuild();
+                            setState(() {});
+                          },
+                          child: Container(
+                            margin: const EdgeInsets.symmetric(horizontal: 3),
+                            padding: const EdgeInsets.symmetric(vertical: 10),
+                            decoration: BoxDecoration(color: appLang == l['c'] ? kPrimary : kCardAlt, borderRadius: BorderRadius.circular(12)),
+                            child: Center(child: Text(l['n']!, style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.bold, color: appLang == l['c'] ? Colors.black : kText))),
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 16),
+
+          Container(
+            padding: const EdgeInsets.all(18),
+            decoration: BoxDecoration(color: kCard, borderRadius: BorderRadius.circular(20), border: Border.all(color: kBorder)),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('💬 SEND FEEDBACK & SUGGESTIONS', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w900, color: kPrimary, letterSpacing: 1)),
+                const SizedBox(height: 10),
+                TextField(
+                  controller: feedbackCtrl,
+                  maxLines: 2,
+                  decoration: InputDecoration(
+                    hintText: 'Write your feedback or feature request...',
+                    filled: true,
+                    fillColor: kBg,
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: BorderSide(color: kBorder)),
+                  ),
+                ),
+                const SizedBox(height: 10),
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    style: ElevatedButton.styleFrom(backgroundColor: kPrimary),
+                    onPressed: () {
+                      feedbackCtrl.clear();
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(backgroundColor: kSecondary, content: const Text('JazakAllah Khair! Your feedback has been submitted.', style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold))),
+                      );
+                    },
+                    child: const Text('Submit Feedback', style: TextStyle(color: Colors.black, fontWeight: FontWeight.w900)),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 16),
+
+          Container(
+            padding: const EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(colors: [kCardAlt, kCard]),
+              borderRadius: BorderRadius.circular(24),
+              border: Border.all(color: kSecondary.withOpacity(0.45), width: 1.4),
+            ),
+            child: Column(
+              children: [
+                Text('👨‍💻 DEVELOPED WITH ❤️ FOR THE UMMAH', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w900, color: kSecondary, letterSpacing: 1.2)),
+                const SizedBox(height: 14),
+                CircleAvatar(
+                  radius: 38,
+                  backgroundColor: kPrimary,
+                  child: CircleAvatar(radius: 35, backgroundColor: kCard, child: Icon(Icons.person_rounded, size: 42, color: kPrimary)),
+                ),
+                const SizedBox(height: 10),
+                Text('Lead Creator & Developer', style: TextStyle(fontSize: 17, fontWeight: FontWeight.w900, color: kText)),
+                const SizedBox(height: 6),
+                Text(
+                  'Passionate about building modern, ad-free, and authentic Islamic digital experiences as Sadaqah Jariyah for Muslims worldwide.',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(fontSize: 12, color: kMuted, height: 1.4),
+                ),
+                const SizedBox(height: 14),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    _socialPill(Icons.camera_alt_outlined, 'Insta: @developer.noor', () => _copySocial('@developer.noor')),
+                    const SizedBox(width: 10),
+                    _socialPill(Icons.facebook_rounded, 'FB: /developer.noor', () => _copySocial('fb.com/developer.noor')),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _socialPill(IconData ic, String handle, VoidCallback tap) {
+    return GestureDetector(
+      onTap: tap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+        decoration: BoxDecoration(color: kBg, borderRadius: BorderRadius.circular(20), border: Border.all(color: kBorder)),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(ic, size: 15, color: kPrimary),
+            const SizedBox(width: 6),
+            Text(handle, style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: kText)),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+
+
+
