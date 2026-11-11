@@ -18,13 +18,13 @@ void main() {
 }
 
 // ---------------- ARCHITECTURAL DESIGN TOKENS ----------------
-const Color kBg = Color(0xFF060D0B);       // Deep Matte Pine-Black
-const Color kCard = Color(0xFF0E1B17);     // Architectural Cypress Surface
-const Color kCardAlt = Color(0xFF132520);  // Elevated Pill Surface
-const Color kBorder = Color(0xFF1E352F);   // Subtle Hairline Border
-const Color kGold = Color(0xFFD6B36A);     // Muted Champagne Gold
-const Color kMint = Color(0xFF2DD4BF);     // Teal Mint Accent
-const Color kMuted = Color(0xFF8A9E97);    // Secondary Slate Text
+const Color kBg = Color(0xFF060D0B);
+const Color kCard = Color(0xFF0E1B17);
+const Color kCardAlt = Color(0xFF132520);
+const Color kBorder = Color(0xFF1E352F);
+const Color kGold = Color(0xFFD6B36A);
+const Color kMint = Color(0xFF2DD4BF);
+const Color kMuted = Color(0xFF8A9E97);
 
 String appLang = 'en';
 bool use12Hour = true;
@@ -118,7 +118,7 @@ class _MainShellState extends State<MainShell> {
             _navItem(0, Icons.grid_view_rounded, 'Home'),
             _navItem(1, Icons.layers_outlined, 'Widgets'),
             _navItem(2, Icons.pie_chart_outline_rounded, 'Tracker'),
-            _navItem(3, Icons.menu_book_rounded, 'Quran'),
+            _navItem(3, Icons.menu_book_rounded, 'Kitab'),
             _navItem(4, Icons.explore_outlined, 'Qibla'),
             _navItem(5, Icons.chat_bubble_outline_rounded, 'Scholar'),
           ],
@@ -144,7 +144,7 @@ class _MainShellState extends State<MainShell> {
             Icon(ic, size: 19, color: sel ? kGold : kMuted),
             if (sel) ...[
               const SizedBox(width: 6),
-              Text(label, style: const TextStyle(color: Colors.white, fontSize: 11.5, fontWeight: FontWeight.w600, letterSpacing: 0.3)),
+              Text(label, style: const TextStyle(color: Colors.white, fontSize: 11.5, fontWeight: FontWeight.w600)),
             ],
           ],
         ),
@@ -153,7 +153,6 @@ class _MainShellState extends State<MainShell> {
   }
 }
 
-// Subtle Architectural Contour Painter
 class TopoWavePainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
@@ -177,7 +176,7 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  String loc = 'Barpaka', hijri = '1448 AH', sunrise = '05:12', sunset = '17:32';
+  String loc = 'Barpaka', hijri = '1448 AH';
   double lat = 26.4167, lon = 92.7333;
   int school = 0;
   bool manual = false;
@@ -247,8 +246,6 @@ class _HomeScreenState extends State<HomeScreen> {
         final d = json.decode(r.body)['data'];
         setState(() {
           for (var pr in prayers) { times[pr] = d['timings'][pr].toString().split(' ')[0]; }
-          sunrise = d['timings']['Sunrise'].toString().split(' ')[0];
-          sunset = d['timings']['Sunset'].toString().split(' ')[0];
           hijri = '${d['date']['hijri']['day']} ${d['date']['hijri']['month']['en']} ${d['date']['hijri']['year']}';
         });
       }
@@ -302,7 +299,6 @@ class _HomeScreenState extends State<HomeScreen> {
       child: ListView(
         padding: const EdgeInsets.fromLTRB(18, 14, 18, 100),
         children: [
-          // 1. Minimalist Executive Header
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
@@ -345,17 +341,13 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
           const SizedBox(height: 18),
 
-          // 2. SIGNATURE EDITORIAL DUAL-PANE HERO CARD
+          // SIGNATURE EDITORIAL DUAL-PANE HERO CARD
           ClipRRect(
             borderRadius: BorderRadius.circular(26),
             child: Container(
               height: 205,
               decoration: BoxDecoration(
-                gradient: const LinearGradient(
-                  colors: [Color(0xFF0E2923), Color(0xFF071512)],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                ),
+                gradient: const LinearGradient(colors: [Color(0xFF0E2923), Color(0xFF071512)], begin: Alignment.topLeft, end: Alignment.bottomRight),
                 borderRadius: BorderRadius.circular(26),
                 border: Border.all(color: kBorder, width: 1.2),
               ),
@@ -366,7 +358,6 @@ class _HomeScreenState extends State<HomeScreen> {
                     padding: const EdgeInsets.all(18),
                     child: Row(
                       children: [
-                        // Left Focus Column
                         Expanded(
                           flex: 54,
                           child: Column(
@@ -379,7 +370,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                   Container(
                                     padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                                     decoration: BoxDecoration(color: kCardAlt, borderRadius: BorderRadius.circular(10), border: Border.all(color: kGold.withOpacity(0.3))),
-                                    child: Text('${currP.toUpperCase()} • CURRENT', style: const TextStyle(fontSize: 8.5, color: kGold, fontWeight: FontWeight.w800, letterSpacing: 0.5)),
+                                    child: Text('${currP.toUpperCase()} • CURRENT', style: const TextStyle(fontSize: 8.5, color: kGold, fontWeight: FontWeight.w800)),
                                   ),
                                 ],
                               ),
@@ -399,7 +390,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                       children: [
                                         CircleAvatar(radius: 3.5, backgroundColor: kGold),
                                         SizedBox(width: 6),
-                                        Text('REMAINING', style: TextStyle(fontSize: 8.5, fontWeight: FontWeight.w800, color: Colors.white70, letterSpacing: 0.8)),
+                                        Text('REMAINING', style: TextStyle(fontSize: 8.5, fontWeight: FontWeight.w800, color: Colors.white70)),
                                       ],
                                     ),
                                     Text(countdown, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w900, color: kMint)),
@@ -410,7 +401,6 @@ class _HomeScreenState extends State<HomeScreen> {
                           ),
                         ),
                         Container(width: 1, height: double.infinity, margin: const EdgeInsets.symmetric(horizontal: 14, vertical: 6), color: Colors.white12),
-                        // Right 3-Step Vertical Timeline
                         Expanded(
                           flex: 46,
                           child: Column(
@@ -431,7 +421,6 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
           const SizedBox(height: 20),
 
-          // 3. UNIFIED SALAH SCHEDULE & TRACKER MATRIX
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
@@ -496,55 +485,23 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
           const SizedBox(height: 22),
 
-          // 4. ARCHITECTURAL BENTO MODULES
           const Text('MODULES & INSTRUMENTS', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: kMuted, letterSpacing: 1.2)),
           const SizedBox(height: 10),
 
           Row(
             children: [
-              Expanded(
-                child: _bentoCard('Al-Quran & Audio', '114 Surahs • Multi-Translation', Icons.menu_book_rounded, kMint, () => widget.onNav(3, sub: 0)),
-              ),
+              Expanded(child: _bentoCard('Al-Quran & Audio', '114 Surahs • Multi-Lang', Icons.menu_book_rounded, kMint, () => widget.onNav(3, sub: 0))),
               const SizedBox(width: 10),
-              Expanded(
-                child: _bentoCard('Hadith Library', 'Sahih Bukhari & Muslim', Icons.library_books_outlined, kGold, () => widget.onNav(3, sub: 1)),
-              ),
+              Expanded(child: _bentoCard('10 Hadith Books', '36,000+ Authentic Hadiths', Icons.library_books_outlined, kGold, () => widget.onNav(3, sub: 1))),
             ],
           ),
           const SizedBox(height: 10),
           Row(
             children: [
-              Expanded(
-                child: _bentoCard('Widget Atelier', 'Dual-Pane Home Widgets', Icons.layers_outlined, kGold, () => widget.onNav(1)),
-              ),
+              Expanded(child: _bentoCard('Widget Atelier', 'Dual-Pane Home Widgets', Icons.layers_outlined, kGold, () => widget.onNav(1))),
               const SizedBox(width: 10),
-              Expanded(
-                child: _bentoCard('Qibla Instrument', 'Live Gyroscope Compass', Icons.explore_outlined, kMint, () => widget.onNav(4)),
-              ),
+              Expanded(child: _bentoCard('Qibla Instrument', 'Live Gyroscope Compass', Icons.explore_outlined, kMint, () => widget.onNav(4))),
             ],
-          ),
-          const SizedBox(height: 20),
-
-          // 5. EDITORIAL DAILY VERSE CARD
-          Container(
-            padding: const EdgeInsets.all(20),
-            decoration: BoxDecoration(color: kCard, borderRadius: BorderRadius.circular(22), border: Border.all(color: kBorder)),
-            child: const Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text('DAILY QURANIC REFLECTION', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w800, color: kGold, letterSpacing: 1.2)),
-                    Text('Surah Ash-Sharh • 94:5', style: TextStyle(fontSize: 11, fontFamily: 'serif', color: kMuted)),
-                  ],
-                ),
-                SizedBox(height: 14),
-                Text('فَإِنَّ مَعَ الْعُسْرِ يُسْرًا', textAlign: TextAlign.right, style: TextStyle(fontSize: 26, fontWeight: FontWeight.bold, color: Colors.white)),
-                SizedBox(height: 10),
-                Text('"For indeed, with hardship comes ease." — Beshak, har mushkil ke sath aasani hai.', style: TextStyle(fontSize: 13, fontFamily: 'serif', color: Colors.white70, height: 1.4)),
-              ],
-            ),
           ),
         ],
       ),
@@ -613,7 +570,7 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 }
 
-// ---------------- 2. WIDGET ATELIER (EDITORIAL DUAL-PANE WIDGETS) ----------------
+// ---------------- 2. WIDGET ATELIER ----------------
 class WidgetAtelierScreen extends StatefulWidget {
   const WidgetAtelierScreen({super.key});
   @override
@@ -651,7 +608,7 @@ class _WidgetAtelierScreenState extends State<WidgetAtelierScreen> {
           const Text('Home Screen Instruments', style: TextStyle(fontSize: 22, fontFamily: 'serif', fontWeight: FontWeight.bold)),
           const SizedBox(height: 20),
 
-          const Text('1. DUAL-PANE SALAH HORIZON WIDGET', style: TextStyle(fontSize: 10.5, fontWeight: FontWeight.w800, color: kMuted, letterSpacing: 1)),
+          const Text('1. DUAL-PANE SALAH HORIZON WIDGET', style: TextStyle(fontSize: 10.5, fontWeight: FontWeight.w800, color: kMuted)),
           const SizedBox(height: 8),
           Container(
             padding: const EdgeInsets.all(18),
@@ -669,7 +626,7 @@ class _WidgetAtelierScreenState extends State<WidgetAtelierScreen> {
                     children: [
                       Container(padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3), decoration: BoxDecoration(color: kCardAlt, borderRadius: BorderRadius.circular(8)), child: const Text('FAJR • CURRENT', style: TextStyle(fontSize: 8.5, color: kGold, fontWeight: FontWeight.bold))),
                       const SizedBox(height: 10),
-                      const Text('NEXT PRAYER', style: TextStyle(fontSize: 9, color: kMuted, letterSpacing: 1)),
+                      const Text('NEXT PRAYER', style: TextStyle(fontSize: 9, color: kMuted)),
                       const Text('Dhuhr', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
                       const Text('12:15 PM', style: TextStyle(fontSize: 22, fontFamily: 'serif', color: Colors.white)),
                       const SizedBox(height: 10),
@@ -699,7 +656,7 @@ class _WidgetAtelierScreenState extends State<WidgetAtelierScreen> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text('2. QURANIC MANUSCRIPT WIDGET (ARABIC + HINGLISH)', style: TextStyle(fontSize: 10.5, fontWeight: FontWeight.w800, color: kMuted, letterSpacing: 1)),
+              const Text('2. QURANIC MANUSCRIPT WIDGET', style: TextStyle(fontSize: 10.5, fontWeight: FontWeight.w800, color: kMuted)),
               GestureDetector(onTap: () => setState(() => vIdx = (vIdx + 1) % verses.length), child: const Text('Cycle Verse ↻', style: TextStyle(fontSize: 11, color: kGold, fontWeight: FontWeight.bold))),
             ],
           ),
@@ -714,7 +671,7 @@ class _WidgetAtelierScreenState extends State<WidgetAtelierScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                Text(v['ref']!, style: const TextStyle(fontSize: 9.5, color: kGold, fontWeight: FontWeight.w800, letterSpacing: 1)),
+                Text(v['ref']!, style: const TextStyle(fontSize: 9.5, color: kGold, fontWeight: FontWeight.w800)),
                 const SizedBox(height: 12),
                 Text(v['ar']!, textAlign: TextAlign.right, style: const TextStyle(fontSize: 25, fontWeight: FontWeight.bold, color: Colors.white)),
                 const SizedBox(height: 10),
@@ -727,7 +684,7 @@ class _WidgetAtelierScreenState extends State<WidgetAtelierScreen> {
           ElevatedButton(
             style: ElevatedButton.styleFrom(backgroundColor: kGold, padding: const EdgeInsets.symmetric(vertical: 15), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16))),
             onPressed: _sync,
-            child: const Text('SYNC WIDGETS TO DEVICE HOME SCREEN', style: TextStyle(color: Colors.black, fontWeight: FontWeight.w900, fontSize: 12, letterSpacing: 0.8)),
+            child: const Text('SYNC WIDGETS TO DEVICE HOME SCREEN', style: TextStyle(color: Colors.black, fontWeight: FontWeight.w900, fontSize: 12)),
           ),
         ],
       ),
@@ -788,37 +745,6 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
           const SizedBox(height: 16),
 
           Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(color: kCard, borderRadius: BorderRadius.circular(20), border: Border.all(color: kBorder)),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text('MONTHLY HEATMAP', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w800, color: kMuted, letterSpacing: 1)),
-                const SizedBox(height: 12),
-                GridView.builder(
-                  shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
-                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: 7, crossAxisSpacing: 6, mainAxisSpacing: 6),
-                  itemCount: daysInM,
-                  itemBuilder: (_, i) {
-                    final dt = DateTime(now.year, now.month, i + 1);
-                    int c = prayers.where((p) { int s = _st(dt, p); return s > 0 && s < 4; }).length;
-                    return Container(
-                      decoration: BoxDecoration(
-                        color: c == 5 ? kMint.withOpacity(0.35) : (c > 0 ? kCardAlt : kBg),
-                        borderRadius: BorderRadius.circular(8),
-                        border: Border.all(color: c == 5 ? kMint : kBorder),
-                      ),
-                      child: Center(child: Text('${i + 1}', style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold))),
-                    );
-                  },
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 16),
-
-          Container(
             padding: const EdgeInsets.all(18),
             decoration: BoxDecoration(color: kCard, borderRadius: BorderRadius.circular(20), border: Border.all(color: kBorder)),
             child: Column(
@@ -827,7 +753,7 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    const Text('QAZA-E-UMRI LEDGER', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: kGold, letterSpacing: 1)),
+                    const Text('QAZA-E-UMRI LEDGER', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: kGold)),
                     Text('$qTotal Remaining', style: const TextStyle(fontSize: 12, color: kMint, fontWeight: FontWeight.bold)),
                   ],
                 ),
@@ -840,7 +766,6 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
                   },
                   child: const Text('+ Add 30 Days Missed Qaza', style: TextStyle(color: Colors.white, fontSize: 12)),
                 ),
-                const SizedBox(height: 6),
                 ...prayers.map((p) {
                   int v = prefs?.getInt('qb_$p') ?? 0;
                   return Row(
@@ -875,7 +800,7 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(label, style: const TextStyle(fontSize: 9.5, fontWeight: FontWeight.w800, color: kMuted, letterSpacing: 1)),
+          Text(label, style: const TextStyle(fontSize: 9.5, fontWeight: FontWeight.w800, color: kMuted)),
           const SizedBox(height: 6),
           Text(val, style: TextStyle(fontSize: 26, fontFamily: 'serif', fontWeight: FontWeight.bold, color: col)),
           Text(sub, style: const TextStyle(fontSize: 11, color: Colors.white60)),
@@ -885,7 +810,7 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
   }
 }
 
-// ---------------- 4. QURAN & HADITH SCRIPTURE VAULT ----------------
+// ---------------- 4. QURAN & 10-BOOK HADITH VAULT (SCREENSHOT GRID!) ----------------
 class KitabScreen extends StatefulWidget {
   final int initTab;
   const KitabScreen({super.key, this.initTab = 0});
@@ -895,36 +820,36 @@ class KitabScreen extends StatefulWidget {
 
 class _KitabScreenState extends State<KitabScreen> {
   late int tab;
-  List surahs = [], hadiths = [];
-  bool loading = true;
-  String qSearch = '', hSearch = '';
+  List surahs = [];
+  bool loadingQuran = true;
+  String qSearch = '';
 
-  final defaultHadiths = const [
-    {'hadithnumber': '1', 'text': 'Sahih Al-Bukhari #1: Actions are judged only by intentions, and every person will have only what they intended.'},
-    {'hadithnumber': '5027', 'text': 'Sahih Al-Bukhari #5027: The best among you are those who learn the Qur\'an and teach it to others.'},
-    {'hadithnumber': '223', 'text': 'Sahih Muslim #223: Purity is half of faith, and Alhamdulillah fills the scale of good deeds.'},
+  // 10 Authentic Hadith Books matching User's Screenshot!
+  final List<Map<String, dynamic>> hadithBooks = const [
+    {'id': 'bukhari', 'title': 'Sahih\nal-Bukhari', 'count': '7589', 'sec': 97, 'col': Color(0xFF818CF8), 'ic': Icons.book_rounded},
+    {'id': 'muslim', 'title': 'Sahih\nMuslim', 'count': '7563', 'sec': 56, 'col': Color(0xFF2DD4BF), 'ic': Icons.menu_book_rounded},
+    {'id': 'nasai', 'title': 'Sunan\nan-Nasa\'i', 'count': '5765', 'sec': 51, 'col': Color(0xFFF59E0B), 'ic': Icons.auto_stories_rounded},
+    {'id': 'abudawud', 'title': 'Sunan\nAbu Dawud', 'count': '5274', 'sec': 43, 'col': Color(0xFFEF4444), 'ic': Icons.bookmark_rounded},
+    {'id': 'tirmidhi', 'title': 'Jami\'\nat-Tirmidhi', 'count': '3998', 'sec': 49, 'col': Color(0xFF38BDF8), 'ic': Icons.library_books_rounded},
+    {'id': 'ibnmajah', 'title': 'Sunan\nIbn Majah', 'count': '4343', 'sec': 37, 'col': Color(0xFFC084FC), 'ic': Icons.collections_bookmark_rounded},
+    {'id': 'malik', 'title': 'Muwatta\nMalik', 'count': '1858', 'sec': 61, 'col': Color(0xFF34D399), 'ic': Icons.layers_rounded},
+    {'id': 'nawawi', 'title': 'An-Nawawi\'s\n40 Hadith', 'count': '42', 'sec': 1, 'col': Color(0xFFF43F5E), 'ic': Icons.star_rounded},
+    {'id': 'qudsi', 'title': 'Hadith\nQudsi', 'count': '40', 'sec': 1, 'col': Color(0xFF60A5FA), 'ic': Icons.article_rounded},
+    {'id': 'dehlawi', 'title': 'Shah Waliullah\n40 Hadith', 'count': '40', 'sec': 1, 'col': Color(0xFF10B981), 'ic': Icons.history_edu_rounded},
   ];
 
   @override
   void initState() {
     super.initState();
     tab = widget.initTab;
-    hadiths = defaultHadiths;
     http.get(Uri.parse('https://api.alquran.cloud/v1/surah')).then((r) {
-      if (r.statusCode == 200 && mounted) setState(() { surahs = json.decode(r.body)['data']; loading = false; });
-    });
-    http.get(Uri.parse('https://cdn.jsdelivr.net/gh/fawazahmed0/hadith-api@1/editions/eng-bukhari/sections/1.json')).then((r) {
-      if (r.statusCode == 200 && mounted) {
-        List l = json.decode(r.body)['hadiths'] ?? [];
-        if (l.isNotEmpty) setState(() => hadiths = l);
-      }
+      if (r.statusCode == 200 && mounted) setState(() { surahs = json.decode(r.body)['data']; loadingQuran = false; });
     });
   }
 
   @override
   Widget build(BuildContext context) {
     final fS = surahs.where((s) => s['englishName'].toString().toLowerCase().contains(qSearch.toLowerCase()) || s['number'].toString().contains(qSearch)).toList();
-    final fH = hadiths.where((h) => h['text'].toString().toLowerCase().contains(hSearch.toLowerCase()) || h['hadithnumber'].toString().contains(hSearch)).toList();
 
     return SafeArea(
       child: Padding(
@@ -937,68 +862,158 @@ class _KitabScreenState extends State<KitabScreen> {
               child: Row(
                 children: [
                   _segBtn('AL-QURAN (114)', 0),
-                  _segBtn('SAHIH HADITH', 1),
+                  _segBtn('HADITH VAULT (10 BOOKS)', 1),
                 ],
               ),
             ),
-            const SizedBox(height: 12),
-            TextField(
-              onChanged: (v) => setState(() { if (tab == 0) qSearch = v; else hSearch = v; }),
-              decoration: InputDecoration(
-                hintText: tab == 0 ? 'Search Surah name or number...' : 'Search Hadith keyword or number...',
-                prefixIcon: const Icon(Icons.search, size: 18, color: kGold),
-                filled: true,
-                fillColor: kCard,
-                contentPadding: const EdgeInsets.symmetric(vertical: 10),
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: const BorderSide(color: kBorder)),
-              ),
-            ),
-            const SizedBox(height: 12),
+            const SizedBox(height: 14),
             Expanded(
-              child: tab == 0
-                  ? (loading
-                      ? const Center(child: CircularProgressIndicator(color: kGold))
-                      : ListView.builder(
-                          itemCount: fS.length,
-                          itemBuilder: (_, i) {
-                            final s = fS[i];
-                            return Container(
-                              margin: const EdgeInsets.only(bottom: 8),
-                              decoration: BoxDecoration(color: kCard, borderRadius: BorderRadius.circular(16), border: Border.all(color: kBorder)),
-                              child: ListTile(
-                                leading: Text('${s['number']}', style: const TextStyle(fontFamily: 'serif', color: kGold, fontWeight: FontWeight.bold)),
-                                title: Text(s['englishName'], style: const TextStyle(fontWeight: FontWeight.w700)),
-                                subtitle: Text('${s['englishNameTranslation']} • ${s['numberOfAyahs']} Verses', style: const TextStyle(fontSize: 11, color: kMuted)),
-                                trailing: Text(s['name'], style: const TextStyle(fontSize: 18, color: kGold)),
-                                onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => SurahReaderPage(num: s['number'], name: s['englishName']))),
-                              ),
-                            );
-                          },
-                        ))
-                  : ListView.builder(
-                      itemCount: fH.length,
-                      itemBuilder: (_, i) {
-                        final h = fH[i];
-                        if (h['text'].toString().isEmpty) return const SizedBox.shrink();
-                        return Container(
-                          margin: const EdgeInsets.only(bottom: 10),
-                          padding: const EdgeInsets.all(16),
-                          decoration: BoxDecoration(color: kCard, borderRadius: BorderRadius.circular(16), border: Border.all(color: kBorder)),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text('HADITH #${h['hadithnumber']}', style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w800, color: kGold, letterSpacing: 1)),
-                              const SizedBox(height: 8),
-                              Text(h['text'].toString(), style: const TextStyle(fontSize: 13.5, height: 1.5, color: Colors.white)),
-                            ],
-                          ),
-                        );
-                      },
-                    ),
+              child: tab == 0 ? _buildQuranView(fS) : _buildHadithBooksGrid(),
             ),
           ],
         ),
       ),
+    );
+  }
+
+  Widget _buildQuranView(List fS) {
+    return Column(
+      children: [
+        TextField(
+          onChanged: (v) => setState(() => qSearch = v),
+          decoration: InputDecoration(
+            hintText: 'Search Surah name or number...',
+            prefixIcon: const Icon(Icons.search, size: 18, color: kGold),
+            filled: true,
+            fillColor: kCard,
+            contentPadding: const EdgeInsets.symmetric(vertical: 10),
+            border: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: const BorderSide(color: kBorder)),
+          ),
+        ),
+        const SizedBox(height: 12),
+        Expanded(
+          child: loadingQuran
+              ? const Center(child: CircularProgressIndicator(color: kGold))
+              : ListView.builder(
+                  itemCount: fS.length,
+                  itemBuilder: (_, i) {
+                    final s = fS[i];
+                    return Container(
+                      margin: const EdgeInsets.only(bottom: 8),
+                      decoration: BoxDecoration(color: kCard, borderRadius: BorderRadius.circular(16), border: Border.all(color: kBorder)),
+                      child: ListTile(
+                        leading: Text('${s['number']}', style: const TextStyle(fontFamily: 'serif', color: kGold, fontWeight: FontWeight.bold)),
+                        title: Text(s['englishName'], style: const TextStyle(fontWeight: FontWeight.w700)),
+                        subtitle: Text('${s['englishNameTranslation']} • ${s['numberOfAyahs']} Verses', style: const TextStyle(fontSize: 11, color: kMuted)),
+                        trailing: Text(s['name'], style: const TextStyle(fontSize: 18, color: kGold)),
+                        onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => SurahReaderPage(num: s['number'], name: s['englishName']))),
+                      ),
+                    );
+                  },
+                ),
+        ),
+      ],
+    );
+  }
+
+  // Screenshot-Style 2-Column 10-Book Hadith Grid (In Luxury Dark Theme)
+  Widget _buildHadithBooksGrid() {
+    return GridView.builder(
+      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 2,
+        crossAxisSpacing: 12,
+        mainAxisSpacing: 12,
+        childAspectRatio: 1.08,
+      ),
+      itemCount: hadithBooks.length,
+      itemBuilder: (ctx, i) {
+        final b = hadithBooks[i];
+        final Color c = b['col'] as Color;
+        return GestureDetector(
+          onTap: () => Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (_) => HadithBookReaderPage(
+                bookId: b['id'] as String,
+                bookTitle: b['title'].toString().replaceAll('\n', ' '),
+                maxSections: b['sec'] as int,
+                accentColor: c,
+              ),
+            ),
+          ),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(22),
+            child: Container(
+              decoration: BoxDecoration(
+                color: kCard,
+                borderRadius: BorderRadius.circular(22),
+                border: Border.all(color: c.withOpacity(0.28), width: 1.2),
+              ),
+              child: Stack(
+                children: [
+                  // Top-Right Soft Decorative Circle (Like Screenshot)
+                  Positioned(
+                    top: -22,
+                    right: -22,
+                    child: Container(
+                      width: 90,
+                      height: 90,
+                      decoration: BoxDecoration(color: c.withOpacity(0.08), shape: BoxShape.circle),
+                    ),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            // Rounded Book Icon Box
+                            Container(
+                              width: 44,
+                              height: 44,
+                              decoration: BoxDecoration(
+                                color: c.withOpacity(0.16),
+                                borderRadius: BorderRadius.circular(14),
+                              ),
+                              child: Icon(b['ic'] as IconData, color: c, size: 24),
+                            ),
+                            // Hadith Count Badge (7589, 7563, etc.)
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                              decoration: BoxDecoration(
+                                color: c.withOpacity(0.15),
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: Text(
+                                b['count'] as String,
+                                style: TextStyle(color: c, fontWeight: FontWeight.w900, fontSize: 12),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const Spacer(),
+                        Text(
+                          b['title'] as String,
+                          style: const TextStyle(fontSize: 14.5, fontWeight: FontWeight.w800, color: Colors.white, height: 1.2),
+                        ),
+                        const SizedBox(height: 8),
+                        // Bottom Accent Bar (Like Screenshot)
+                        Container(
+                          width: 32,
+                          height: 3.5,
+                          decoration: BoxDecoration(color: c, borderRadius: BorderRadius.circular(4)),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
     );
   }
 
@@ -1010,8 +1025,202 @@ class _KitabScreenState extends State<KitabScreen> {
         child: Container(
           padding: const EdgeInsets.symmetric(vertical: 10),
           decoration: BoxDecoration(color: sel ? kCardAlt : Colors.transparent, borderRadius: BorderRadius.circular(10)),
-          child: Center(child: Text(lb, style: TextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: sel ? kGold : kMuted, letterSpacing: 0.8))),
+          child: Center(child: Text(lb, style: TextStyle(fontSize: 10.5, fontWeight: FontWeight.w800, color: sel ? kGold : kMuted))),
         ),
+      ),
+    );
+  }
+}
+
+// ---------------- FULL HADITH BOOK READER PAGE (ALL CHAPTERS + ARABIC + EN/URDU) ----------------
+class HadithBookReaderPage extends StatefulWidget {
+  final String bookId;
+  final String bookTitle;
+  final int maxSections;
+  final Color accentColor;
+
+  const HadithBookReaderPage({
+    super.key,
+    required this.bookId,
+    required this.bookTitle,
+    required this.maxSections,
+    required this.accentColor,
+  });
+
+  @override
+  State<HadithBookReaderPage> createState() => _HadithBookReaderPageState();
+}
+
+class _HadithBookReaderPageState extends State<HadithBookReaderPage> {
+  int section = 1;
+  String hLang = 'eng'; // 'eng' or 'urd'
+  List transHadiths = [];
+  List arabHadiths = [];
+  bool loading = true;
+  String search = '';
+
+  @override
+  void initState() {
+    super.initState();
+    _loadChapter();
+  }
+
+  Future<void> _loadChapter() async {
+    setState(() => loading = true);
+    try {
+      bool isSingleFile = widget.maxSections == 1;
+      String tUrl = isSingleFile
+          ? 'https://cdn.jsdelivr.net/gh/fawazahmed0/hadith-api@1/editions/$hLang-${widget.bookId}.json'
+          : 'https://cdn.jsdelivr.net/gh/fawazahmed0/hadith-api@1/editions/$hLang-${widget.bookId}/sections/$section.json';
+
+      String aUrl = isSingleFile
+          ? 'https://cdn.jsdelivr.net/gh/fawazahmed0/hadith-api@1/editions/ara-${widget.bookId}.json'
+          : 'https://cdn.jsdelivr.net/gh/fawazahmed0/hadith-api@1/editions/ara-${widget.bookId}/sections/$section.json';
+
+      final res = await Future.wait([http.get(Uri.parse(tUrl)), http.get(Uri.parse(aUrl))]);
+      if (res[0].statusCode == 200 && mounted) {
+        final td = json.decode(res[0].body);
+        final ad = res[1].statusCode == 200 ? json.decode(res[1].body) : null;
+        setState(() {
+          transHadiths = td['hadiths'] ?? [];
+          arabHadiths = ad != null ? (ad['hadiths'] ?? []) : [];
+          loading = false;
+        });
+      } else if (mounted) {
+        // Fallback to English if Urdu isn't available for 40-hadith collections
+        if (hLang == 'urd') {
+          hLang = 'eng';
+          _loadChapter();
+          return;
+        }
+        setState(() => loading = false);
+      }
+    } catch (_) {
+      if (mounted) setState(() => loading = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final filtered = transHadiths.where((h) {
+      final t = h['text']?.toString().toLowerCase() ?? '';
+      final n = h['hadithnumber']?.toString() ?? '';
+      return t.contains(search.toLowerCase()) || n.contains(search);
+    }).toList();
+
+    return Scaffold(
+      appBar: AppBar(
+        title: Text(widget.bookTitle, style: const TextStyle(fontFamily: 'serif', fontSize: 17)),
+        backgroundColor: kBg,
+        actions: [
+          TextButton(
+            onPressed: () { setState(() => hLang = hLang == 'eng' ? 'urd' : 'eng'); _loadChapter(); },
+            child: Text(hLang == 'eng' ? 'اردو' : 'EN', style: const TextStyle(color: kGold, fontWeight: FontWeight.bold)),
+          ),
+        ],
+      ),
+      body: Column(
+        children: [
+          // Chapter Selector Bar (For Multi-Chapter Books like Bukhari 1..97)
+          if (widget.maxSections > 1)
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+              color: kCard,
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  IconButton(
+                    icon: const Icon(Icons.chevron_left, color: kGold),
+                    onPressed: section > 1 ? () { setState(() => section--); _loadChapter(); } : null,
+                  ),
+                  DropdownButton<int>(
+                    value: section,
+                    dropdownColor: kCard,
+                    underline: const SizedBox(),
+                    items: List.generate(widget.maxSections, (i) => DropdownMenuItem(
+                      value: i + 1,
+                      child: Text('Chapter / Book ${i + 1} of ${widget.maxSections}', style: const TextStyle(fontWeight: FontWeight.bold, color: kGold, fontSize: 13)),
+                    )),
+                    onChanged: (v) { if (v != null) { setState(() => section = v); _loadChapter(); } },
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.chevron_right, color: kGold),
+                    onPressed: section < widget.maxSections ? () { setState(() => section++); _loadChapter(); } : null,
+                  ),
+                ],
+              ),
+            ),
+
+          Padding(
+            padding: const EdgeInsets.all(12),
+            child: TextField(
+              onChanged: (v) => setState(() => search = v),
+              decoration: InputDecoration(
+                hintText: 'Search inside ${widget.bookTitle} (# or word)...',
+                prefixIcon: Icon(Icons.search, size: 18, color: widget.accentColor),
+                filled: true,
+                fillColor: kCard,
+                contentPadding: const EdgeInsets.symmetric(vertical: 8),
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: const BorderSide(color: kBorder)),
+              ),
+            ),
+          ),
+
+          Expanded(
+            child: loading
+                ? Center(child: CircularProgressIndicator(color: widget.accentColor))
+                : ListView.builder(
+                    padding: const EdgeInsets.symmetric(horizontal: 14),
+                    itemCount: filtered.length,
+                    itemBuilder: (_, i) {
+                      final h = filtered[i];
+                      final String txt = h['text']?.toString() ?? '';
+                      if (txt.isEmpty) return const SizedBox.shrink();
+                      String arab = '';
+                      if (i < arabHadiths.length) arab = arabHadiths[i]['text']?.toString() ?? '';
+
+                      return Container(
+                        margin: const EdgeInsets.only(bottom: 12),
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: kCard,
+                          borderRadius: BorderRadius.circular(18),
+                          border: Border.all(color: kBorder),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                                  decoration: BoxDecoration(color: widget.accentColor.withOpacity(0.15), borderRadius: BorderRadius.circular(8)),
+                                  child: Text('${widget.bookTitle} • #${h['hadithnumber']}', style: TextStyle(color: widget.accentColor, fontWeight: FontWeight.w800, fontSize: 11)),
+                                ),
+                                IconButton(
+                                  icon: const Icon(Icons.copy, size: 16, color: kMuted),
+                                  onPressed: () {
+                                    Clipboard.setData(ClipboardData(text: '$arab\n\n$txt\n(${widget.bookTitle} #${h['hadithnumber']})'));
+                                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Hadith copied')));
+                                  },
+                                ),
+                              ],
+                            ),
+                            if (arab.isNotEmpty) ...[
+                              const SizedBox(height: 12),
+                              Text(arab, textAlign: TextAlign.right, style: const TextStyle(fontSize: 21, fontWeight: FontWeight.bold, color: Colors.white, height: 1.7)),
+                              const Divider(color: kBorder, height: 22),
+                            ] else
+                              const SizedBox(height: 10),
+                            Text(txt, style: const TextStyle(fontSize: 14, fontFamily: 'serif', color: Colors.white70, height: 1.5)),
+                          ],
+                        ),
+                      );
+                    },
+                  ),
+          ),
+        ],
       ),
     );
   }
@@ -1164,11 +1373,7 @@ class _QiblaInstrumentScreenState extends State<QiblaInstrumentScreen> {
                 Container(
                   width: 270,
                   height: 270,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: kCard,
-                    border: Border.all(color: aligned ? kMint : kBorder, width: 2),
-                  ),
+                  decoration: BoxDecoration(shape: BoxShape.circle, color: kCard, border: Border.all(color: aligned ? kMint : kBorder, width: 2)),
                 ),
                 Transform.rotate(
                   angle: -heading * (math.pi / 180.0),
@@ -1205,7 +1410,7 @@ class _QiblaInstrumentScreenState extends State<QiblaInstrumentScreen> {
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 14),
       decoration: BoxDecoration(color: kCard, borderRadius: BorderRadius.circular(16), border: Border.all(color: kBorder)),
-      child: Column(children: [Text(l, style: const TextStyle(fontSize: 9.5, color: kMuted, fontWeight: FontWeight.w800, letterSpacing: 1)), const SizedBox(height: 4), Text(v, style: const TextStyle(fontSize: 22, fontFamily: 'serif', fontWeight: FontWeight.bold, color: Colors.white))]),
+      child: Column(children: [Text(l, style: const TextStyle(fontSize: 9.5, color: kMuted, fontWeight: FontWeight.w800)), const SizedBox(height: 4), Text(v, style: const TextStyle(fontSize: 22, fontFamily: 'serif', fontWeight: FontWeight.bold, color: Colors.white))]),
     );
   }
 }
