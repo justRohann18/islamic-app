@@ -1,0 +1,16 @@
+{
+  "show_banner": true,
+  "banner_title": "🌙 Jummah & Daily Reminder",
+  "banner_message": "Recite Surah Al-Kahf & send abundant Durood upon Prophet ﷺ today!",
+  "app_insta": "@noor.islamic.app",
+  "app_fb": "fb.com/NoorIslamicApp",
+  "dev_name": "Noor Lead Creator",
+  "dev_bio": "Building modern, ad-free & authentic Islamic digital experiences as Sadaqah Jariyah for the Ummah.",
+  "dev_image": "https://cdn-icons-png.flaticon.com/512/4140/4140048.png",
+  "dev_insta": "@developer.noor",
+  "dev_fb": "fb.com/developer.noor",
+  "force_custom_ayah": false,
+  "custom_ayah_ref": "Surah Al-Baqarah • 2:152",
+  "custom_ayah_arab": "فَاذْكُرُونِي أَذْكُرْكُمْ وَاشْكُرُوا لِي وَلَا تَكْفُرُونِ",
+  "custom_ayah_trans": "So remember Me; I will remember you. And be grateful to Me and do not deny Me."
+}
