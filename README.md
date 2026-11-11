@@ -31,7 +31,7 @@
     <td align="center"><b>5. Streak & Analytics</b></td>
   </tr>
   <tr>
-    <td><img src="https://placehold.co/320x660/06120F/D6B36A.png?text=SIRAT%0AThe+Straight+Path%0A%0A%E2%94%81%E2%94%81%E2%94%81%E2%94%81%E2%94%81%E2%94%81%E2%94%81%E2%94%81%0A%0AWELCOME+TO+SIRAT%0A%0AYour+Architectural%0AIslamic+Companion%0A%0A%5B+Name:+Mumin+%5D%0A%5B+City:+Barpaka+%5D%0A%0A%5B+BEGIN+JOURNEY+%5D" width="210" alt="Onboarding Flashcards"/></td>
+    <td><img src="1.jpg"/></td>
     <td><img src="https://placehold.co/320x660/060D0B/2DD4BF.png?text=BARPAKA+%E2%80%A2+1448+AH%0A%0ANEXT+PRAYER%0ADhuhr+12:15+PM%0ARemaining+-02:14:30%0A%0A%E2%94%81%E2%94%81%E2%94%81%E2%94%81%E2%94%81%E2%94%81%E2%94%81%E2%94%81%0AFajr+JAMAAT+%E2%9C%93%0ADhuhr+ONTIME+%E2%9C%93%0AAsr+15:25%0AMaghrib+16:45%0AIsha+18:15%0A%0ADaily+Quranic+Verse%0ASurah+Ash-Sharh+94:5" width="210" alt="Dual-Pane Home"/></td>
     <td><img src="https://placehold.co/320x660/091916/D6B36A.png?text=WIDGET+ATELIER%0A%0A%5B+Pine+%7C+Gold+%7C+Sapphire+%5D%0AAyah+Size:+22sp%0A%0A%E2%94%81%E2%94%81%E2%94%81%E2%94%81%E2%94%81%E2%94%81%E2%94%81%E2%94%81%0ADUAL-PANE+WIDGET%0ANext:+Dhuhr+12:15+PM%0AChronometer+-02:14:30%0A%0AVERSE+WIDGET%0ASurah+Ash-Sharh+94:5%0A%0A%5B+FORCE+SYNC+NOW+%5D" width="210" alt="Widget Studio"/></td>
     <td><img src="https://placehold.co/320x660/060D0B/38BDF8.png?text=KITAB+%26+HADITH+VAULT%0A%0A%5B+Search+36,000%2B+Hadiths+%5D%0A%0A%E2%94%81%E2%94%81%E2%94%81%E2%94%81%E2%94%81%E2%94%81%E2%94%81%E2%94%81%0ASahih+al-Bukhari+(7589)%0ASahih+Muslim+(7563)%0ASunan+an-Nasai+(5765)%0ASunan+Abu+Dawud+(5274)%0AJami+at-Tirmidhi+(3998)%0ASunan+Ibn+Majah+(4343)%0AMuwatta+Malik+(1858)%0AAn-Nawawi+40+(42)" width="210" alt="Hadith Vault"/></td>
