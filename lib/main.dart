@@ -31,14 +31,15 @@ String adminPopupTitle = 'Sirat Broadcast';
 String adminPopupBody = 'Assalamu Alaikum. May Allah accept your prayers and good deeds today.';
 bool adminUpdateAvailable = false;
 String adminLatestVer = 'v1.0.0 Official';
-String adminUpdateUrl = 'https://github.com/';
+String adminUpdateUrl = 'https://github.com/justRohann18/islamic-app/releases';
 
-String adminAppInsta = '@sirat.islamic.app';
-String adminAppFb = 'fb.com/SiratIslamicApp';
-String adminDevName = 'Lead Creator & Developer';
+// PERMANENTLY HARDCODED OFFICIAL HANDLES & JAHIDUL HASSAN PROFILE!
+String adminAppInsta = '@app_sirat';
+String adminAppFb = 'https://www.facebook.com/share/1Bz6Qs6BKV/';
+String adminDevName = 'Jahidul Hassan';
 String adminDevBio = 'Building modern, ad-free and authentic Islamic digital experiences as Sadaqah Jariyah.';
-String adminDevInsta = '@developer.sirat';
-String adminDevFb = 'fb.com/developer.sirat';
+String adminDevInsta = '@just.jahidulx';
+String adminDevFb = 'https://www.facebook.com/share/1Bz6Qs6BKV/';
 
 final List<Map<String, dynamic>> kAccentPalettes = [
   {'name': 'Champagne Gold', 'primary': const Color(0xFFD6B36A), 'sec': const Color(0xFF2DD4BF)},
@@ -66,7 +67,6 @@ String liveDuaRef = 'Quranic Dua • 2:201';
 String liveDuaArab = 'رَبَّنَا آتِنَا فِي الدُّنْيَا حَسَنَةً وَفِي الْآخِرَةِ حَسَنَةً وَقِنَا عَذَابَ النَّارِ';
 String liveDuaTrans = '"Our Lord, grant us good in this world and good in the Hereafter."';
 
-// Custom Generated "SIRAT" (The Straight Path) Vector Emblem
 class SiratLogoPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
@@ -75,7 +75,6 @@ class SiratLogoPainter extends CustomPainter {
     canvas.drawRRect(bgRect, Paint()..color = const Color(0xFF071713));
     canvas.drawRRect(bgRect, Paint()..color = const Color(0xFFD6B36A)..style = PaintingStyle.stroke..strokeWidth = 2.2);
 
-    // Mihrab Arch
     final arch = Path()
       ..moveTo(w * 0.22, h * 0.85)
       ..lineTo(w * 0.22, h * 0.45)
@@ -85,7 +84,6 @@ class SiratLogoPainter extends CustomPainter {
       ..close();
     canvas.drawPath(arch, Paint()..color = const Color(0xFFD6B36A)..style = PaintingStyle.stroke..strokeWidth = 2.0);
 
-    // Ascending Straight Path ("Sirat")
     final path = Path()
       ..moveTo(w * 0.36, h * 0.85)
       ..lineTo(w * 0.47, h * 0.38)
@@ -94,7 +92,6 @@ class SiratLogoPainter extends CustomPainter {
       ..close();
     canvas.drawPath(path, Paint()..color = const Color(0xFF2DD4BF));
 
-    // Guiding 4-Point Star at the Summit
     final star = Path()
       ..moveTo(w * 0.5, h * 0.19)
       ..lineTo(w * 0.53, h * 0.26)
@@ -238,7 +235,6 @@ class _NoorSuperAppState extends State<NoorSuperApp> {
   }
 }
 
-// Interactive 4-Slide Flashcard Onboarding for New Users!
 class SiratOnboardingFlashcards extends StatefulWidget {
   final VoidCallback onFinish;
   const SiratOnboardingFlashcards({super.key, required this.onFinish});
@@ -272,9 +268,7 @@ class _SiratOnboardingFlashcardsState extends State<SiratOnboardingFlashcards> {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Row(children: [SizedBox(width: 28, height: 28, child: CustomPaint(painter: SiratLogoPainter())), const SizedBox(width: 8), Text('SIRAT', style: TextStyle(fontWeight: FontWeight.w900, letterSpacing: 1.5, color: kPrimary))]),
-                  Row(
-                    children: List.generate(4, (i) => Container(width: page == i ? 22 : 7, height: 7, margin: const EdgeInsets.only(left: 5), decoration: BoxDecoration(color: page == i ? kPrimary : kBorder, borderRadius: BorderRadius.circular(6)))),
-                  ),
+                  Row(children: List.generate(4, (i) => Container(width: page == i ? 22 : 7, height: 7, margin: const EdgeInsets.only(left: 5), decoration: BoxDecoration(color: page == i ? kPrimary : kBorder, borderRadius: BorderRadius.circular(6))))),
                 ],
               ),
               const SizedBox(height: 20),
@@ -288,19 +282,13 @@ class _SiratOnboardingFlashcardsState extends State<SiratOnboardingFlashcards> {
                     return Container(
                       margin: const EdgeInsets.symmetric(vertical: 10),
                       padding: const EdgeInsets.all(26),
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(colors: [kCardAlt, kCard], begin: Alignment.topLeft, end: Alignment.bottomRight),
-                        borderRadius: BorderRadius.circular(28),
-                        border: Border.all(color: kPrimary.withOpacity(0.45), width: 1.5),
-                      ),
+                      decoration: BoxDecoration(gradient: LinearGradient(colors: [kCardAlt, kCard], begin: Alignment.topLeft, end: Alignment.bottomRight), borderRadius: BorderRadius.circular(28), border: Border.all(color: kPrimary.withOpacity(0.45), width: 1.5)),
                       child: SingleChildScrollView(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            if (i == 0)
-                              Center(child: SizedBox(width: 84, height: 84, child: CustomPaint(painter: SiratLogoPainter())))
-                            else
-                              Container(padding: const EdgeInsets.all(16), decoration: BoxDecoration(color: kPrimary.withOpacity(0.15), borderRadius: BorderRadius.circular(20)), child: Icon(c['ic'] as IconData, size: 36, color: kPrimary)),
+                            if (i == 0) Center(child: SizedBox(width: 84, height: 84, child: CustomPaint(painter: SiratLogoPainter())))
+                            else Container(padding: const EdgeInsets.all(16), decoration: BoxDecoration(color: kPrimary.withOpacity(0.15), borderRadius: BorderRadius.circular(20)), child: Icon(c['ic'] as IconData, size: 36, color: kPrimary)),
                             const SizedBox(height: 24),
                             Text(c['tag'] as String, style: TextStyle(fontSize: 10.5, fontWeight: FontWeight.w900, color: kSecondary, letterSpacing: 1.4)),
                             const SizedBox(height: 8),
@@ -331,13 +319,8 @@ class _SiratOnboardingFlashcardsState extends State<SiratOnboardingFlashcards> {
                     } else {
                       final p = await SharedPreferences.getInstance();
                       await p.setBool('sirat_onboarded', true);
-                      if (nameC.text.trim().isNotEmpty) {
-                        globalUserName = nameC.text.trim();
-                        await p.setString('user_name', globalUserName);
-                      }
-                      if (cityC.text.trim().isNotEmpty) {
-                        await p.setString('loc', cityC.text.trim());
-                      }
+                      if (nameC.text.trim().isNotEmpty) { globalUserName = nameC.text.trim(); await p.setString('user_name', globalUserName); }
+                      if (cityC.text.trim().isNotEmpty) { await p.setString('loc', cityC.text.trim()); }
                       widget.onFinish();
                     }
                   },
@@ -410,6 +393,7 @@ class _MainShellState extends State<MainShell> {
     );
   }
 }
+
 
 
 
@@ -961,9 +945,6 @@ class _LiveAnimatedWidgetStudioPageState extends State<LiveAnimatedWidgetStudioP
 
 
 
-
-
-
 // ---------------- 3. ENHANCED EXECUTIVE STREAK TAB & 4. KITAB TAB ----------------
 class UniqueStreakScreen extends StatefulWidget {
   const UniqueStreakScreen({super.key});
@@ -1376,13 +1357,19 @@ class _KitabScreenState extends State<KitabScreen> {
 
 
 
-// ---------------- EXTRA ADMIN STATE, READERS & DIRECT SOCIAL REDIRECT SETTINGS ----------------
-String adminDevImage = '';
+
+
+
+
+
+
+// ---------------- HARDCODED JAHIDUL HASSAN PHOTO, READERS & DIRECT SOCIAL REDIRECT ----------------
+String adminDevImage = 'https://instasize.com/api/image/f82d477b378ee650f67b95f504fcdec6c2b01ca112ac64faa0d4aef2766656ec.jpeg';
 bool adminForceCustomAyah = false;
 bool adminForceCustomDua = false;
 bool adminMaintenanceMode = false;
 
-// Directly opens Instagram or Facebook App / Browser when user taps handle!
+// Directly opens Instagram or Facebook App when user taps handle!
 Future<void> openSocialProfile(bool isInstagram, String handleOrUrl) async {
   String clean = handleOrUrl.trim();
   String finalUrl = clean;
@@ -1390,7 +1377,7 @@ Future<void> openSocialProfile(bool isInstagram, String handleOrUrl) async {
     clean = clean.replaceAll('@', '');
     if (isInstagram) {
       clean = clean.replaceAll('instagram.com/', '').replaceAll('www.instagram.com/', '');
-      finalUrl = 'https://www.instagram.com/$clean';
+      finalUrl = 'https://www.instagram.com/$clean/';
     } else {
       clean = clean.replaceAll('fb.com/', '').replaceAll('facebook.com/', '').replaceAll('www.facebook.com/', '');
       finalUrl = 'https://www.facebook.com/$clean';
@@ -1398,59 +1385,6 @@ Future<void> openSocialProfile(bool isInstagram, String handleOrUrl) async {
   }
   try {
     await _widgetChannel.invokeMethod('openUrl', {'url': finalUrl});
-  } catch (_) {}
-}
-
-// Fetches live admin_config.json from justRohann18/islamic-app (with zero cache delay!)
-Future<void> syncFromGitHubCloudGlobal() async {
-  try {
-    final p = await SharedPreferences.getInstance();
-    adminPinCode = p.getString('adm_pin') ?? adminPinCode;
-    adminDevImage = p.getString('adm_dev_img') ?? adminDevImage;
-    adminAppInsta = p.getString('adm_app_ig') ?? adminAppInsta;
-    adminAppFb = p.getString('adm_app_fb') ?? adminAppFb;
-    adminDevInsta = p.getString('adm_dev_ig') ?? adminDevInsta;
-    adminDevFb = p.getString('adm_dev_fb') ?? adminDevFb;
-    adminDevName = p.getString('adm_dev_n') ?? adminDevName;
-    adminDevBio = p.getString('adm_dev_b') ?? adminDevBio;
-
-    final ts = DateTime.now().millisecondsSinceEpoch;
-    final urls = [
-      'https://api.github.com/repos/justRohann18/islamic-app/contents/admin_config.json?t=$ts',
-      'https://raw.githubusercontent.com/justRohann18/islamic-app/main/admin_config.json?t=$ts',
-    ];
-
-    for (var u in urls) {
-      final r = await http.get(Uri.parse(u), headers: {'Accept': 'application/vnd.github.v3.raw'});
-      if (r.statusCode == 200 && r.body.trim().startsWith('{')) {
-        final d = json.decode(r.body);
-        adminShowBanner = d['show_banner'] ?? adminShowBanner;
-        adminBannerTitle = d['banner_title'] ?? adminBannerTitle;
-        adminBannerMsg = d['banner_message'] ?? adminBannerMsg;
-        adminShowPopup = d['show_popup'] ?? adminShowPopup;
-        adminPopupTitle = d['popup_title'] ?? adminPopupTitle;
-        adminPopupBody = d['popup_body'] ?? adminPopupBody;
-        adminUpdateAvailable = d['update_available'] ?? adminUpdateAvailable;
-        adminLatestVer = d['latest_version'] ?? adminLatestVer;
-        adminUpdateUrl = d['update_url'] ?? adminUpdateUrl;
-        adminAppInsta = d['app_insta'] ?? adminAppInsta;
-        adminAppFb = d['app_fb'] ?? adminAppFb;
-        adminDevName = d['dev_name'] ?? adminDevName;
-        adminDevBio = d['dev_bio'] ?? adminDevBio;
-        adminDevImage = d['dev_image'] ?? adminDevImage;
-        adminDevInsta = d['dev_insta'] ?? adminDevInsta;
-        adminDevFb = d['dev_fb'] ?? adminDevFb;
-
-        await p.setString('adm_dev_n', adminDevName);
-        await p.setString('adm_dev_b', adminDevBio);
-        await p.setString('adm_dev_img', adminDevImage);
-        await p.setString('adm_dev_ig', adminDevInsta);
-        await p.setString('adm_dev_fb', adminDevFb);
-        await p.setString('adm_app_ig', adminAppInsta);
-        await p.setString('adm_app_fb', adminAppFb);
-        break;
-      }
-    }
   } catch (_) {}
 }
 
@@ -1631,14 +1565,6 @@ class SettingsProfileScreen extends StatefulWidget {
 }
 
 class _SettingsProfileScreenState extends State<SettingsProfileScreen> {
-  @override
-  void initState() {
-    super.initState();
-    syncFromGitHubCloudGlobal().then((_) {
-      if (mounted) { setState(() {}); widget.onRebuild(); }
-    });
-  }
-
   void _openUserNameAndWidgets() {
     final ctrl = TextEditingController(text: globalUserName);
     showDialog(
@@ -1699,19 +1625,18 @@ class _SettingsProfileScreenState extends State<SettingsProfileScreen> {
     );
   }
 
-  // Tapping Instagram or Facebook directly redirects to Instagram/Facebook App!
-  Widget _brandBadge(bool isInsta, String handle) {
+  Widget _brandBadge(bool isInsta, String handleOrUrl, String displayLabel) {
     return GestureDetector(
-      onTap: () => openSocialProfile(isInsta, handle),
+      onTap: () => openSocialProfile(isInsta, handleOrUrl),
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
         decoration: BoxDecoration(color: kBg, borderRadius: BorderRadius.circular(14), border: Border.all(color: kBorder)),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
             SizedBox(width: 16, height: 16, child: CustomPaint(painter: SocialLogoPainter(isInstagram: isInsta, color: isInsta ? kPrimary : kSecondary))),
             const SizedBox(width: 7),
-            Text(handle, style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: kText)),
+            Text(displayLabel, style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: kText)),
             const SizedBox(width: 4),
             Icon(Icons.open_in_new_rounded, size: 11, color: kMuted),
           ],
@@ -1722,7 +1647,6 @@ class _SettingsProfileScreenState extends State<SettingsProfileScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final bool hasPhoto = adminDevImage.trim().startsWith('http');
     return SafeArea(
       child: ListView(
         padding: const EdgeInsets.fromLTRB(18, 16, 18, 100),
@@ -1739,7 +1663,14 @@ class _SettingsProfileScreenState extends State<SettingsProfileScreen> {
                   Text('SIRAT', style: TextStyle(fontSize: 22, fontFamily: 'serif', fontWeight: FontWeight.w900, color: kText, letterSpacing: 2.5)),
                   Text('The Straight Path • v1.0.0 Official', style: TextStyle(fontSize: 11, color: kMuted)),
                   const SizedBox(height: 14),
-                  Row(mainAxisAlignment: MainAxisAlignment.center, children: [_brandBadge(true, adminAppInsta), const SizedBox(width: 10), _brandBadge(false, adminAppFb)]),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      _brandBadge(true, adminAppInsta, '@app_sirat'),
+                      const SizedBox(width: 10),
+                      _brandBadge(false, adminAppFb, 'Facebook'),
+                    ],
+                  ),
                 ],
               ),
             ),
@@ -1856,23 +1787,30 @@ class _SettingsProfileScreenState extends State<SettingsProfileScreen> {
           ),
           const SizedBox(height: 14),
 
+          // JAHIDUL HASSAN DEVELOPER CARD WITH PHOTO & DIRECT REDIRECT!
           Container(
             padding: const EdgeInsets.all(18),
             decoration: BoxDecoration(color: kCard, borderRadius: BorderRadius.circular(22), border: Border.all(color: kBorder)),
             child: Column(
               children: [
                 CircleAvatar(
-                  radius: 36,
+                  radius: 40,
                   backgroundColor: kPrimary,
-                  backgroundImage: hasPhoto ? NetworkImage(adminDevImage.trim()) : null,
-                  child: hasPhoto ? null : const Icon(Icons.person_outline_rounded, size: 36, color: Colors.black),
+                  backgroundImage: NetworkImage(adminDevImage),
                 ),
                 const SizedBox(height: 10),
-                Text(adminDevName, style: TextStyle(fontSize: 16, fontWeight: FontWeight.w900, color: kText)),
+                Text(adminDevName, style: TextStyle(fontSize: 17, fontWeight: FontWeight.w900, color: kText)),
                 const SizedBox(height: 4),
                 Text(adminDevBio, textAlign: TextAlign.center, style: TextStyle(fontSize: 11.5, color: kMuted)),
                 const SizedBox(height: 12),
-                Row(mainAxisAlignment: MainAxisAlignment.center, children: [_brandBadge(true, adminDevInsta), const SizedBox(width: 10), _brandBadge(false, adminDevFb)]),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    _brandBadge(true, adminDevInsta, '@just.jahidulx'),
+                    const SizedBox(width: 10),
+                    _brandBadge(false, adminDevFb, 'Facebook'),
+                  ],
+                ),
                 const SizedBox(height: 12),
                 OutlinedButton.icon(
                   onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => SiratOnboardingFlashcards(onFinish: () => Navigator.pop(context)))),
@@ -1887,6 +1825,9 @@ class _SettingsProfileScreenState extends State<SettingsProfileScreen> {
     );
   }
 }
+
+
+
 
 
 
