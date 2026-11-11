@@ -19,6 +19,20 @@ int accentIndex = 0;
 String appLang = 'en';
 bool use12Hour = true;
 
+// ---------------- LIVE ADMIN REMOTE CONFIG STATE ----------------
+String adminCloudUrl = ''; // Optional: Paste your GitHub Raw admin_config.json URL in Admin Panel!
+bool adminShowBanner = true;
+String adminBannerTitle = '🌙 Noor Official Update';
+String adminBannerMsg = 'Welcome to Noor Pro! Track your daily Salah & read Live Quran.';
+String adminAppInsta = '@noor.islamic.app';
+String adminAppFb = 'fb.com/NoorIslamicApp';
+String adminDevName = 'Lead Creator & Developer';
+String adminDevBio = 'Passionate about building modern, ad-free, and authentic Islamic digital experiences as Sadaqah Jariyah.';
+String adminDevImage = '';
+String adminDevInsta = '@developer.noor';
+String adminDevFb = 'fb.com/developer.noor';
+bool adminForceCustomAyah = false;
+
 final List<Map<String, dynamic>> kAccentPalettes = [
   {'name': 'Amber Gold', 'primary': const Color(0xFFF59E0B), 'sec': const Color(0xFF2DD4BF)},
   {'name': 'Emerald Mint', 'primary': const Color(0xFF10B981), 'sec': const Color(0xFFFBBF24)},
@@ -76,8 +90,59 @@ Future<void> triggerNativeWidgetBroadcast() async {
   } catch (_) {}
 }
 
+// Load Local + Cloud Admin Settings
+Future<void> syncAdminRemoteConfig() async {
+  final p = await SharedPreferences.getInstance();
+  adminCloudUrl = p.getString('adm_url') ?? '';
+  adminShowBanner = p.getBool('adm_show_ban') ?? true;
+  adminBannerTitle = p.getString('adm_ban_t') ?? adminBannerTitle;
+  adminBannerMsg = p.getString('adm_ban_m') ?? adminBannerMsg;
+  adminAppInsta = p.getString('adm_app_ig') ?? adminAppInsta;
+  adminAppFb = p.getString('adm_app_fb') ?? adminAppFb;
+  adminDevName = p.getString('adm_dev_n') ?? adminDevName;
+  adminDevBio = p.getString('adm_dev_b') ?? adminDevBio;
+  adminDevImage = p.getString('adm_dev_img') ?? '';
+  adminDevInsta = p.getString('adm_dev_ig') ?? adminDevInsta;
+  adminDevFb = p.getString('adm_dev_fb') ?? adminDevFb;
+  adminForceCustomAyah = p.getBool('adm_force_ayah') ?? false;
+
+  if (adminCloudUrl.trim().startsWith('http')) {
+    try {
+      final r = await http.get(Uri.parse(adminCloudUrl.trim()));
+      if (r.statusCode == 200) {
+        final d = json.decode(r.body);
+        adminShowBanner = d['show_banner'] ?? adminShowBanner;
+        adminBannerTitle = d['banner_title'] ?? adminBannerTitle;
+        adminBannerMsg = d['banner_message'] ?? adminBannerMsg;
+        adminAppInsta = d['app_insta'] ?? adminAppInsta;
+        adminAppFb = d['app_fb'] ?? adminAppFb;
+        adminDevName = d['dev_name'] ?? adminDevName;
+        adminDevBio = d['dev_bio'] ?? adminDevBio;
+        adminDevImage = d['dev_image'] ?? adminDevImage;
+        adminDevInsta = d['dev_insta'] ?? adminDevInsta;
+        adminDevFb = d['dev_fb'] ?? adminDevFb;
+        adminForceCustomAyah = d['force_custom_ayah'] ?? false;
+        if (adminForceCustomAyah) {
+          liveAyahRef = d['custom_ayah_ref'] ?? liveAyahRef;
+          liveAyahArab = d['custom_ayah_arab'] ?? liveAyahArab;
+          liveAyahTrans = '"${d['custom_ayah_trans'] ?? liveAyahTrans}"';
+        }
+      }
+    } catch (_) {}
+  }
+}
+
 Future<void> fetchLiveDailyAyahAndDua({bool forceRandom = false}) async {
   try {
+    await syncAdminRemoteConfig();
+    if (adminForceCustomAyah && !forceRandom) {
+      final p = await SharedPreferences.getInstance();
+      liveAyahRef = p.getString('adm_ayah_ref') ?? liveAyahRef;
+      liveAyahArab = p.getString('adm_ayah_ar') ?? liveAyahArab;
+      liveAyahTrans = p.getString('adm_ayah_tr') ?? liveAyahTrans;
+      return;
+    }
+
     final now = DateTime.now();
     int dayOfYear = now.difference(DateTime(now.year, 1, 1)).inDays + 1;
     int ayahNum = forceRandom ? (math.Random().nextInt(6200) + 10) : ((dayOfYear * 37 + now.year) % 6220) + 7;
@@ -244,13 +309,6 @@ class MihrabArchPainter extends CustomPainter {
   @override
   bool shouldRepaint(covariant CustomPainter oldDelegate) => true;
 }
-
-
-
-
-
-
-
 
 
 
@@ -912,6 +970,9 @@ class _UniqueWidgetStudioScreenState extends State<UniqueWidgetStudioScreen> {
 
 
 
+
+
+
 // ---------------- 3. UNIQUE STREAK, BADGES & CONSISTENCY TAB ----------------
 class UniqueStreakScreen extends StatefulWidget {
   const UniqueStreakScreen({super.key});
@@ -967,6 +1028,20 @@ class _UniqueStreakScreenState extends State<UniqueStreakScreen> {
       child: ListView(
         padding: const EdgeInsets.fromLTRB(18, 14, 18, 100),
         children: [
+          if (adminShowBanner)
+            Container(
+              margin: const EdgeInsets.only(bottom: 14),
+              padding: const EdgeInsets.all(14),
+              decoration: BoxDecoration(color: kPrimary.withOpacity(0.15), borderRadius: BorderRadius.circular(18), border: Border.all(color: kPrimary)),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(adminBannerTitle, style: TextStyle(fontWeight: FontWeight.w900, fontSize: 13, color: kPrimary)),
+                  const SizedBox(height: 4),
+                  Text(adminBannerMsg, style: TextStyle(fontSize: 12, color: kText)),
+                ],
+              ),
+            ),
           Text('🔥 SPIRITUAL STREAK & MILESTONES', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w900, color: kPrimary, letterSpacing: 1.4)),
           const SizedBox(height: 4),
           Text('Your Daily Salah Journey', style: TextStyle(fontSize: 22, fontFamily: 'serif', fontWeight: FontWeight.bold, color: kText)),
@@ -1103,7 +1178,7 @@ class _UniqueStreakScreenState extends State<UniqueStreakScreen> {
   }
 }
 
-// ---------------- 4. QURAN & 10-BOOK HADITH VAULT (GLOBAL SEARCH!) ----------------
+// ---------------- 4. QURAN & 10-BOOK HADITH VAULT ----------------
 class KitabScreen extends StatefulWidget {
   final int initTab;
   const KitabScreen({super.key, this.initTab = 0});
@@ -1514,7 +1589,7 @@ class _SurahReaderPageState extends State<SurahReaderPage> {
   }
 }
 
-// ---------------- 5. SETTINGS, THEME CUSTOMIZER & DEVELOPER PROFILE TAB ----------------
+// ---------------- 5. SETTINGS, THEME CUSTOMIZER, DEVELOPER PROFILE & ADMIN PANEL ----------------
 class SettingsProfileScreen extends StatefulWidget {
   final VoidCallback onRebuild;
   const SettingsProfileScreen({super.key, required this.onRebuild});
@@ -1532,44 +1607,81 @@ class _SettingsProfileScreenState extends State<SettingsProfileScreen> {
     );
   }
 
+  void _openAdminPinDialog() {
+    final pinCtrl = TextEditingController();
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: kCard,
+        title: Text('🔐 Admin Control Access', style: TextStyle(color: kPrimary, fontWeight: FontWeight.bold)),
+        content: TextField(
+          controller: pinCtrl,
+          obscureText: true,
+          keyboardType: TextInputType.number,
+          decoration: const InputDecoration(hintText: 'Enter Admin PIN (Default: 7860)'),
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: kPrimary),
+            onPressed: () {
+              if (pinCtrl.text.trim() == '7860') {
+                Navigator.pop(ctx);
+                Navigator.push(context, MaterialPageRoute(builder: (_) => AdminDashboardPage(onRebuild: widget.onRebuild)));
+              } else {
+                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('❌ Invalid Admin PIN! (Hint: 7860)')));
+              }
+            },
+            child: const Text('Unlock Admin', style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return SafeArea(
       child: ListView(
         padding: const EdgeInsets.fromLTRB(18, 16, 18, 100),
         children: [
-          Container(
-            padding: const EdgeInsets.all(22),
-            decoration: BoxDecoration(
-              gradient: LinearGradient(colors: [kPrimary.withOpacity(0.22), kCard]),
-              borderRadius: BorderRadius.circular(26),
-              border: Border.all(color: kPrimary.withOpacity(0.45)),
-            ),
-            child: Column(
-              children: [
-                Container(
-                  width: 68,
-                  height: 68,
-                  decoration: BoxDecoration(gradient: LinearGradient(colors: [kPrimary, kSecondary]), borderRadius: BorderRadius.circular(22)),
-                  child: const Icon(Icons.mosque_rounded, size: 36, color: Colors.black),
-                ),
-                const SizedBox(height: 12),
-                Text('NOOR ISLAMIC PRO', style: TextStyle(fontSize: 20, fontFamily: 'serif', fontWeight: FontWeight.w900, color: kText, letterSpacing: 1.2)),
-                Text('All-in-One Daily Salah, Live Quran & Hadith Companion', style: TextStyle(fontSize: 11.5, color: kMuted)),
-                const SizedBox(height: 14),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    _socialPill(Icons.camera_alt_outlined, '@noor.islamic.app', () => _copySocial('@noor.islamic.app')),
-                    const SizedBox(width: 10),
-                    _socialPill(Icons.facebook_rounded, 'fb.com/NoorIslamicApp', () => _copySocial('fb.com/NoorIslamicApp')),
-                  ],
-                ),
-              ],
+          // 1. TOP APP LOGO (LONG-PRESS TO UNLOCK ADMIN PANEL!)
+          GestureDetector(
+            onLongPress: _openAdminPinDialog,
+            child: Container(
+              padding: const EdgeInsets.all(22),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(colors: [kPrimary.withOpacity(0.22), kCard]),
+                borderRadius: BorderRadius.circular(26),
+                border: Border.all(color: kPrimary.withOpacity(0.45)),
+              ),
+              child: Column(
+                children: [
+                  Container(
+                    width: 68,
+                    height: 68,
+                    decoration: BoxDecoration(gradient: LinearGradient(colors: [kPrimary, kSecondary]), borderRadius: BorderRadius.circular(22)),
+                    child: const Icon(Icons.mosque_rounded, size: 36, color: Colors.black),
+                  ),
+                  const SizedBox(height: 12),
+                  Text('NOOR ISLAMIC PRO', style: TextStyle(fontSize: 20, fontFamily: 'serif', fontWeight: FontWeight.w900, color: kText, letterSpacing: 1.2)),
+                  Text('All-in-One Daily Salah, Live Quran & Hadith Companion', style: TextStyle(fontSize: 11.5, color: kMuted)),
+                  const SizedBox(height: 14),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      _socialPill(Icons.camera_alt_outlined, adminAppInsta, () => _copySocial(adminAppInsta)),
+                      const SizedBox(width: 10),
+                      _socialPill(Icons.facebook_rounded, adminAppFb, () => _copySocial(adminAppFb)),
+                    ],
+                  ),
+                ],
+              ),
             ),
           ),
           const SizedBox(height: 20),
 
+          // 2. DARK / LIGHT MODE
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
             decoration: BoxDecoration(color: kCard, borderRadius: BorderRadius.circular(20), border: Border.all(color: kBorder)),
@@ -1590,6 +1702,7 @@ class _SettingsProfileScreenState extends State<SettingsProfileScreen> {
           ),
           const SizedBox(height: 16),
 
+          // 3. THEME COLOR PICKER
           Container(
             padding: const EdgeInsets.all(18),
             decoration: BoxDecoration(color: kCard, borderRadius: BorderRadius.circular(20), border: Border.all(color: kBorder)),
@@ -1636,6 +1749,7 @@ class _SettingsProfileScreenState extends State<SettingsProfileScreen> {
           ),
           const SizedBox(height: 16),
 
+          // 4. LANGUAGE SELECTOR
           Container(
             padding: const EdgeInsets.all(18),
             decoration: BoxDecoration(color: kCard, borderRadius: BorderRadius.circular(20), border: Border.all(color: kBorder)),
@@ -1672,6 +1786,7 @@ class _SettingsProfileScreenState extends State<SettingsProfileScreen> {
           ),
           const SizedBox(height: 16),
 
+          // 5. FEEDBACK
           Container(
             padding: const EdgeInsets.all(18),
             decoration: BoxDecoration(color: kCard, borderRadius: BorderRadius.circular(20), border: Border.all(color: kBorder)),
@@ -1709,6 +1824,7 @@ class _SettingsProfileScreenState extends State<SettingsProfileScreen> {
           ),
           const SizedBox(height: 16),
 
+          // 6. DEVELOPER PROFILE CARD + ADMIN PANEL LAUNCH BUTTON
           Container(
             padding: const EdgeInsets.all(20),
             decoration: BoxDecoration(
@@ -1721,26 +1837,32 @@ class _SettingsProfileScreenState extends State<SettingsProfileScreen> {
                 Text('👨‍💻 DEVELOPED WITH ❤️ FOR THE UMMAH', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w900, color: kSecondary, letterSpacing: 1.2)),
                 const SizedBox(height: 14),
                 CircleAvatar(
-                  radius: 38,
+                  radius: 40,
                   backgroundColor: kPrimary,
-                  child: CircleAvatar(radius: 35, backgroundColor: kCard, child: Icon(Icons.person_rounded, size: 42, color: kPrimary)),
+                  backgroundImage: adminDevImage.trim().startsWith('http') ? NetworkImage(adminDevImage.trim()) : null,
+                  child: adminDevImage.trim().startsWith('http')
+                      ? null
+                      : Icon(Icons.person_rounded, size: 42, color: Colors.black),
                 ),
                 const SizedBox(height: 10),
-                Text('Lead Creator & Developer', style: TextStyle(fontSize: 17, fontWeight: FontWeight.w900, color: kText)),
+                Text(adminDevName, style: TextStyle(fontSize: 17, fontWeight: FontWeight.w900, color: kText)),
                 const SizedBox(height: 6),
-                Text(
-                  'Passionate about building modern, ad-free, and authentic Islamic digital experiences as Sadaqah Jariyah for Muslims worldwide.',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(fontSize: 12, color: kMuted, height: 1.4),
-                ),
+                Text(adminDevBio, textAlign: TextAlign.center, style: TextStyle(fontSize: 12, color: kMuted, height: 1.4)),
                 const SizedBox(height: 14),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    _socialPill(Icons.camera_alt_outlined, 'Insta: @developer.noor', () => _copySocial('@developer.noor')),
+                    _socialPill(Icons.camera_alt_outlined, adminDevInsta, () => _copySocial(adminDevInsta)),
                     const SizedBox(width: 10),
-                    _socialPill(Icons.facebook_rounded, 'FB: /developer.noor', () => _copySocial('fb.com/developer.noor')),
+                    _socialPill(Icons.facebook_rounded, adminDevFb, () => _copySocial(adminDevFb)),
                   ],
+                ),
+                const SizedBox(height: 14),
+                OutlinedButton.icon(
+                  style: OutlinedButton.styleFrom(side: BorderSide(color: kPrimary.withOpacity(0.5))),
+                  onPressed: _openAdminPinDialog,
+                  icon: Icon(Icons.admin_panel_settings_rounded, size: 16, color: kPrimary),
+                  label: Text('Owner Admin Control Panel', style: TextStyle(fontSize: 11.5, color: kPrimary, fontWeight: FontWeight.bold)),
                 ),
               ],
             ),
@@ -1769,6 +1891,173 @@ class _SettingsProfileScreenState extends State<SettingsProfileScreen> {
   }
 }
 
+// ---------------- 6. FULL OWNER ADMIN CONTROL PANEL SCREEN ----------------
+class AdminDashboardPage extends StatefulWidget {
+  final VoidCallback onRebuild;
+  const AdminDashboardPage({super.key, required this.onRebuild});
+  @override
+  State<AdminDashboardPage> createState() => _AdminDashboardPageState();
+}
 
+class _AdminDashboardPageState extends State<AdminDashboardPage> {
+  late TextEditingController urlCtrl, banTCtrl, banMCtrl, appIgCtrl, appFbCtrl;
+  late TextEditingController devNCtrl, devBCtrl, devImgCtrl, devIgCtrl, devFbCtrl;
+  late TextEditingController ayahRefCtrl, ayahArCtrl, ayahTrCtrl;
+  bool showBan = adminShowBanner;
+  bool forceAyah = adminForceCustomAyah;
+
+  @override
+  void initState() {
+    super.initState();
+    urlCtrl = TextEditingController(text: adminCloudUrl);
+    banTCtrl = TextEditingController(text: adminBannerTitle);
+    banMCtrl = TextEditingController(text: adminBannerMsg);
+    appIgCtrl = TextEditingController(text: adminAppInsta);
+    appFbCtrl = TextEditingController(text: adminAppFb);
+    devNCtrl = TextEditingController(text: adminDevName);
+    devBCtrl = TextEditingController(text: adminDevBio);
+    devImgCtrl = TextEditingController(text: adminDevImage);
+    devIgCtrl = TextEditingController(text: adminDevInsta);
+    devFbCtrl = TextEditingController(text: adminDevFb);
+    ayahRefCtrl = TextEditingController(text: liveAyahRef);
+    ayahArCtrl = TextEditingController(text: liveAyahArab);
+    ayahTrCtrl = TextEditingController(text: liveAyahTrans);
+  }
+
+  Future<void> _saveAdminChanges() async {
+    final p = await SharedPreferences.getInstance();
+    await p.setString('adm_url', urlCtrl.text.trim());
+    await p.setBool('adm_show_ban', showBan);
+    await p.setString('adm_ban_t', banTCtrl.text.trim());
+    await p.setString('adm_ban_m', banMCtrl.text.trim());
+    await p.setString('adm_app_ig', appIgCtrl.text.trim());
+    await p.setString('adm_app_fb', appFbCtrl.text.trim());
+    await p.setString('adm_dev_n', devNCtrl.text.trim());
+    await p.setString('adm_dev_b', devBCtrl.text.trim());
+    await p.setString('adm_dev_img', devImgCtrl.text.trim());
+    await p.setString('adm_dev_ig', devIgCtrl.text.trim());
+    await p.setString('adm_dev_fb', devFbCtrl.text.trim());
+    await p.setBool('adm_force_ayah', forceAyah);
+    await p.setString('adm_ayah_ref', ayahRefCtrl.text.trim());
+    await p.setString('adm_ayah_ar', ayahArCtrl.text.trim());
+    await p.setString('adm_ayah_tr', ayahTrCtrl.text.trim());
+
+    await syncAdminRemoteConfig();
+    if (forceAyah) {
+      liveAyahRef = ayahRefCtrl.text.trim();
+      liveAyahArab = ayahArCtrl.text.trim();
+      liveAyahTrans = ayahTrCtrl.text.trim();
+    }
+    await triggerNativeWidgetBroadcast();
+    widget.onRebuild();
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(backgroundColor: kSecondary, content: const Text('✅ Admin Settings Applied Live across App & Widgets!', style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold))),
+      );
+    }
+  }
+
+  void _exportCloudJson() {
+    final map = {
+      'show_banner': showBan,
+      'banner_title': banTCtrl.text.trim(),
+      'banner_message': banMCtrl.text.trim(),
+      'app_insta': appIgCtrl.text.trim(),
+      'app_fb': appFbCtrl.text.trim(),
+      'dev_name': devNCtrl.text.trim(),
+      'dev_bio': devBCtrl.text.trim(),
+      'dev_image': devImgCtrl.text.trim(),
+      'dev_insta': devIgCtrl.text.trim(),
+      'dev_fb': devFbCtrl.text.trim(),
+      'force_custom_ayah': forceAyah,
+      'custom_ayah_ref': ayahRefCtrl.text.trim(),
+      'custom_ayah_arab': ayahArCtrl.text.trim(),
+      'custom_ayah_trans': ayahTrCtrl.text.trim(),
+    };
+    Clipboard.setData(ClipboardData(text: const JsonEncoder.withIndent('  ').convert(map)));
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(backgroundColor: kPrimary, content: const Text('📋 Cloud JSON Copied! Paste it into admin_config.json on GitHub to update all users!', style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold))),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('👑 Owner Admin Control Panel'),
+        backgroundColor: kBg,
+        actions: [
+          IconButton(icon: Icon(Icons.copy_all_rounded, color: kPrimary), onPressed: _exportCloudJson, tooltip: 'Copy Cloud JSON'),
+        ],
+      ),
+      body: ListView(
+        padding: const EdgeInsets.all(18),
+        children: [
+          _secTitle('🌐 1. GITHUB CLOUD SYNC URL (OPTIONAL)'),
+          _field(urlCtrl, 'GitHub Raw URL for admin_config.json'),
+          const SizedBox(height: 16),
+
+          _secTitle('📢 2. LIVE ANNOUNCEMENT BANNER'),
+          SwitchListTile(
+            title: const Text('Show Announcement Banner in App'),
+            activeColor: kPrimary,
+            value: showBan,
+            onChanged: (v) => setState(() => showBan = v),
+          ),
+          _field(banTCtrl, 'Banner Heading (e.g. 🌙 Eid / Jummah Mubarak)'),
+          _field(banMCtrl, 'Banner Message'),
+          const SizedBox(height: 16),
+
+          _secTitle('✨ 3. OVERRIDE DAILY AYAH & WIDGET'),
+          SwitchListTile(
+            title: const Text('Force Custom Ayah instead of Auto API'),
+            activeColor: kPrimary,
+            value: forceAyah,
+            onChanged: (v) => setState(() => forceAyah = v),
+          ),
+          _field(ayahRefCtrl, 'Custom Surah & Verse Reference'),
+          _field(ayahArCtrl, 'Custom Arabic Text'),
+          _field(ayahTrCtrl, 'Custom Translation'),
+          const SizedBox(height: 16),
+
+          _secTitle('👨‍💻 4. DEVELOPER PROFILE & SOCIAL HANDLES'),
+          _field(devNCtrl, 'Developer Name'),
+          _field(devBCtrl, 'Developer About / Bio'),
+          _field(devImgCtrl, 'Developer Photo Image URL (https://...)'),
+          _field(devIgCtrl, 'Developer Instagram Handle'),
+          _field(devFbCtrl, 'Developer Facebook Link'),
+          _field(appIgCtrl, 'App Official Instagram Handle'),
+          _field(appFbCtrl, 'App Official Facebook Link'),
+          const SizedBox(height: 20),
+
+          ElevatedButton.icon(
+            style: ElevatedButton.styleFrom(backgroundColor: kPrimary, padding: const EdgeInsets.symmetric(vertical: 15)),
+            onPressed: _saveAdminChanges,
+            icon: const Icon(Icons.bolt_rounded, color: Colors.black),
+            label: const Text('SAVE & APPLY LIVE CHANGES', style: TextStyle(color: Colors.black, fontWeight: FontWeight.w900)),
+          ),
+          const SizedBox(height: 10),
+          OutlinedButton.icon(
+            onPressed: _exportCloudJson,
+            icon: Icon(Icons.cloud_upload_rounded, color: kSecondary),
+            label: Text('Copy JSON for GitHub Cloud (admin_config.json)', style: TextStyle(color: kSecondary, fontWeight: FontWeight.bold)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _secTitle(String t) => Padding(padding: const EdgeInsets.only(bottom: 8), child: Text(t, style: TextStyle(fontSize: 11, fontWeight: FontWeight.w900, color: kPrimary)));
+
+  Widget _field(TextEditingController c, String label) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 10),
+      child: TextField(
+        controller: c,
+        decoration: InputDecoration(labelText: label, filled: true, fillColor: kCard, border: OutlineInputBorder(borderRadius: BorderRadius.circular(12))),
+      ),
+    );
+  }
+}
 
 
