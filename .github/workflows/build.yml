@@ -207,10 +207,10 @@ jobs:
                               result.success(true)
                           }
                           "openUrl" -> {
-                              val url = call.argument<String>("url") ?: "https://instagram.com"
+                              val url = call.argument<String>("url") ?: "https://www.instagram.com/app_sirat/"
                               try {
-                                  val i = Intent(Intent.ACTION_VIEW, Uri.parse(url)).apply { addFlags(Intent.FLAG_ACTIVITY_NEW_TASK) }
-                                  applicationContext.startActivity(i)
+                                  val i = Intent(Intent.ACTION_VIEW, Uri.parse(url))
+                                  this@MainActivity.startActivity(i)
                               } catch (_: Exception) {}
                               result.success(true)
                           }
