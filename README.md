@@ -1,4 +1,4 @@
-[ai_studio_code (37).txt](https://github.com/user-attachments/files/34688018/ai_studio_code.37.txt)
+
 <div align="center">
 
 # SIRAT (صِرَاط) — The Straight Path
