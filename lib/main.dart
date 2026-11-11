@@ -419,10 +419,6 @@ class _MainShellState extends State<MainShell> {
 
 
 
-
-
-
-
 // ---------------- 1. HOMEPAGE (QURAN.COM FONT + ALARMS) & 2. WIDGET STUDIO (SIZE + THEME) ----------------
 class InteractiveHomeScreen extends StatefulWidget {
   final Function(int, {int sub}) onNav;
@@ -966,9 +962,6 @@ class _LiveAnimatedWidgetStudioPageState extends State<LiveAnimatedWidgetStudioP
 
 
 
-
-
-
 // ---------------- 3. ENHANCED EXECUTIVE STREAK TAB & 4. KITAB TAB ----------------
 class UniqueStreakScreen extends StatefulWidget {
   const UniqueStreakScreen({super.key});
@@ -1379,13 +1372,12 @@ class _KitabScreenState extends State<KitabScreen> {
 
 
 
+// ---------------- EXTRA ADMIN STATE, READERS & SECRET LOGO-HOLD SETTINGS ----------------
+String adminDevImage = '';
+bool adminForceCustomAyah = false;
+bool adminForceCustomDua = false;
+bool adminMaintenanceMode = false;
 
-
-
-
-
-
-// ---------------- READERS, SIRAT SETTINGS (CUSTOM LOGO + FLASHCARDS) & ADMIN PANEL ----------------
 class HadithBookReaderPage extends StatefulWidget {
   final String bookId, bookTitle;
   final int maxSections;
@@ -1563,6 +1555,48 @@ class SettingsProfileScreen extends StatefulWidget {
 }
 
 class _SettingsProfileScreenState extends State<SettingsProfileScreen> {
+  @override
+  void initState() {
+    super.initState();
+    _syncFromGitHubCloud();
+  }
+
+  Future<void> _syncFromGitHubCloud() async {
+    try {
+      final p = await SharedPreferences.getInstance();
+      adminPinCode = p.getString('adm_pin') ?? adminPinCode;
+      adminDevImage = p.getString('adm_dev_img') ?? adminDevImage;
+      adminAppInsta = p.getString('adm_app_ig') ?? adminAppInsta;
+      adminAppFb = p.getString('adm_app_fb') ?? adminAppFb;
+      adminDevInsta = p.getString('adm_dev_ig') ?? adminDevInsta;
+      adminDevFb = p.getString('adm_dev_fb') ?? adminDevFb;
+      adminDevBio = p.getString('adm_dev_b') ?? adminDevBio;
+
+      const cloudUrl = 'https://raw.githubusercontent.com/justRohan18/islamic-app/main/admin_config.json';
+      final r = await http.get(Uri.parse('$cloudUrl?t=${DateTime.now().millisecondsSinceEpoch}'));
+      if (r.statusCode == 200) {
+        final d = json.decode(r.body);
+        adminShowBanner = d['show_banner'] ?? adminShowBanner;
+        adminBannerTitle = d['banner_title'] ?? adminBannerTitle;
+        adminBannerMsg = d['banner_message'] ?? adminBannerMsg;
+        adminShowPopup = d['show_popup'] ?? adminShowPopup;
+        adminPopupTitle = d['popup_title'] ?? adminPopupTitle;
+        adminPopupBody = d['popup_body'] ?? adminPopupBody;
+        adminUpdateAvailable = d['update_available'] ?? adminUpdateAvailable;
+        adminLatestVer = d['latest_version'] ?? adminLatestVer;
+        adminUpdateUrl = d['update_url'] ?? adminUpdateUrl;
+        adminAppInsta = d['app_insta'] ?? adminAppInsta;
+        adminAppFb = d['app_fb'] ?? adminAppFb;
+        adminDevName = d['dev_name'] ?? adminDevName;
+        adminDevBio = d['dev_bio'] ?? adminDevBio;
+        adminDevImage = d['dev_image'] ?? adminDevImage;
+        adminDevInsta = d['dev_insta'] ?? adminDevInsta;
+        adminDevFb = d['dev_fb'] ?? adminDevFb;
+        if (mounted) { setState(() {}); widget.onRebuild(); }
+      }
+    } catch (_) {}
+  }
+
   void _openUserNameAndWidgets() {
     final ctrl = TextEditingController(text: globalUserName);
     showDialog(
@@ -1597,24 +1631,27 @@ class _SettingsProfileScreenState extends State<SettingsProfileScreen> {
     );
   }
 
-  void _openAdminPin() {
+  // Secret Hold on SIRAT Logo opens PIN Dialog (Hidden from regular users!)
+  void _openSecretAdminPin() {
+    HapticFeedback.heavyImpact();
     final pinC = TextEditingController();
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
         backgroundColor: kCard,
-        title: Text('Admin Access (PIN: 7860)', style: TextStyle(color: kPrimary)),
-        content: TextField(controller: pinC, obscureText: true, keyboardType: TextInputType.number),
+        title: Text('Owner Command Center', style: TextStyle(color: kPrimary, fontWeight: FontWeight.bold)),
+        content: TextField(controller: pinC, obscureText: true, keyboardType: TextInputType.number, decoration: const InputDecoration(hintText: 'Enter Secret PIN')),
         actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
           ElevatedButton(
             style: ElevatedButton.styleFrom(backgroundColor: kPrimary),
             onPressed: () {
               if (pinC.text.trim() == adminPinCode) {
                 Navigator.pop(ctx);
-                Navigator.push(context, MaterialPageRoute(builder: (_) => AdminDashboardPage(onRebuild: widget.onRebuild)));
+                Navigator.push(context, MaterialPageRoute(builder: (_) => AdminDashboardPage(onRebuild: () { setState(() {}); widget.onRebuild(); })));
               }
             },
-            child: const Text('Unlock', style: TextStyle(color: Colors.black)),
+            child: const Text('Unlock', style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
           ),
         ],
       ),
@@ -1644,13 +1681,14 @@ class _SettingsProfileScreenState extends State<SettingsProfileScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final bool hasPhoto = adminDevImage.trim().startsWith('http');
     return SafeArea(
       child: ListView(
         padding: const EdgeInsets.fromLTRB(18, 16, 18, 100),
         children: [
-          // 1. SIRAT CUSTOM VECTOR LOGO & SOCIAL HANDLES
+          // HOLD THIS SIRAT LOGO CARD TO OPEN SECRET ADMIN PANEL!
           GestureDetector(
-            onLongPress: _openAdminPin,
+            onLongPress: _openSecretAdminPin,
             child: Container(
               padding: const EdgeInsets.all(22),
               decoration: BoxDecoration(color: kCard, borderRadius: BorderRadius.circular(24), border: Border.all(color: kPrimary.withOpacity(0.45))),
@@ -1661,21 +1699,13 @@ class _SettingsProfileScreenState extends State<SettingsProfileScreen> {
                   Text('SIRAT', style: TextStyle(fontSize: 22, fontFamily: 'serif', fontWeight: FontWeight.w900, color: kText, letterSpacing: 2.5)),
                   Text('The Straight Path • v1.0.0 Official', style: TextStyle(fontSize: 11, color: kMuted)),
                   const SizedBox(height: 14),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      _brandBadge(true, adminAppInsta),
-                      const SizedBox(width: 10),
-                      _brandBadge(false, adminAppFb),
-                    ],
-                  ),
+                  Row(mainAxisAlignment: MainAxisAlignment.center, children: [_brandBadge(true, adminAppInsta), const SizedBox(width: 10), _brandBadge(false, adminAppFb)]),
                 ],
               ),
             ),
           ),
           const SizedBox(height: 14),
 
-          // 2. DARK / LIGHT MODE
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
             decoration: BoxDecoration(color: kCard, borderRadius: BorderRadius.circular(18), border: Border.all(color: kBorder)),
@@ -1695,7 +1725,6 @@ class _SettingsProfileScreenState extends State<SettingsProfileScreen> {
           ),
           const SizedBox(height: 14),
 
-          // 3. USERNAME & WIDGET STUDIO (DIRECTLY ABOVE LANGUAGE!)
           GestureDetector(
             onTap: _openUserNameAndWidgets,
             child: Container(
@@ -1721,7 +1750,6 @@ class _SettingsProfileScreenState extends State<SettingsProfileScreen> {
           ),
           const SizedBox(height: 14),
 
-          // 4. LANGUAGE SELECTOR
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(color: kCard, borderRadius: BorderRadius.circular(18), border: Border.all(color: kBorder)),
@@ -1758,7 +1786,6 @@ class _SettingsProfileScreenState extends State<SettingsProfileScreen> {
           ),
           const SizedBox(height: 14),
 
-          // 5. THEME COLOUR
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(color: kCard, borderRadius: BorderRadius.circular(18), border: Border.all(color: kBorder)),
@@ -1780,11 +1807,7 @@ class _SettingsProfileScreenState extends State<SettingsProfileScreen> {
                         widget.onRebuild();
                         setState(() {});
                       },
-                      child: Chip(
-                        backgroundColor: (pal['primary'] as Color).withOpacity(0.18),
-                        avatar: CircleAvatar(backgroundColor: pal['primary'] as Color),
-                        label: Text(pal['name'] as String, style: TextStyle(fontSize: 11, color: kText)),
-                      ),
+                      child: Chip(backgroundColor: (pal['primary'] as Color).withOpacity(0.18), avatar: CircleAvatar(backgroundColor: pal['primary'] as Color), label: Text(pal['name'] as String, style: TextStyle(fontSize: 11, color: kText))),
                     );
                   }),
                 ),
@@ -1793,42 +1816,29 @@ class _SettingsProfileScreenState extends State<SettingsProfileScreen> {
           ),
           const SizedBox(height: 14),
 
-          // 6. DEVELOPER PROFILE & REPLAY FLASHCARDS
+          // DEVELOPER CARD (NO VISIBLE ADMIN BUTTON HERE!)
           Container(
             padding: const EdgeInsets.all(18),
             decoration: BoxDecoration(color: kCard, borderRadius: BorderRadius.circular(22), border: Border.all(color: kBorder)),
             child: Column(
               children: [
-                CircleAvatar(radius: 32, backgroundColor: kPrimary, child: const Icon(Icons.person_outline_rounded, size: 34, color: Colors.black)),
-                const SizedBox(height: 8),
+                CircleAvatar(
+                  radius: 36,
+                  backgroundColor: kPrimary,
+                  backgroundImage: hasPhoto ? NetworkImage(adminDevImage.trim()) : null,
+                  child: hasPhoto ? null : const Icon(Icons.person_outline_rounded, size: 36, color: Colors.black),
+                ),
+                const SizedBox(height: 10),
                 Text(adminDevName, style: TextStyle(fontSize: 16, fontWeight: FontWeight.w900, color: kText)),
                 const SizedBox(height: 4),
                 Text(adminDevBio, textAlign: TextAlign.center, style: TextStyle(fontSize: 11.5, color: kMuted)),
                 const SizedBox(height: 12),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    _brandBadge(true, adminDevInsta),
-                    const SizedBox(width: 10),
-                    _brandBadge(false, adminDevFb),
-                  ],
-                ),
+                Row(mainAxisAlignment: MainAxisAlignment.center, children: [_brandBadge(true, adminDevInsta), const SizedBox(width: 10), _brandBadge(false, adminDevFb)]),
                 const SizedBox(height: 12),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    OutlinedButton.icon(
-                      onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => SiratOnboardingFlashcards(onFinish: () => Navigator.pop(context)))),
-                      icon: Icon(Icons.style_outlined, size: 15, color: kSecondary),
-                      label: Text('Intro Flashcards', style: TextStyle(color: kSecondary, fontSize: 11.5)),
-                    ),
-                    const SizedBox(width: 8),
-                    OutlinedButton.icon(
-                      onPressed: _openAdminPin,
-                      icon: Icon(Icons.lock_outline_rounded, size: 15, color: kPrimary),
-                      label: Text('Admin Panel', style: TextStyle(color: kPrimary, fontSize: 11.5)),
-                    ),
-                  ],
+                OutlinedButton.icon(
+                  onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => SiratOnboardingFlashcards(onFinish: () => Navigator.pop(context)))),
+                  icon: Icon(Icons.style_outlined, size: 15, color: kSecondary),
+                  label: Text('Replay Intro Flashcards', style: TextStyle(color: kSecondary, fontSize: 11.5)),
                 ),
               ],
             ),
@@ -1839,6 +1849,12 @@ class _SettingsProfileScreenState extends State<SettingsProfileScreen> {
   }
 }
 
+
+
+
+
+
+// ---------------- SUPER-LOADED 8-MODULE OWNER ADMIN COMMAND CENTER ----------------
 class AdminDashboardPage extends StatefulWidget {
   final VoidCallback onRebuild;
   const AdminDashboardPage({super.key, required this.onRebuild});
@@ -1847,45 +1863,243 @@ class AdminDashboardPage extends StatefulWidget {
 }
 
 class _AdminDashboardPageState extends State<AdminDashboardPage> {
-  final banTC = TextEditingController(text: adminBannerTitle);
-  final banMC = TextEditingController(text: adminBannerMsg);
-  final devNC = TextEditingController(text: adminDevName);
+  late TextEditingController pinC, banTC, banMC, popTC, popBC, updVC, updUC;
+  late TextEditingController ayRefC, ayArC, ayTrC, duRefC, duArC, duTrC;
+  late TextEditingController defCityC, devNC, devBC, devImgC, devIgC, devFbC, appIgC, appFbC;
   bool sBan = adminShowBanner, sPop = adminShowPopup, sUpd = adminUpdateAvailable;
+  bool fAyah = adminForceCustomAyah, fDua = adminForceCustomDua, mLock = adminMaintenanceMode;
+  int defSchool = 0, defWidTheme = widgetThemeIdx, defWidSize = widgetAyahSize;
+
+  @override
+  void initState() {
+    super.initState();
+    pinC = TextEditingController(text: adminPinCode);
+    banTC = TextEditingController(text: adminBannerTitle);
+    banMC = TextEditingController(text: adminBannerMsg);
+    popTC = TextEditingController(text: adminPopupTitle);
+    popBC = TextEditingController(text: adminPopupBody);
+    updVC = TextEditingController(text: adminLatestVer);
+    updUC = TextEditingController(text: adminUpdateUrl);
+    ayRefC = TextEditingController(text: liveAyahRef);
+    ayArC = TextEditingController(text: liveAyahArab);
+    ayTrC = TextEditingController(text: liveAyahTrans);
+    duRefC = TextEditingController(text: liveDuaRef);
+    duArC = TextEditingController(text: liveDuaArab);
+    duTrC = TextEditingController(text: liveDuaTrans);
+    defCityC = TextEditingController(text: 'Barpaka');
+    devNC = TextEditingController(text: adminDevName);
+    devBC = TextEditingController(text: adminDevBio);
+    devImgC = TextEditingController(text: adminDevImage);
+    devIgC = TextEditingController(text: adminDevInsta);
+    devFbC = TextEditingController(text: adminDevFb);
+    appIgC = TextEditingController(text: adminAppInsta);
+    appFbC = TextEditingController(text: adminAppFb);
+  }
+
+  Future<void> _saveAndExportAll() async {
+    final p = await SharedPreferences.getInstance();
+    adminPinCode = pinC.text.trim().isEmpty ? '7860' : pinC.text.trim();
+    adminShowBanner = sBan;
+    adminBannerTitle = banTC.text.trim();
+    adminBannerMsg = banMC.text.trim();
+    adminShowPopup = sPop;
+    adminPopupTitle = popTC.text.trim();
+    adminPopupBody = popBC.text.trim();
+    adminUpdateAvailable = sUpd;
+    adminLatestVer = updVC.text.trim();
+    adminUpdateUrl = updUC.text.trim();
+    adminMaintenanceMode = mLock;
+    adminForceCustomAyah = fAyah;
+    adminForceCustomDua = fDua;
+    widgetThemeIdx = defWidTheme;
+    widgetAyahSize = defWidSize;
+
+    if (fAyah) {
+      liveAyahRef = ayRefC.text.trim();
+      liveAyahArab = ayArC.text.trim();
+      liveAyahTrans = ayTrC.text.trim();
+    }
+    if (fDua) {
+      liveDuaRef = duRefC.text.trim();
+      liveDuaArab = duArC.text.trim();
+      liveDuaTrans = duTrC.text.trim();
+    }
+
+    adminDevName = devNC.text.trim();
+    adminDevBio = devBC.text.trim();
+    adminDevImage = devImgC.text.trim();
+    adminDevInsta = devIgC.text.trim();
+    adminDevFb = devFbC.text.trim();
+    adminAppInsta = appIgC.text.trim();
+    adminAppFb = appFbC.text.trim();
+
+    await p.setString('adm_pin', adminPinCode);
+    await p.setBool('adm_show_ban', adminShowBanner);
+    await p.setString('adm_ban_t', adminBannerTitle);
+    await p.setString('adm_ban_m', adminBannerMsg);
+    await p.setBool('adm_show_pop', adminShowPopup);
+    await p.setString('adm_pop_t', adminPopupTitle);
+    await p.setString('adm_pop_b', adminPopupBody);
+    await p.setBool('adm_upd_on', adminUpdateAvailable);
+    await p.setString('adm_upd_v', adminLatestVer);
+    await p.setString('adm_upd_u', adminUpdateUrl);
+    await p.setInt('wid_theme', widgetThemeIdx);
+    await p.setInt('wid_size', widgetAyahSize);
+    await p.setInt('school', defSchool);
+    if (defCityC.text.trim().isNotEmpty) await p.setString('loc', defCityC.text.trim());
+    await p.setString('wq_ref', liveAyahRef.toUpperCase());
+    await p.setString('wq_arab', liveAyahArab);
+    await p.setString('wq_hing', liveAyahTrans);
+    await p.setString('adm_dev_n', adminDevName);
+    await p.setString('adm_dev_b', adminDevBio);
+    await p.setString('adm_dev_img', adminDevImage);
+    await p.setString('adm_dev_ig', adminDevInsta);
+    await p.setString('adm_dev_fb', adminDevFb);
+    await p.setString('adm_app_ig', adminAppInsta);
+    await p.setString('adm_app_fb', adminAppFb);
+
+    final cloudJson = const JsonEncoder.withIndent('  ').convert({
+      'show_banner': adminShowBanner,
+      'banner_title': adminBannerTitle,
+      'banner_message': adminBannerMsg,
+      'show_popup': adminShowPopup,
+      'popup_title': adminPopupTitle,
+      'popup_body': adminPopupBody,
+      'update_available': adminUpdateAvailable,
+      'latest_version': adminLatestVer,
+      'update_url': adminUpdateUrl,
+      'force_custom_ayah': adminForceCustomAyah,
+      'custom_ayah_ref': liveAyahRef,
+      'custom_ayah_arab': liveAyahArab,
+      'custom_ayah_trans': liveAyahTrans,
+      'force_custom_dua': adminForceCustomDua,
+      'custom_dua_ref': liveDuaRef,
+      'custom_dua_arab': liveDuaArab,
+      'custom_dua_trans': liveDuaTrans,
+      'app_insta': adminAppInsta,
+      'app_fb': adminAppFb,
+      'dev_name': adminDevName,
+      'dev_bio': adminDevBio,
+      'dev_image': adminDevImage,
+      'dev_insta': adminDevInsta,
+      'dev_fb': adminDevFb,
+    });
+    Clipboard.setData(ClipboardData(text: cloudJson));
+    await triggerNativeWidgetBroadcast();
+    widget.onRebuild();
+
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(backgroundColor: kSecondary, content: const Text('Saved & Cloud JSON Copied! Paste in admin_config.json on GitHub!', style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold))));
+      Navigator.pop(context);
+    }
+  }
+
+  Widget _hdr(String t) => Padding(padding: const EdgeInsets.only(top: 16, bottom: 8), child: Text(t, style: TextStyle(fontSize: 11, fontWeight: FontWeight.w900, color: kPrimary, letterSpacing: 1)));
+  Widget _inp(TextEditingController c, String l) => Padding(padding: const EdgeInsets.only(bottom: 8), child: TextField(controller: c, decoration: InputDecoration(labelText: l, filled: true, fillColor: kCard, border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)))));
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Sirat Owner Admin Panel'), backgroundColor: kBg),
+      appBar: AppBar(
+        title: const Text('Sirat Master Command Center'),
+        backgroundColor: kBg,
+        actions: [
+          IconButton(
+            icon: Icon(Icons.notifications_active_outlined, color: kSecondary),
+            tooltip: 'Test Prayer Notification',
+            onPressed: () async { try { await _widgetChannel.invokeMethod('testNotification', {'prayer': 'Fajr'}); } catch (_) {} },
+          ),
+        ],
+      ),
       body: ListView(
         padding: const EdgeInsets.all(18),
         children: [
-          SwitchListTile(title: const Text('Show Home Banner'), value: sBan, onChanged: (v) => setState(() => sBan = v)),
-          TextField(controller: banTC, decoration: const InputDecoration(labelText: 'Banner Title')),
-          TextField(controller: banMC, decoration: const InputDecoration(labelText: 'Banner Message')),
-          SwitchListTile(title: const Text('Show Startup Popup Alert'), value: sPop, onChanged: (v) => setState(() => sPop = v)),
-          SwitchListTile(title: const Text('Show APK Update Available'), value: sUpd, onChanged: (v) => setState(() => sUpd = v)),
-          TextField(controller: devNC, decoration: const InputDecoration(labelText: 'Developer Name')),
+          _hdr('1. SECURITY & ACCESS PIN'),
+          _inp(pinC, 'Secret Admin PIN (Default: 7860)'),
+
+          _hdr('2. HOME ANNOUNCEMENT BANNER'),
+          SwitchListTile(title: const Text('Enable Top Home Banner'), activeColor: kPrimary, value: sBan, onChanged: (v) => setState(() => sBan = v)),
+          _inp(banTC, 'Banner Heading'),
+          _inp(banMC, 'Banner Description'),
+
+          _hdr('3. STARTUP BROADCAST POPUP DIALOG'),
+          SwitchListTile(title: const Text('Show Popup Alert on App Launch'), activeColor: kPrimary, value: sPop, onChanged: (v) => setState(() => sPop = v)),
+          _inp(popTC, 'Popup Title'),
+          _inp(popBC, 'Popup Message Body'),
+
+          _hdr('4. OTA APP UPDATE PUSHER & MAINTENANCE'),
+          SwitchListTile(title: const Text('Show "New Update Live" Banner'), activeColor: kSecondary, value: sUpd, onChanged: (v) => setState(() => sUpd = v)),
+          _inp(updVC, 'New Version Label (e.g. v2.0.0 Pro)'),
+          _inp(updUC, 'Direct APK Download Link (GitHub Release URL)'),
+          SwitchListTile(title: const Text('Maintenance Mode Lock'), activeColor: Colors.redAccent, value: mLock, onChanged: (v) => setState(() => mLock = v)),
+
+          _hdr('5. CUSTOM DAILY AYAH & WIDGET OVERRIDE'),
+          SwitchListTile(title: const Text('Force Custom Ayah instead of Auto API'), activeColor: kPrimary, value: fAyah, onChanged: (v) => setState(() => fAyah = v)),
+          _inp(ayRefC, 'Custom Ayah Reference (e.g. Surah Al-Baqarah 2:152)'),
+          _inp(ayArC, 'Custom Arabic Verse'),
+          _inp(ayTrC, 'Custom Verse Translation'),
+
+          _hdr('6. CUSTOM DAILY DUA OVERRIDE'),
+          SwitchListTile(title: const Text('Force Custom Daily Dua'), activeColor: kSecondary, value: fDua, onChanged: (v) => setState(() => fDua = v)),
+          _inp(duRefC, 'Custom Dua Reference'),
+          _inp(duArC, 'Custom Dua Arabic'),
+          _inp(duTrC, 'Custom Dua Translation'),
+
+          _hdr('7. GLOBAL PRAYER, WIDGET & THEME DEFAULTS'),
+          _inp(defCityC, 'Default City / Town Name'),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Text('Default Fiqh School:'),
+              ChoiceChip(label: const Text('Shafi\'i'), selected: defSchool == 0, onSelected: (_) => setState(() => defSchool = 0)),
+              ChoiceChip(label: const Text('Hanafi'), selected: defSchool == 1, onSelected: (_) => setState(() => defSchool = 1)),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Text('Widget Theme:'),
+              ChoiceChip(label: const Text('Emerald'), selected: defWidTheme == 0, onSelected: (_) => setState(() => defWidTheme = 0)),
+              ChoiceChip(label: const Text('Gold'), selected: defWidTheme == 1, onSelected: (_) => setState(() => defWidTheme = 1)),
+              ChoiceChip(label: const Text('Sapphire'), selected: defWidTheme == 2, onSelected: (_) => setState(() => defWidTheme = 2)),
+            ],
+          ),
+          Slider(
+            activeColor: kPrimary,
+            min: 16,
+            max: 30,
+            divisions: 14,
+            label: '${defWidSize}sp',
+            value: defWidSize.toDouble(),
+            onChanged: (v) => setState(() => defWidSize = v.toInt()),
+          ),
+
+          _hdr('8. DEVELOPER PHOTO, BIO & SOCIAL HANDLES'),
+          _inp(devImgC, 'Developer Photo URL (https://...)'),
+          _inp(devNC, 'Developer Name'),
+          _inp(devBC, 'Developer Bio / About'),
+          _inp(devIgC, 'Developer Instagram Handle'),
+          _inp(devFbC, 'Developer Facebook Link'),
+          _inp(appIgC, 'App Official Instagram Handle'),
+          _inp(appFbC, 'App Official Facebook Link'),
           const SizedBox(height: 16),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(backgroundColor: kPrimary),
+
+          ElevatedButton.icon(
+            style: ElevatedButton.styleFrom(backgroundColor: kPrimary, padding: const EdgeInsets.symmetric(vertical: 16)),
+            onPressed: _saveAndExportAll,
+            icon: const Icon(Icons.cloud_upload_outlined, color: Colors.black),
+            label: const Text('SAVE ALL & COPY CLOUD JSON FOR ALL USERS', style: TextStyle(color: Colors.black, fontWeight: FontWeight.w900, fontSize: 12)),
+          ),
+          const SizedBox(height: 10),
+          OutlinedButton.icon(
             onPressed: () async {
               final p = await SharedPreferences.getInstance();
-              await p.setBool('adm_show_ban', sBan);
-              await p.setString('adm_ban_t', banTC.text);
-              await p.setString('adm_ban_m', banMC.text);
-              await p.setBool('adm_show_pop', sPop);
-              await p.setBool('adm_upd_on', sUpd);
-              await p.setString('adm_dev_n', devNC.text);
-              adminShowBanner = sBan;
-              adminBannerTitle = banTC.text;
-              adminBannerMsg = banMC.text;
-              adminShowPopup = sPop;
-              adminUpdateAvailable = sUpd;
-              adminDevName = devNC.text;
-              widget.onRebuild();
-              if (mounted) Navigator.pop(context);
+              await p.setBool('sirat_onboarded', false);
+              if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(backgroundColor: kSecondary, content: const Text('Onboarding Reset! Restart app to view Intro Flashcards.', style: TextStyle(color: Colors.black))));
             },
-            child: const Text('SAVE ADMIN SETTINGS', style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
+            icon: Icon(Icons.refresh_rounded, color: kSecondary),
+            label: Text('Reset First-Time Onboarding Flashcards', style: TextStyle(color: kSecondary)),
           ),
         ],
       ),
