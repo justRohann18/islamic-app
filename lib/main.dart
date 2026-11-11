@@ -22,38 +22,36 @@ String globalUserName = 'Mumin';
 
 String adminPinCode = '7860';
 bool adminShowBanner = true;
-String adminBannerTitle = '🌙 Noor Official Reminder';
-String adminBannerMsg = 'Recite Surah Al-Mulk before sleeping & track your 5 daily prayers!';
+String adminBannerTitle = 'Noor Official Reminder';
+String adminBannerMsg = 'Recite Surah Al-Mulk before sleeping and track your five daily prayers.';
 bool adminShowPopup = false;
-String adminPopupTitle = '✨ Special Islamic Broadcast';
-String adminPopupBody = 'Assalamu Alaikum! May Allah accept your prayers and good deeds today.';
+String adminPopupTitle = 'Special Islamic Broadcast';
+String adminPopupBody = 'Assalamu Alaikum. May Allah accept your prayers and good deeds today.';
 bool adminUpdateAvailable = false;
-String adminLatestVer = 'v12.0 Pro';
+String adminLatestVer = 'v13.0 Pro';
 String adminUpdateUrl = 'https://github.com/';
 
 String adminAppInsta = '@noor.islamic.app';
 String adminAppFb = 'fb.com/NoorIslamicApp';
 String adminDevName = 'Lead Creator & Developer';
-String adminDevBio = 'Building modern, ad-free & authentic Islamic digital experiences as Sadaqah Jariyah.';
-String adminDevImage = '';
+String adminDevBio = 'Building modern, ad-free and authentic Islamic digital experiences as Sadaqah Jariyah.';
 String adminDevInsta = '@developer.noor';
 String adminDevFb = 'fb.com/developer.noor';
 
 final List<Map<String, dynamic>> kAccentPalettes = [
-  {'name': 'Amber Gold', 'primary': const Color(0xFFF59E0B), 'sec': const Color(0xFF2DD4BF)},
-  {'name': 'Emerald Mint', 'primary': const Color(0xFF10B981), 'sec': const Color(0xFFFBBF24)},
+  {'name': 'Champagne Gold', 'primary': const Color(0xFFD6B36A), 'sec': const Color(0xFF2DD4BF)},
+  {'name': 'Emerald Mint', 'primary': const Color(0xFF10B981), 'sec': const Color(0xFFF59E0B)},
   {'name': 'Royal Sapphire', 'primary': const Color(0xFF38BDF8), 'sec': const Color(0xFF818CF8)},
   {'name': 'Amethyst Velvet', 'primary': const Color(0xFFA855F7), 'sec': const Color(0xFFF472B6)},
-  {'name': 'Rose Ruby', 'primary': const Color(0xFFF43F5E), 'sec': const Color(0xFFFBBF24)},
-  {'name': 'Cyan Ocean', 'primary': const Color(0xFF06B6D4), 'sec': const Color(0xFF34D399)},
+  {'name': 'Crimson Ruby', 'primary': const Color(0xFFF43F5E), 'sec': const Color(0xFFFBBF24)},
 ];
 
 Color get kPrimary => kAccentPalettes[accentIndex]['primary'] as Color;
 Color get kSecondary => kAccentPalettes[accentIndex]['sec'] as Color;
-Color get kBg => isDarkMode ? const Color(0xFF080C0B) : const Color(0xFFF4F6F5);
-Color get kCard => isDarkMode ? const Color(0xFF111917) : const Color(0xFFFFFFFF);
-Color get kCardAlt => isDarkMode ? const Color(0xFF192622) : const Color(0xFFE6F0EC);
-Color get kBorder => isDarkMode ? const Color(0xFF243832) : const Color(0xFFD0DFD9);
+Color get kBg => isDarkMode ? const Color(0xFF060D0B) : const Color(0xFFF4F6F5);
+Color get kCard => isDarkMode ? const Color(0xFF0E1A16) : const Color(0xFFFFFFFF);
+Color get kCardAlt => isDarkMode ? const Color(0xFF142822) : const Color(0xFFE6F0EC);
+Color get kBorder => isDarkMode ? const Color(0xFF1E352F) : const Color(0xFFD0DFD9);
 Color get kText => isDarkMode ? Colors.white : const Color(0xFF0F172A);
 Color get kMuted => isDarkMode ? const Color(0xFF8E9E99) : const Color(0xFF64748B);
 
@@ -64,7 +62,37 @@ String liveAyahAudio = 'https://cdn.islamic.network/quran/audio/128/ar.alafasy/6
 
 String liveDuaRef = 'Quranic Dua • 2:201';
 String liveDuaArab = 'رَبَّنَا آتِنَا فِي الدُّنْيَا حَسَنَةً وَفِي الْآخِرَةِ حَسَنَةً وَقِنَا عَذَابَ النَّارِ';
-String liveDuaTrans = '"Our Lord! Grant us good in this world and good in the Hereafter."';
+String liveDuaTrans = '"Our Lord, grant us good in this world and good in the Hereafter."';
+
+// Authentic Vector Instagram & Facebook Brand Logo Painter (ZERO EMOJIS!)
+class SocialLogoPainter extends CustomPainter {
+  final bool isInstagram;
+  final Color color;
+  SocialLogoPainter({required this.isInstagram, required this.color});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final p = Paint()..color = color..style = PaintingStyle.stroke..strokeWidth = 1.8..strokeCap = StrokeCap.round;
+    final w = size.width, h = size.height;
+    if (isInstagram) {
+      canvas.drawRRect(RRect.fromRectAndRadius(Rect.fromLTWH(w * 0.1, h * 0.1, w * 0.8, h * 0.8), Radius.circular(w * 0.24)), p);
+      canvas.drawCircle(Offset(w * 0.5, h * 0.5), w * 0.2, p);
+      canvas.drawCircle(Offset(w * 0.72, h * 0.28), w * 0.05, Paint()..color = color);
+    } else {
+      canvas.drawCircle(Offset(w * 0.5, h * 0.5), w * 0.42, p);
+      final fPath = Path()
+        ..moveTo(w * 0.62, h * 0.28)
+        ..lineTo(w * 0.52, h * 0.28)
+        ..quadraticBezierTo(w * 0.44, h * 0.28, w * 0.44, h * 0.38)
+        ..lineTo(w * 0.44, h * 0.78)
+        ..moveTo(w * 0.35, h * 0.50)
+        ..lineTo(w * 0.60, h * 0.50);
+      canvas.drawPath(fPath, p);
+    }
+  }
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+}
 
 String formatClock(String raw) {
   if (!raw.contains(':')) return raw;
@@ -82,13 +110,6 @@ String formatClock(String raw) {
 }
 
 String getDateKey(DateTime d) => "${d.year}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}";
-
-String tr(String en, String hi, String ur, String ro) {
-  if (appLang == 'hi') return hi;
-  if (appLang == 'ur') return ur;
-  if (appLang == 'ro') return ro;
-  return en;
-}
 
 Future<void> triggerNativeWidgetBroadcast() async {
   try { await _widgetChannel.invokeMethod('refreshWidgets'); } catch (_) {}
@@ -121,7 +142,7 @@ Future<void> fetchLiveDailyAyahAndDua({bool forceRandom = false}) async {
       liveDuaRef = 'Daily Dua • ${dd[0]['surah']['englishName']} ${dd[0]['surah']['number']}:${dd[0]['numberInSurah']}';
     }
 
-    await p.setString('wq_ref', '✨ $liveAyahRef');
+    await p.setString('wq_ref', liveAyahRef.toUpperCase());
     await p.setString('wq_arab', liveAyahArab);
     await p.setString('wq_hing', liveAyahTrans);
     await triggerNativeWidgetBroadcast();
@@ -138,35 +159,17 @@ class _NoorSuperAppState extends State<NoorSuperApp> {
   @override
   void initState() {
     super.initState();
-    _initPrefs();
-  }
-
-  Future<void> _initPrefs() async {
-    final p = await SharedPreferences.getInstance();
-    setState(() {
-      isDarkMode = p.getBool('dark') ?? true;
-      accentIndex = p.getInt('accent') ?? 0;
-      appLang = p.getString('lang') ?? 'en';
-      use12Hour = p.getBool('use12') ?? true;
-      globalUserName = p.getString('user_name') ?? 'Mumin';
-      adminPinCode = p.getString('adm_pin') ?? '7860';
-      adminShowBanner = p.getBool('adm_show_ban') ?? true;
-      adminBannerTitle = p.getString('adm_ban_t') ?? adminBannerTitle;
-      adminBannerMsg = p.getString('adm_ban_m') ?? adminBannerMsg;
-      adminShowPopup = p.getBool('adm_show_pop') ?? false;
-      adminPopupTitle = p.getString('adm_pop_t') ?? adminPopupTitle;
-      adminPopupBody = p.getString('adm_pop_b') ?? adminPopupBody;
-      adminUpdateAvailable = p.getBool('adm_upd_on') ?? false;
-      adminLatestVer = p.getString('adm_upd_v') ?? adminLatestVer;
-      adminUpdateUrl = p.getString('adm_upd_u') ?? adminUpdateUrl;
-      adminDevName = p.getString('adm_dev_n') ?? adminDevName;
-      adminDevBio = p.getString('adm_dev_b') ?? adminDevBio;
-      adminDevImage = p.getString('adm_dev_img') ?? '';
-      adminDevInsta = p.getString('adm_dev_ig') ?? adminDevInsta;
-      adminDevFb = p.getString('adm_dev_fb') ?? adminDevFb;
+    SharedPreferences.getInstance().then((p) async {
+      setState(() {
+        isDarkMode = p.getBool('dark') ?? true;
+        accentIndex = p.getInt('accent') ?? 0;
+        appLang = p.getString('lang') ?? 'en';
+        use12Hour = p.getBool('use12') ?? true;
+        globalUserName = p.getString('user_name') ?? 'Mumin';
+      });
+      await fetchLiveDailyAyahAndDua();
+      if (mounted) setState(() {});
     });
-    await fetchLiveDailyAyahAndDua();
-    if (mounted) setState(() {});
   }
 
   @override
@@ -193,29 +196,11 @@ class MainShell extends StatefulWidget {
 }
 
 class _MainShellState extends State<MainShell> {
-  int idx = 0;
-  int kitSub = 0;
-  bool popShown = false;
-
+  int idx = 0, kitSub = 0;
   void _nav(int i, {int sub = 0}) => setState(() { idx = i; kitSub = sub; });
 
   @override
   Widget build(BuildContext context) {
-    if (adminShowPopup && !popShown) {
-      popShown = true;
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        showDialog(
-          context: context,
-          builder: (ctx) => AlertDialog(
-            backgroundColor: kCard,
-            title: Text(adminPopupTitle, style: TextStyle(color: kPrimary, fontWeight: FontWeight.bold)),
-            content: Text(adminPopupBody, style: TextStyle(color: kText)),
-            actions: [ElevatedButton(style: ElevatedButton.styleFrom(backgroundColor: kPrimary), onPressed: () => Navigator.pop(ctx), child: const Text('OK', style: TextStyle(color: Colors.black)))],
-          ),
-        );
-      });
-    }
-
     final pages = [
       InteractiveHomeScreen(onNav: _nav, onRebuild: widget.onAppRebuild),
       const UniqueStreakScreen(),
@@ -230,14 +215,14 @@ class _MainShellState extends State<MainShell> {
         height: 64,
         margin: const EdgeInsets.fromLTRB(18, 0, 18, 14),
         padding: const EdgeInsets.symmetric(horizontal: 8),
-        decoration: BoxDecoration(color: kCard.withOpacity(0.96), borderRadius: BorderRadius.circular(28), border: Border.all(color: kBorder)),
+        decoration: BoxDecoration(color: kCard.withOpacity(0.96), borderRadius: BorderRadius.circular(24), border: Border.all(color: kBorder)),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceAround,
           children: [
-            _navPill(0, Icons.wb_twilight_rounded, tr('Today', 'आज', 'آج', 'Today')),
-            _navPill(1, Icons.local_fire_department_rounded, tr('Streak', 'स्ट्रीक', 'اسٹریک', 'Streak')),
-            _navPill(2, Icons.menu_book_rounded, tr('Kitab', 'किताब', 'کتاب', 'Kitab')),
-            _navPill(3, Icons.settings_rounded, tr('Settings', 'सेटिंग्स', 'ترتیبات', 'Settings')),
+            _navPill(0, Icons.wb_twilight_rounded, 'Today'),
+            _navPill(1, Icons.donut_large_rounded, 'Streak'),
+            _navPill(2, Icons.menu_book_rounded, 'Kitab'),
+            _navPill(3, Icons.tune_rounded, 'Settings'),
           ],
         ),
       ),
@@ -250,11 +235,11 @@ class _MainShellState extends State<MainShell> {
       onTap: () => setState(() => idx = i),
       child: Container(
         padding: EdgeInsets.symmetric(horizontal: sel ? 16 : 10, vertical: 9),
-        decoration: BoxDecoration(color: sel ? kPrimary : Colors.transparent, borderRadius: BorderRadius.circular(20)),
+        decoration: BoxDecoration(color: sel ? kPrimary : Colors.transparent, borderRadius: BorderRadius.circular(18)),
         child: Row(
           children: [
             Icon(ic, size: 19, color: sel ? Colors.black : kMuted),
-            if (sel) ...[const SizedBox(width: 6), Text(label, style: const TextStyle(color: Colors.black, fontSize: 12, fontWeight: FontWeight.w900))],
+            if (sel) ...[const SizedBox(width: 6), Text(label, style: const TextStyle(color: Colors.black, fontSize: 12, fontWeight: FontWeight.w800))],
           ],
         ),
       ),
@@ -267,7 +252,7 @@ class _MainShellState extends State<MainShell> {
 
 
 
-// ---------------- 1. HOMEPAGE & LIVE ANIMATED WIDGET STUDIO ----------------
+// ---------------- 1. ARCHITECTURAL HOMEPAGE & IDENTICAL WIDGET STUDIO ----------------
 class InteractiveHomeScreen extends StatefulWidget {
   final Function(int, {int sub}) onNav;
   final VoidCallback onRebuild;
@@ -282,7 +267,7 @@ class _InteractiveHomeScreenState extends State<InteractiveHomeScreen> {
   int school = 0, tasbihCount = 0, zikrIdx = 0, remSeconds = 3600;
   bool manual = false, isPlayingAyah = false;
   Timer? timer;
-  String nextP = 'Dhuhr', countdown = '02h 14m 30s';
+  String nextP = 'Dhuhr', countdown = '02:14:30';
 
   final prayers = ['Fajr', 'Dhuhr', 'Asr', 'Maghrib', 'Isha'];
   Map<String, String> times = {'Fajr': '04:15', 'Dhuhr': '12:15', 'Asr': '15:25', 'Maghrib': '16:45', 'Isha': '18:15'};
@@ -323,7 +308,7 @@ class _InteractiveHomeScreenState extends State<InteractiveHomeScreen> {
     if (mounted) {
       setState(() {
         nextP = found;
-        countdown = '${d.inHours.toString().padLeft(2, '0')}h ${(d.inMinutes % 60).toString().padLeft(2, '0')}m ${(d.inSeconds % 60).toString().padLeft(2, '0')}s';
+        countdown = '-${d.inHours.toString().padLeft(2, '0')}:${(d.inMinutes % 60).toString().padLeft(2, '0')}:${(d.inSeconds % 60).toString().padLeft(2, '0')}';
       });
     }
   }
@@ -350,12 +335,12 @@ class _InteractiveHomeScreenState extends State<InteractiveHomeScreen> {
   Future<void> _syncWidgetPrefs() async {
     _tick();
     final p = await SharedPreferences.getInstance();
-    await p.setString('wp_loc', '⚡ NOOR LIVE • ${loc.toUpperCase()}');
-    await p.setString('wp_user', 'SALAH RADAR • ${globalUserName.toUpperCase()}');
+    await p.setString('wp_loc', loc.toUpperCase());
+    await p.setString('wp_user', globalUserName.toUpperCase());
     await p.setString('wp_next_name', nextP);
     await p.setString('wp_next', formatClock(times[nextP]!));
     await p.setInt('wp_rem_sec', remSeconds);
-    await p.setString('wp_strip', 'Fajr ${formatClock(times['Fajr']!).split(' ')[0]} • Dhuhr ${formatClock(times['Dhuhr']!).split(' ')[0]} • Asr ${formatClock(times['Asr']!).split(' ')[0]} • Mag ${formatClock(times['Maghrib']!).split(' ')[0]} • Isha ${formatClock(times['Isha']!).split(' ')[0]}');
+    await p.setString('wp_strip', 'Fajr   ${formatClock(times['Fajr']!).split(' ')[0]}\nDhuhr  ${formatClock(times['Dhuhr']!).split(' ')[0]}\nAsr    ${formatClock(times['Asr']!).split(' ')[0]}\nMag    ${formatClock(times['Maghrib']!).split(' ')[0]}\nIsha   ${formatClock(times['Isha']!).split(' ')[0]}');
     await triggerNativeWidgetBroadcast();
   }
 
@@ -384,35 +369,14 @@ class _InteractiveHomeScreenState extends State<InteractiveHomeScreen> {
       child: ListView(
         padding: const EdgeInsets.fromLTRB(18, 12, 18, 100),
         children: [
-          if (adminUpdateAvailable)
-            Container(
-              margin: const EdgeInsets.only(bottom: 10),
-              padding: const EdgeInsets.all(10),
-              decoration: BoxDecoration(color: kSecondary.withOpacity(0.2), borderRadius: BorderRadius.circular(14), border: Border.all(color: kSecondary)),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text('🚀 Update $adminLatestVer Live!', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: kText)),
-                  ElevatedButton(style: ElevatedButton.styleFrom(backgroundColor: kSecondary), onPressed: () => Clipboard.setData(ClipboardData(text: adminUpdateUrl)), child: const Text('Copy Link', style: TextStyle(color: Colors.black, fontSize: 11))),
-                ],
-              ),
-            ),
-          if (adminShowBanner)
-            Container(
-              margin: const EdgeInsets.only(bottom: 12),
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(color: kPrimary.withOpacity(0.14), borderRadius: BorderRadius.circular(16), border: Border.all(color: kPrimary.withOpacity(0.5))),
-              child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [Text(adminBannerTitle, style: TextStyle(fontWeight: FontWeight.w900, fontSize: 12.5, color: kPrimary)), Text(adminBannerMsg, style: TextStyle(fontSize: 11.5, color: kText))]),
-            ),
-
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('📍 $loc', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w900, color: kText)),
-                  Text('🌙 $hijri • Salam, $globalUserName', style: TextStyle(fontSize: 11, color: kPrimary, fontWeight: FontWeight.w600)),
+                  Row(children: [Icon(Icons.location_on_outlined, size: 15, color: kPrimary), const SizedBox(width: 4), Text(loc.toUpperCase(), style: TextStyle(fontSize: 15, fontWeight: FontWeight.w900, color: kText, letterSpacing: 1))]),
+                  Text('$hijri • $globalUserName', style: TextStyle(fontSize: 11, color: kMuted, fontWeight: FontWeight.w600)),
                 ],
               ),
               Row(
@@ -426,29 +390,70 @@ class _InteractiveHomeScreenState extends State<InteractiveHomeScreen> {
           ),
           const SizedBox(height: 14),
 
-          // Hero Card
+          // Dual-Pane Architectural Hero Card (Matches Phone Home Screen Widget!)
           Container(
-            padding: const EdgeInsets.all(22),
+            padding: const EdgeInsets.all(18),
             decoration: BoxDecoration(
-              gradient: LinearGradient(colors: [kPrimary.withOpacity(0.24), kCardAlt, kCard], begin: Alignment.topCenter, end: Alignment.bottomCenter),
-              borderRadius: BorderRadius.circular(28),
-              border: Border.all(color: kPrimary.withOpacity(0.5), width: 1.5),
+              gradient: const LinearGradient(colors: [Color(0xFF0D2621), Color(0xFF091916), Color(0xFF060D0B)], begin: Alignment.topLeft, end: Alignment.bottomRight),
+              borderRadius: BorderRadius.circular(24),
+              border: Border.all(color: kSecondary.withOpacity(0.55), width: 1.5),
             ),
-            child: Column(
+            child: Row(
               children: [
-                Text('UPCOMING SALAH • ${nextP.toUpperCase()}', style: TextStyle(color: kPrimary, fontSize: 10.5, fontWeight: FontWeight.w900, letterSpacing: 1.2)),
-                const SizedBox(height: 8),
-                Text(formatClock(times[nextP]!), style: TextStyle(fontSize: 40, fontFamily: 'serif', fontWeight: FontWeight.w900, color: kText)),
-                const SizedBox(height: 4),
-                Text('Starts in $countdown', style: TextStyle(color: kSecondary, fontSize: 13, fontWeight: FontWeight.w800)),
-                const SizedBox(height: 16),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceAround,
-                  children: [
-                    Text('🌙 Suhur: ${formatClock(times['Fajr']!)}', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: kText)),
-                    Text('🌅 Sunrise: ${formatClock(sunrise)}', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: kText)),
-                    Text('🌇 Iftar: ${formatClock(times['Maghrib']!)}', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: kText)),
-                  ],
+                Expanded(
+                  flex: 5,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(loc.toUpperCase(), style: TextStyle(color: kPrimary, fontSize: 11, fontWeight: FontWeight.w900, letterSpacing: 1)),
+                          Container(padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2), decoration: BoxDecoration(color: kCardAlt, borderRadius: BorderRadius.circular(10), border: Border.all(color: kPrimary.withOpacity(0.5))), child: Text(globalUserName.toUpperCase(), style: TextStyle(color: kSecondary, fontSize: 8.5, fontWeight: FontWeight.bold))),
+                        ],
+                      ),
+                      const SizedBox(height: 10),
+                      const Text('NEXT PRAYER', style: TextStyle(color: Color(0xFF8E9E99), fontSize: 9, fontWeight: FontWeight.bold, letterSpacing: 1.2)),
+                      Text(nextP, style: const TextStyle(color: Colors.white, fontSize: 28, fontWeight: FontWeight.w900)),
+                      Text(formatClock(times[nextP]!), style: TextStyle(color: kPrimary, fontSize: 22, fontFamily: 'serif', fontWeight: FontWeight.bold)),
+                      const SizedBox(height: 10),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+                        decoration: BoxDecoration(color: kCardAlt, borderRadius: BorderRadius.circular(12), border: Border.all(color: kPrimary.withOpacity(0.4))),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            const Text('REMAINING', style: TextStyle(color: Color(0xFF8E9E99), fontSize: 8.5, fontWeight: FontWeight.bold)),
+                            Text(countdown, style: TextStyle(color: kSecondary, fontSize: 13, fontWeight: FontWeight.w900)),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  flex: 4,
+                  child: Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(color: kCardAlt, borderRadius: BorderRadius.circular(16), border: Border.all(color: kPrimary.withOpacity(0.35))),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: prayers.map((p) {
+                        bool isN = p == nextP;
+                        return Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 3),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text(p, style: TextStyle(fontSize: 11, fontWeight: isN ? FontWeight.w900 : FontWeight.normal, color: isN ? kSecondary : Colors.white70)),
+                              Text(formatClock(times[p]!).split(' ')[0], style: TextStyle(fontSize: 11, fontFamily: 'serif', fontWeight: FontWeight.bold, color: isN ? kPrimary : Colors.white)),
+                            ],
+                          ),
+                        );
+                      }).toList(),
+                    ),
+                  ),
                 ),
               ],
             ),
@@ -458,8 +463,8 @@ class _InteractiveHomeScreenState extends State<InteractiveHomeScreen> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text('🕌 Daily Salah Check-In', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w900, color: kText)),
-              Text('$salahDone/5 Offered • Hold Time to Edit', style: TextStyle(fontSize: 11, color: kPrimary, fontWeight: FontWeight.bold)),
+              Text('DAILY SALAH TRACKER', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w900, color: kMuted, letterSpacing: 1.2)),
+              Text('$salahDone OF 5 COMPLETED • HOLD TO EDIT', style: TextStyle(fontSize: 10, color: kPrimary, fontWeight: FontWeight.bold)),
             ],
           ),
           const SizedBox(height: 8),
@@ -469,7 +474,7 @@ class _InteractiveHomeScreenState extends State<InteractiveHomeScreen> {
               bool isN = pr == nextP;
               int st = status[pr] ?? 0;
               final stCols = [kMuted, kSecondary, const Color(0xFF38BDF8), kPrimary, const Color(0xFFEF4444)];
-              final stTags = ['Tap +', 'Jamaat', 'OnTime', 'Late', 'Missed'];
+              final stTags = ['LOG', 'JAMAAT', 'ONTIME', 'LATE', 'MISSED'];
               return Expanded(
                 child: GestureDetector(
                   onTap: () async {
@@ -495,16 +500,16 @@ class _InteractiveHomeScreenState extends State<InteractiveHomeScreen> {
                     padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 3),
                     decoration: BoxDecoration(
                       color: st > 0 ? stCols[st].withOpacity(0.16) : (isN ? kCardAlt : kCard),
-                      borderRadius: BorderRadius.circular(18),
-                      border: Border.all(color: st > 0 ? stCols[st] : (isN ? kPrimary : kBorder), width: 1.4),
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(color: st > 0 ? stCols[st] : (isN ? kPrimary : kBorder), width: 1.3),
                     ),
                     child: Column(
                       children: [
-                        Text(pr, style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w800, color: isN ? kPrimary : kText)),
-                        const SizedBox(height: 3),
-                        Text(formatClock(times[pr]!).split(' ')[0], style: TextStyle(fontSize: 10, color: kMuted, fontWeight: FontWeight.bold)),
+                        Icon(st > 0 && st < 4 ? Icons.check_circle_outline_rounded : Icons.schedule_rounded, size: 16, color: stCols[st]),
                         const SizedBox(height: 6),
-                        Text(stTags[st], style: TextStyle(fontSize: 8.5, fontWeight: FontWeight.w900, color: stCols[st])),
+                        Text(pr, style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w800, color: isN ? kPrimary : kText)),
+                        const SizedBox(height: 4),
+                        Text(stTags[st], style: TextStyle(fontSize: 8, fontWeight: FontWeight.w900, color: stCols[st])),
                       ],
                     ),
                   ),
@@ -514,17 +519,17 @@ class _InteractiveHomeScreenState extends State<InteractiveHomeScreen> {
           ),
           const SizedBox(height: 18),
 
-          // Live Ayah Card
+          // Live API Ayah Card
           Container(
             padding: const EdgeInsets.all(18),
-            decoration: BoxDecoration(color: kCard, borderRadius: BorderRadius.circular(22), border: Border.all(color: kPrimary.withOpacity(0.4))),
+            decoration: BoxDecoration(color: kCard, borderRadius: BorderRadius.circular(20), border: Border.all(color: kBorder)),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text('✨ LIVE AYAH • $liveAyahRef', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w900, color: kPrimary)),
+                    Text('VERSE OF THE DAY • $liveAyahRef', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w900, color: kPrimary, letterSpacing: 0.8)),
                     Row(
                       children: [
                         GestureDetector(
@@ -532,12 +537,12 @@ class _InteractiveHomeScreenState extends State<InteractiveHomeScreen> {
                             if (isPlayingAyah) { await audioPlayer.stop(); setState(() => isPlayingAyah = false); }
                             else { setState(() => isPlayingAyah = true); await audioPlayer.play(UrlSource(liveAyahAudio)); }
                           },
-                          child: Icon(isPlayingAyah ? Icons.stop_circle : Icons.volume_up_rounded, size: 18, color: kSecondary),
+                          child: Icon(isPlayingAyah ? Icons.stop_circle_outlined : Icons.volume_up_outlined, size: 18, color: kSecondary),
                         ),
                         const SizedBox(width: 10),
                         GestureDetector(
                           onTap: () async { await fetchLiveDailyAyahAndDua(forceRandom: true); if (mounted) setState(() {}); },
-                          child: Text('New ↻', style: TextStyle(fontSize: 11, color: kPrimary, fontWeight: FontWeight.bold)),
+                          child: Icon(Icons.refresh_rounded, size: 18, color: kPrimary),
                         ),
                       ],
                     ),
@@ -552,14 +557,14 @@ class _InteractiveHomeScreenState extends State<InteractiveHomeScreen> {
           ),
           const SizedBox(height: 12),
 
-          // Live Dua Card
+          // Live API Dua Card
           Container(
             padding: const EdgeInsets.all(18),
-            decoration: BoxDecoration(color: kCard, borderRadius: BorderRadius.circular(22), border: Border.all(color: kSecondary.withOpacity(0.4))),
+            decoration: BoxDecoration(color: kCard, borderRadius: BorderRadius.circular(20), border: Border.all(color: kBorder)),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                Text('🤲 $liveDuaRef', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w900, color: kSecondary)),
+                Text(liveDuaRef.toUpperCase(), style: TextStyle(fontSize: 10, fontWeight: FontWeight.w900, color: kSecondary, letterSpacing: 0.8)),
                 const SizedBox(height: 8),
                 Text(liveDuaArab, textAlign: TextAlign.right, style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: kText)),
                 const SizedBox(height: 6),
@@ -573,40 +578,21 @@ class _InteractiveHomeScreenState extends State<InteractiveHomeScreen> {
   }
 }
 
-// ---------------- 2. LIVE ANIMATED RADAR & COUNTDOWN WIDGET STUDIO ----------------
-class RadarSweepPainter extends CustomPainter {
-  final double angle;
-  final Color col;
-  RadarSweepPainter(this.angle, this.col);
-  @override
-  void paint(Canvas canvas, Size size) {
-    final c = Offset(size.width * 0.82, size.height * 0.45);
-    final p = Paint()..color = col.withOpacity(0.16)..style = PaintingStyle.stroke..strokeWidth = 1.5;
-    canvas.drawCircle(c, 30, p);
-    canvas.drawCircle(c, 50, p);
-    canvas.drawCircle(Offset(c.dx + 50 * math.cos(angle), c.dy + 50 * math.sin(angle)), 5, Paint()..color = col);
-  }
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => true;
-}
-
 class LiveAnimatedWidgetStudioPage extends StatefulWidget {
   const LiveAnimatedWidgetStudioPage({super.key});
   @override
   State<LiveAnimatedWidgetStudioPage> createState() => _LiveAnimatedWidgetStudioPageState();
 }
 
-class _LiveAnimatedWidgetStudioPageState extends State<LiveAnimatedWidgetStudioPage> with SingleTickerProviderStateMixin {
-  late AnimationController _animCtrl;
+class _LiveAnimatedWidgetStudioPageState extends State<LiveAnimatedWidgetStudioPage> {
   Timer? _clockTimer;
-  String loc = '⚡ NOOR LIVE • BARPAKA', nextP = 'Dhuhr', nextTime = '12:15 PM';
-  String stripText = 'Fajr 04:15 • Dhuhr 12:15 • Asr 03:25 • Mag 04:45 • Isha 06:15';
+  String loc = 'BARPAKA', nextP = 'Dhuhr', nextTime = '12:15 PM';
+  String stripText = 'Fajr   04:15\nDhuhr  12:15\nAsr    15:25\nMag    16:45\nIsha   18:15';
   int remSec = 5420;
 
   @override
   void initState() {
     super.initState();
-    _animCtrl = AnimationController(vsync: this, duration: const Duration(seconds: 5))..repeat();
     SharedPreferences.getInstance().then((p) {
       if (mounted) {
         setState(() {
@@ -622,102 +608,105 @@ class _LiveAnimatedWidgetStudioPageState extends State<LiveAnimatedWidgetStudioP
   }
 
   @override
-  void dispose() { _animCtrl.dispose(); _clockTimer?.cancel(); super.dispose(); }
+  void dispose() { _clockTimer?.cancel(); super.dispose(); }
 
-  String _fmt(int s) => '- ${(s ~/ 3600).toString().padLeft(2, '0')}:${((s % 3600) ~/ 60).toString().padLeft(2, '0')}:${(s % 60).toString().padLeft(2, '0')}';
+  String _fmt(int s) => '-${(s ~/ 3600).toString().padLeft(2, '0')}:${((s % 3600) ~/ 60).toString().padLeft(2, '0')}:${(s % 60).toString().padLeft(2, '0')}';
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text('⚡ $globalUserName\'s Live Widgets'), backgroundColor: kBg),
+      appBar: AppBar(title: Text('$globalUserName\'s Home Screen Widgets'), backgroundColor: kBg),
       body: ListView(
         padding: const EdgeInsets.all(18),
         children: [
-          Text('1. LIVE ANIMATED SALAH RADAR WIDGET', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w900, color: kSecondary)),
+          Text('1. DUAL-PANE PRAYER WIDGET (EXACT PHONE MATCH)', style: TextStyle(fontSize: 10.5, fontWeight: FontWeight.w900, color: kSecondary, letterSpacing: 1)),
           const SizedBox(height: 10),
-          AnimatedBuilder(
-            animation: _animCtrl,
-            builder: (_, __) {
-              double pulse = 0.5 + 0.5 * math.sin(_animCtrl.value * 2 * math.pi);
-              return ClipRRect(
-                borderRadius: BorderRadius.circular(26),
-                child: Container(
-                  padding: const EdgeInsets.all(18),
-                  decoration: BoxDecoration(
-                    gradient: const LinearGradient(colors: [Color(0xFF0F2922), Color(0xFF091512), Color(0xFF050807)]),
-                    borderRadius: BorderRadius.circular(26),
-                    border: Border.all(color: const Color(0xFF2DD4BF).withOpacity(0.5 + pulse * 0.4), width: 2),
-                  ),
-                  child: Stack(
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              gradient: const LinearGradient(colors: [Color(0xFF0D2621), Color(0xFF091916), Color(0xFF060D0B)]),
+              borderRadius: BorderRadius.circular(24),
+              border: Border.all(color: const Color(0xFF2DD4BF), width: 1.5),
+            ),
+            child: Row(
+              children: [
+                Expanded(
+                  flex: 5,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Positioned.fill(child: CustomPaint(painter: RadarSweepPainter(_animCtrl.value * 2 * math.pi, const Color(0xFF2DD4BF)))),
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Text(loc, style: const TextStyle(color: Color(0xFF2DD4BF), fontSize: 11, fontWeight: FontWeight.w900)),
-                              Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                                decoration: BoxDecoration(color: const Color(0xFF132A24), borderRadius: BorderRadius.circular(14), border: Border.all(color: const Color(0xFFF59E0B))),
-                                child: Text(_fmt(remSec), style: const TextStyle(color: Color(0xFFF59E0B), fontSize: 12.5, fontWeight: FontWeight.w900)),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 10),
-                          Text('SALAH RADAR • ${globalUserName.toUpperCase()}', style: const TextStyle(color: Colors.white60, fontSize: 9.5, fontWeight: FontWeight.bold)),
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Text(nextP, style: const TextStyle(color: Colors.white, fontSize: 28, fontWeight: FontWeight.w900)),
-                              Text(nextTime, style: const TextStyle(color: Color(0xFF2DD4BF), fontSize: 24, fontFamily: 'serif', fontWeight: FontWeight.bold)),
-                            ],
-                          ),
-                          const SizedBox(height: 10),
-                          const LinearProgressIndicator(value: 0.68, minHeight: 6, backgroundColor: Color(0xFF1E352F), valueColor: AlwaysStoppedAnimation(Color(0xFFF59E0B))),
-                          const SizedBox(height: 10),
-                          Text(stripText, style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold)),
+                          Text(loc, style: const TextStyle(color: Color(0xFFD6B36A), fontSize: 11, fontWeight: FontWeight.bold)),
+                          Container(padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2), decoration: BoxDecoration(color: const Color(0xFF132A24), borderRadius: BorderRadius.circular(10), border: Border.all(color: const Color(0xFFD6B36A))), child: Text(globalUserName.toUpperCase(), style: const TextStyle(color: Color(0xFF2DD4BF), fontSize: 8.5, fontWeight: FontWeight.bold))),
                         ],
+                      ),
+                      const SizedBox(height: 8),
+                      const Text('NEXT PRAYER', style: TextStyle(color: Color(0xFF8E9E99), fontSize: 9, fontWeight: FontWeight.bold)),
+                      Text(nextP, style: const TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold)),
+                      Text(nextTime, style: const TextStyle(color: Color(0xFFD6B36A), fontSize: 20, fontFamily: 'serif', fontWeight: FontWeight.bold)),
+                      const SizedBox(height: 8),
+                      Container(
+                        padding: const EdgeInsets.all(6),
+                        decoration: BoxDecoration(color: const Color(0xFF132A24), borderRadius: BorderRadius.circular(12), border: Border.all(color: const Color(0xFFD6B36A))),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            const Text('REMAINING', style: TextStyle(color: Color(0xFF8E9E99), fontSize: 8.5, fontWeight: FontWeight.bold)),
+                            Text(_fmt(remSec), style: const TextStyle(color: Color(0xFF2DD4BF), fontSize: 12, fontWeight: FontWeight.bold)),
+                          ],
+                        ),
                       ),
                     ],
                   ),
                 ),
-              );
-            },
+                const SizedBox(width: 12),
+                Expanded(
+                  flex: 4,
+                  child: Container(
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(color: const Color(0xFF132A24), borderRadius: BorderRadius.circular(14), border: Border.all(color: const Color(0xFFD6B36A))),
+                    child: Text(stripText, style: const TextStyle(color: Colors.white, fontSize: 10.5, fontWeight: FontWeight.bold, height: 1.5)),
+                  ),
+                ),
+              ],
+            ),
           ),
           const SizedBox(height: 22),
-          Text('2. LIVE STREAMING AYAH WIDGET', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w900, color: kPrimary)),
+          Text('2. DAILY QURAN VERSE WIDGET (EXACT PHONE MATCH)', style: TextStyle(fontSize: 10.5, fontWeight: FontWeight.w900, color: kPrimary, letterSpacing: 1)),
           const SizedBox(height: 10),
           Container(
-            padding: const EdgeInsets.all(18),
+            padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              gradient: const LinearGradient(colors: [Color(0xFF0F2922), Color(0xFF091512), Color(0xFF050807)]),
-              borderRadius: BorderRadius.circular(26),
-              border: Border.all(color: const Color(0xFF2DD4BF), width: 1.8),
+              gradient: const LinearGradient(colors: [Color(0xFF0D2621), Color(0xFF091916), Color(0xFF060D0B)]),
+              borderRadius: BorderRadius.circular(24),
+              border: Border.all(color: const Color(0xFF2DD4BF), width: 1.5),
             ),
             child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                Text('✨ $liveAyahRef', style: const TextStyle(color: Color(0xFFF59E0B), fontSize: 10, fontWeight: FontWeight.bold)),
-                const SizedBox(height: 10),
-                Text(liveAyahArab, textAlign: TextAlign.center, style: const TextStyle(color: Colors.white, fontSize: 21, fontWeight: FontWeight.bold)),
+                Text(liveAyahRef.toUpperCase(), style: const TextStyle(color: Color(0xFFD6B36A), fontSize: 9.5, fontWeight: FontWeight.bold)),
                 const SizedBox(height: 8),
-                Text(liveAyahTrans, textAlign: TextAlign.center, style: const TextStyle(color: Color(0xFF2DD4BF), fontSize: 12, fontFamily: 'serif')),
+                Text(liveAyahArab, textAlign: TextAlign.right, style: const TextStyle(color: Colors.white, fontSize: 21, fontWeight: FontWeight.bold)),
+                const SizedBox(height: 8),
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(color: const Color(0xFF132A24), borderRadius: BorderRadius.circular(12), border: Border.all(color: const Color(0xFFD6B36A))),
+                  child: Text(liveAyahTrans, style: const TextStyle(color: Color(0xFF2DD4BF), fontSize: 11.5, fontFamily: 'serif', fontStyle: FontStyle.italic)),
+                ),
               ],
             ),
           ),
           const SizedBox(height: 20),
           ElevatedButton.icon(
-            style: ElevatedButton.styleFrom(backgroundColor: kSecondary, padding: const EdgeInsets.symmetric(vertical: 14)),
+            style: ElevatedButton.styleFrom(backgroundColor: kPrimary, padding: const EdgeInsets.symmetric(vertical: 14)),
             onPressed: () async {
-              final p = await SharedPreferences.getInstance();
-              await p.setString('wp_user', 'SALAH RADAR • ${globalUserName.toUpperCase()}');
-              await p.setInt('wp_rem_sec', remSec);
               await triggerNativeWidgetBroadcast();
-              if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(backgroundColor: kSecondary, content: const Text('⚡ Live Countdown Widget Synced to Phone!', style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold))));
+              if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(backgroundColor: kSecondary, content: const Text('Widgets Force-Pushed to Phone Home Screen!', style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold))));
             },
-            icon: const Icon(Icons.bolt_rounded, color: Colors.black),
-            label: const Text('SYNC LIVE WIDGETS TO PHONE', style: TextStyle(color: Colors.black, fontWeight: FontWeight.w900)),
+            icon: const Icon(Icons.sync_rounded, color: Colors.black),
+            label: const Text('FORCE SYNC TO PHONE HOME SCREEN', style: TextStyle(color: Colors.black, fontWeight: FontWeight.w900)),
           ),
         ],
       ),
@@ -731,7 +720,8 @@ class _LiveAnimatedWidgetStudioPageState extends State<LiveAnimatedWidgetStudioP
 
 
 
-// ---------------- 3. STREAK TAB & 4. KITAB TAB (TOP HADITH SEARCH!) ----------------
+
+// ---------------- 3. ENHANCED EXECUTIVE STREAK TAB & 4. KITAB TAB ----------------
 class UniqueStreakScreen extends StatefulWidget {
   const UniqueStreakScreen({super.key});
   @override
@@ -749,34 +739,135 @@ class _UniqueStreakScreenState extends State<UniqueStreakScreen> {
   Widget build(BuildContext context) {
     final now = DateTime.now();
     int daysInM = DateUtils.getDaysInMonth(now.year, now.month);
-    int mAda = 0, mJamaat = 0;
+    int mAda = 0, mJamaat = 0, perfectDays = 0;
+    Map<String, int> pCounts = {'Fajr': 0, 'Dhuhr': 0, 'Asr': 0, 'Maghrib': 0, 'Isha': 0};
+
     for (int i = 1; i <= daysInM; i++) {
       final dt = DateTime(now.year, now.month, i);
+      int dayC = 0;
       for (var p in prayers) {
         int s = _st(dt, p);
-        if (s > 0 && s < 4) mAda++;
+        if (s > 0 && s < 4) { mAda++; dayC++; pCounts[p] = (pCounts[p] ?? 0) + 1; }
         if (s == 1) mJamaat++;
       }
+      if (dayC == 5) perfectDays++;
     }
+
+    int activeStreak = 0;
+    for (int i = 0; i < 30; i++) {
+      final dt = now.subtract(Duration(days: i));
+      int c = prayers.where((p) { int s = _st(dt, p); return s > 0 && s < 4; }).length;
+      if (c > 0) activeStreak++; else if (i > 0) break;
+    }
+
+    int passedDays = math.max(1, now.day);
+    double scorePct = ((mAda / (passedDays * 5)) * 100).clamp(0.0, 100.0);
+    final weekDays = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
+
     return SafeArea(
       child: ListView(
         padding: const EdgeInsets.fromLTRB(18, 14, 18, 100),
         children: [
-          Text('🔥 SPIRITUAL STREAK & BADGES', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w900, color: kPrimary)),
+          Text('SPIRITUAL ANALYTICS & STREAK', style: TextStyle(fontSize: 10.5, fontWeight: FontWeight.w900, color: kPrimary, letterSpacing: 1.2)),
           const SizedBox(height: 12),
+
+          // 1. Radial Score Gauge & KPI Summary Card
           Container(
             padding: const EdgeInsets.all(20),
-            decoration: BoxDecoration(color: kCard, borderRadius: BorderRadius.circular(24), border: Border.all(color: kPrimary.withOpacity(0.5))),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+            decoration: BoxDecoration(color: kCard, borderRadius: BorderRadius.circular(24), border: Border.all(color: kPrimary.withOpacity(0.45))),
+            child: Row(
               children: [
-                Text('$mAda Prayers Offered This Month', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w900, color: kText)),
-                const SizedBox(height: 4),
-                Text('🟢 $mJamaat Offered in Congregation (Jamaat)', style: TextStyle(fontSize: 13, color: kSecondary, fontWeight: FontWeight.bold)),
+                SizedBox(
+                  width: 82,
+                  height: 82,
+                  child: Stack(
+                    fit: StackFit.expand,
+                    children: [
+                      CircularProgressIndicator(value: scorePct / 100, strokeWidth: 8, backgroundColor: kBg, valueColor: AlwaysStoppedAnimation(kSecondary)),
+                      Center(child: Text('${scorePct.toInt()}%', style: TextStyle(fontSize: 19, fontFamily: 'serif', fontWeight: FontWeight.w900, color: kText))),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 18),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(children: [Icon(Icons.bolt_rounded, size: 18, color: kPrimary), const SizedBox(width: 4), Text('$activeStreak DAY ACTIVE STREAK', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w900, color: kPrimary))]),
+                      const SizedBox(height: 6),
+                      Text('$mAda Offered • $mJamaat in Jamaat • $perfectDays Full 5/5 Days', style: TextStyle(fontSize: 12, color: kMuted, height: 1.4)),
+                    ],
+                  ),
+                ),
               ],
             ),
           ),
           const SizedBox(height: 16),
+
+          // 2. 7-Day Weekly Performance Bar Chart
+          Container(
+            padding: const EdgeInsets.all(18),
+            decoration: BoxDecoration(color: kCard, borderRadius: BorderRadius.circular(22), border: Border.all(color: kBorder)),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('LAST 7 DAYS PERFORMANCE', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w900, color: kMuted, letterSpacing: 1)),
+                const SizedBox(height: 16),
+                SizedBox(
+                  height: 115,
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceAround,
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: List.generate(7, (i) {
+                      final d = now.subtract(Duration(days: 6 - i));
+                      int c = prayers.where((p) { int s = _st(d, p); return s > 0 && s < 4; }).length;
+                      return Column(
+                        mainAxisAlignment: MainAxisAlignment.end,
+                        children: [
+                          Text('$c/5', style: TextStyle(fontSize: 9.5, color: kMuted)),
+                          const SizedBox(height: 5),
+                          Container(width: 24, height: math.max(8, c * 15.0), decoration: BoxDecoration(color: c == 5 ? kPrimary : kSecondary, borderRadius: BorderRadius.circular(6))),
+                          const SizedBox(height: 6),
+                          Text(weekDays[d.weekday - 1], style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: kText)),
+                        ],
+                      );
+                    }),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 16),
+
+          // 3. Prayer-by-Prayer Consistency Meters
+          Container(
+            padding: const EdgeInsets.all(18),
+            decoration: BoxDecoration(color: kCard, borderRadius: BorderRadius.circular(22), border: Border.all(color: kBorder)),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('PRAYER-BY-PRAYER DISCIPLINE', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w900, color: kPrimary, letterSpacing: 1)),
+                const SizedBox(height: 12),
+                ...prayers.map((p) {
+                  int c = pCounts[p] ?? 0;
+                  double r = (c / passedDays).clamp(0.0, 1.0);
+                  return Padding(
+                    padding: const EdgeInsets.only(bottom: 10),
+                    child: Column(
+                      children: [
+                        Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [Text(p, style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.bold, color: kText)), Text('${(r * 100).toInt()}% ($c/$passedDays)', style: TextStyle(fontSize: 11, color: kSecondary, fontWeight: FontWeight.bold))]),
+                        const SizedBox(height: 4),
+                        ClipRRect(borderRadius: BorderRadius.circular(4), child: LinearProgressIndicator(value: r, minHeight: 6, backgroundColor: kBg, valueColor: AlwaysStoppedAnimation(kSecondary))),
+                      ],
+                    ),
+                  );
+                }).toList(),
+              ],
+            ),
+          ),
+          const SizedBox(height: 16),
+
+          // 4. 30-Day Monthly Matrix
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(color: kCard, borderRadius: BorderRadius.circular(22), border: Border.all(color: kBorder)),
@@ -811,7 +902,7 @@ class KitabScreen extends StatefulWidget {
 class _KitabScreenState extends State<KitabScreen> {
   late int tab;
   List surahs = [];
-  bool loadingQuran = true;
+  bool loadingQuran = true, loadingCloudHadiths = false;
   String qSearch = '', globalHadithQuery = '';
   List<Map<String, String>> globalHadithPool = [];
 
@@ -823,47 +914,48 @@ class _KitabScreenState extends State<KitabScreen> {
     {'id': 'tirmidhi', 'title': 'Jami\'\nat-Tirmidhi', 'count': '3998', 'sec': 49, 'col': Color(0xFF38BDF8), 'ic': Icons.library_books_rounded},
     {'id': 'ibnmajah', 'title': 'Sunan\nIbn Majah', 'count': '4343', 'sec': 37, 'col': Color(0xFFC084FC), 'ic': Icons.collections_bookmark_rounded},
     {'id': 'malik', 'title': 'Muwatta\nMalik', 'count': '1858', 'sec': 61, 'col': Color(0xFF34D399), 'ic': Icons.layers_rounded},
-    {'id': 'nawawi', 'title': 'An-Nawawi\'s\n40 Hadith', 'count': '42', 'sec': 1, 'col': Color(0xFFF43F5E), 'ic': Icons.star_rounded},
-    {'id': 'qudsi', 'title': 'Hadith\nQudsi', 'count': '40', 'sec': 1, 'col': Color(0xFF60A5FA), 'ic': Icons.article_rounded},
+    {'id': 'nawawi', 'title': 'An-Nawawi\'s\n40 Hadith', 'count': '42', 'sec': 1, 'col': Color(0xFFF43F5E), 'ic': Icons.star_border_rounded},
+    {'id': 'qudsi', 'title': 'Hadith\nQudsi', 'count': '40', 'sec': 1, 'col': Color(0xFF60A5FA), 'ic': Icons.article_outlined},
     {'id': 'dehlawi', 'title': 'Shah Waliullah\n40 Hadith', 'count': '40', 'sec': 1, 'col': Color(0xFF10B981), 'ic': Icons.history_edu_rounded},
-  ];
-
-  final List<Map<String, String>> masterHadithIndex = [
-    {'book': 'Sahih al-Bukhari', 'num': '1', 'ar': 'إِنَّمَا الأَعْمَالُ بِالنِّيَّاتِ', 'en': 'Actions are judged only by intentions, and every person will have only what they intended.'},
-    {'book': 'Sahih al-Bukhari', 'num': '5027', 'ar': 'خَيْرُكُمْ مَنْ تَعَلَّمَ الْقُرْآنَ وَعَلَّمَهُ', 'en': 'The best among you (Muslims) are those who learn the Glorious Qur\'an and teach it to others.'},
-    {'book': 'Sahih Muslim', 'num': '223', 'ar': 'الطُّهُورُ شَطْرُ الإِيمَانِ', 'en': 'Cleanliness (Wudu/Purity) is half of faith (Iman), and saying Alhamdulillah fills the scale of good deeds, and Prayer (Salah) is a light (Noor), and Charity (Sadaqah) is a proof.'},
-    {'book': 'Sahih Muslim', 'num': '2564', 'ar': 'إِنَّ اللَّهَ لاَ يَنْظُرُ إِلَى صُوَرِكُمْ', 'en': 'Verily, Allah does not look at your appearances or your wealth, rather He looks at your hearts and your deeds.'},
-    {'book': 'Jami\' at-Tirmidhi', 'num': '1956', 'ar': 'تَبَسُّمُكَ فِي وَجْهِ أَخِيكَ لَكَ صَدَقَةٌ', 'en': 'Your smiling in the face of your brother is a charity (Sadaqah) for you.'},
-    {'book': 'Sunan an-Nasa\'i', 'num': '3104', 'ar': 'الْجَنَّةُ تَحْتَ أَقْدَامِ الأُمَّهَاتِ', 'en': 'Stay with your mother, for indeed Paradise (Jannah) lies beneath her feet.'},
   ];
 
   @override
   void initState() {
     super.initState();
     tab = widget.initTab;
-    globalHadithPool = List.from(masterHadithIndex);
     http.get(Uri.parse('https://api.alquran.cloud/v1/surah')).then((r) {
       if (r.statusCode == 200 && mounted) setState(() { surahs = json.decode(r.body)['data']; loadingQuran = false; });
     });
-    _preloadHadiths();
+    _preloadMassiveHadithDatabase();
   }
 
-  Future<void> _preloadHadiths() async {
+  // Loads thousands of Hadiths from full book JSONs and calls setState() so Search works 100%!
+  Future<void> _preloadMassiveHadithDatabase() async {
+    if (loadingCloudHadiths) return;
+    setState(() => loadingCloudHadiths = true);
     try {
-      for (var u in [
-        {'b': 'An-Nawawi 40', 'url': 'https://cdn.jsdelivr.net/gh/fawazahmed0/hadith-api@1/editions/eng-nawawi.json'},
-        {'b': 'Sahih Bukhari', 'url': 'https://cdn.jsdelivr.net/gh/fawazahmed0/hadith-api@1/editions/eng-bukhari/sections/1.json'},
-        {'b': 'Sahih Muslim', 'url': 'https://cdn.jsdelivr.net/gh/fawazahmed0/hadith-api@1/editions/eng-muslim/sections/1.json'},
-      ]) {
-        final r = await http.get(Uri.parse(u['url']!));
+      final sources = [
+        {'b': 'An-Nawawi 40', 'url': 'https://cdn.jsdelivr.net/gh/fawazahmed0/hadith-api@1/editions/eng-nawawi.min.json'},
+        {'b': 'Hadith Qudsi', 'url': 'https://cdn.jsdelivr.net/gh/fawazahmed0/hadith-api@1/editions/eng-qudsi.min.json'},
+        {'b': 'Shah Waliullah', 'url': 'https://cdn.jsdelivr.net/gh/fawazahmed0/hadith-api@1/editions/eng-dehlawi.min.json'},
+        {'b': 'Sahih Bukhari', 'url': 'https://cdn.jsdelivr.net/gh/fawazahmed0/hadith-api@1/editions/eng-bukhari.min.json'},
+        {'b': 'Sahih Muslim', 'url': 'https://cdn.jsdelivr.net/gh/fawazahmed0/hadith-api@1/editions/eng-muslim.min.json'},
+      ];
+      for (var src in sources) {
+        final r = await http.get(Uri.parse(src['url']!));
         if (r.statusCode == 200) {
-          for (var h in (json.decode(r.body)['hadiths'] ?? [])) {
+          final List list = json.decode(r.body)['hadiths'] ?? [];
+          for (var h in list) {
             final t = h['text']?.toString() ?? '';
-            if (t.isNotEmpty) globalHadithPool.add({'book': u['b']!, 'num': h['hadithnumber']?.toString() ?? '', 'ar': '', 'en': t});
+            if (t.isNotEmpty) {
+              globalHadithPool.add({'book': src['b']!, 'num': h['hadithnumber']?.toString() ?? '', 'en': t});
+            }
           }
+          if (mounted) setState(() {}); // Immediately refresh search results as each book arrives!
         }
       }
     } catch (_) {}
+    if (mounted) setState(() => loadingCloudHadiths = false);
   }
 
   void _openFullHadithModal(Map<String, String> h) {
@@ -871,27 +963,24 @@ class _KitabScreenState extends State<KitabScreen> {
       context: context,
       isScrollControlled: true,
       backgroundColor: kCard,
-      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(28))),
-      builder: (ctx) => Padding(
-        padding: const EdgeInsets.all(22),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
+      builder: (ctx) => DraggableScrollableSheet(
+        expand: false,
+        initialChildSize: 0.6,
+        maxChildSize: 0.9,
+        builder: (_, sc) => ListView(
+          controller: sc,
+          padding: const EdgeInsets.all(22),
           children: [
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text('📜 ${h['book']} • Hadith #${h['num']}', style: TextStyle(color: kPrimary, fontWeight: FontWeight.w900, fontSize: 13)),
-                IconButton(icon: Icon(Icons.copy_rounded, color: kSecondary), onPressed: () { Clipboard.setData(ClipboardData(text: '${h['ar']}\n\n${h['en']}')); Navigator.pop(ctx); }),
+                Text('${h['book']} • Hadith #${h['num']}', style: TextStyle(color: kPrimary, fontWeight: FontWeight.w900, fontSize: 13)),
+                IconButton(icon: Icon(Icons.copy_rounded, color: kSecondary), onPressed: () { Clipboard.setData(ClipboardData(text: '${h['en']} (${h['book']} #${h['num']})')); Navigator.pop(ctx); }),
               ],
             ),
-            const SizedBox(height: 12),
-            if ((h['ar'] ?? '').isNotEmpty) ...[
-              Text(h['ar']!, textAlign: TextAlign.right, style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: kText)),
-              Divider(color: kBorder, height: 22),
-            ],
-            Text(h['en']!, style: TextStyle(fontSize: 15, fontFamily: 'serif', color: kText, height: 1.55)),
-            const SizedBox(height: 16),
+            Divider(color: kBorder, height: 22),
+            Text(h['en']!, style: TextStyle(fontSize: 15, fontFamily: 'serif', color: kText, height: 1.6)),
           ],
         ),
       ),
@@ -903,7 +992,10 @@ class _KitabScreenState extends State<KitabScreen> {
     final fS = surahs.where((s) => s['englishName'].toString().toLowerCase().contains(qSearch.toLowerCase()) || s['number'].toString().contains(qSearch)).toList();
     final bool isSearchingH = globalHadithQuery.trim().isNotEmpty;
     final hResults = isSearchingH
-        ? globalHadithPool.where((h) => h['en']!.toLowerCase().contains(globalHadithQuery.toLowerCase()) || h['book']!.toLowerCase().contains(globalHadithQuery.toLowerCase()) || h['num']!.contains(globalHadithQuery)).toList()
+        ? globalHadithPool.where((h) {
+            final q = globalHadithQuery.toLowerCase();
+            return h['en']!.toLowerCase().contains(q) || h['book']!.toLowerCase().contains(q) || h['num']!.contains(q);
+          }).take(200).toList()
         : <Map<String, String>>[];
 
     return SafeArea(
@@ -913,15 +1005,15 @@ class _KitabScreenState extends State<KitabScreen> {
           children: [
             Container(
               padding: const EdgeInsets.all(4),
-              decoration: BoxDecoration(color: kCard, borderRadius: BorderRadius.circular(16), border: Border.all(color: kBorder)),
-              child: Row(children: [_segBtn('📖 AL-QURAN (114)', 0), _segBtn('📚 10 HADITH BOOKS', 1)]),
+              decoration: BoxDecoration(color: kCard, borderRadius: BorderRadius.circular(14), border: Border.all(color: kBorder)),
+              child: Row(children: [_segBtn('AL-QURAN (114)', 0), _segBtn('10 HADITH BOOKS', 1)]),
             ),
             const SizedBox(height: 12),
             Expanded(
               child: tab == 0
                   ? Column(
                       children: [
-                        TextField(onChanged: (v) => setState(() => qSearch = v), decoration: InputDecoration(hintText: 'Search Surah...', prefixIcon: Icon(Icons.search, color: kPrimary), filled: true, fillColor: kCard, border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)))),
+                        TextField(onChanged: (v) => setState(() => qSearch = v), decoration: InputDecoration(hintText: 'Search Surah name or number...', prefixIcon: Icon(Icons.search, color: kPrimary), filled: true, fillColor: kCard, border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)))),
                         const SizedBox(height: 10),
                         Expanded(
                           child: loadingQuran
@@ -929,6 +1021,7 @@ class _KitabScreenState extends State<KitabScreen> {
                               : ListView.builder(
                                   itemCount: fS.length,
                                   itemBuilder: (_, i) => ListTile(
+                                    leading: Text('${fS[i]['number']}', style: TextStyle(color: kPrimary, fontWeight: FontWeight.bold)),
                                     title: Text(fS[i]['englishName'], style: TextStyle(fontWeight: FontWeight.bold, color: kText)),
                                     trailing: Text(fS[i]['name'], style: TextStyle(fontSize: 18, color: kPrimary)),
                                     onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => SurahReaderPage(num: fS[i]['number'], name: fS[i]['englishName']))),
@@ -939,16 +1032,15 @@ class _KitabScreenState extends State<KitabScreen> {
                     )
                   : Column(
                       children: [
-                        // SEARCH BAR DIRECTLY ABOVE HADITH BOOKS!
                         TextField(
                           onChanged: (v) => setState(() => globalHadithQuery = v),
                           decoration: InputDecoration(
-                            hintText: '🔍 Search Hadith topic, word or # (e.g. prayer, charity, mother)...',
+                            hintText: 'Search across ${globalHadithPool.length}+ Hadiths (word or #)...',
                             prefixIcon: Icon(Icons.search_rounded, color: kPrimary),
                             suffixIcon: isSearchingH ? IconButton(icon: Icon(Icons.clear, color: kMuted), onPressed: () => setState(() => globalHadithQuery = '')) : null,
                             filled: true,
                             fillColor: kCard,
-                            border: OutlineInputBorder(borderRadius: BorderRadius.circular(16)),
+                            border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
                           ),
                         ),
                         const SizedBox(height: 12),
@@ -970,8 +1062,8 @@ class _KitabScreenState extends State<KitabScreen> {
                                             Row(
                                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                               children: [
-                                                Text('📜 ${h['book']} • #${h['num']}', style: TextStyle(color: kPrimary, fontWeight: FontWeight.bold, fontSize: 11.5)),
-                                                Text('Tap for full →', style: TextStyle(color: kSecondary, fontSize: 10.5, fontWeight: FontWeight.bold)),
+                                                Text('${h['book']} • #${h['num']}', style: TextStyle(color: kPrimary, fontWeight: FontWeight.bold, fontSize: 11.5)),
+                                                Text('View Full Hadith', style: TextStyle(color: kSecondary, fontSize: 10.5, fontWeight: FontWeight.bold)),
                                               ],
                                             ),
                                             const SizedBox(height: 6),
@@ -992,14 +1084,14 @@ class _KitabScreenState extends State<KitabScreen> {
                                       onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => HadithBookReaderPage(bookId: b['id'] as String, bookTitle: b['title'].toString().replaceAll('\n', ' '), maxSections: b['sec'] as int, accentColor: c))),
                                       child: Container(
                                         padding: const EdgeInsets.all(16),
-                                        decoration: BoxDecoration(color: kCard, borderRadius: BorderRadius.circular(22), border: Border.all(color: c.withOpacity(0.35))),
+                                        decoration: BoxDecoration(color: kCard, borderRadius: BorderRadius.circular(20), border: Border.all(color: c.withOpacity(0.35))),
                                         child: Column(
                                           crossAxisAlignment: CrossAxisAlignment.start,
                                           children: [
                                             Row(
                                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                               children: [
-                                                Icon(b['ic'] as IconData, color: c, size: 26),
+                                                Icon(b['ic'] as IconData, color: c, size: 24),
                                                 Text(b['count'] as String, style: TextStyle(color: c, fontWeight: FontWeight.w900, fontSize: 12)),
                                               ],
                                             ),
@@ -1028,7 +1120,7 @@ class _KitabScreenState extends State<KitabScreen> {
         onTap: () => setState(() => tab = i),
         child: Container(
           padding: const EdgeInsets.symmetric(vertical: 10),
-          decoration: BoxDecoration(color: sel ? kCardAlt : Colors.transparent, borderRadius: BorderRadius.circular(12)),
+          decoration: BoxDecoration(color: sel ? kCardAlt : Colors.transparent, borderRadius: BorderRadius.circular(10)),
           child: Center(child: Text(lb, style: TextStyle(fontSize: 11, fontWeight: FontWeight.w900, color: sel ? kPrimary : kMuted))),
         ),
       ),
@@ -1037,14 +1129,7 @@ class _KitabScreenState extends State<KitabScreen> {
 }
 
 
-
-
-
-
-
-
-
-// ---------------- READERS, SETTINGS (WITH WIDGET ABOVE LANGUAGE!) & ADMIN PANEL ----------------
+// ---------------- READERS, SETTINGS (VECTOR BRAND LOGOS!) & ADMIN PANEL ----------------
 class HadithBookReaderPage extends StatefulWidget {
   final String bookId, bookTitle;
   final int maxSections;
@@ -1086,7 +1171,7 @@ class _HadithBookReaderPageState extends State<HadithBookReaderPage> {
             children: [
               Text('${widget.bookTitle} • Hadith #$num', style: TextStyle(color: widget.accentColor, fontWeight: FontWeight.bold)),
               const SizedBox(height: 12),
-              Text(txt, style: TextStyle(fontSize: 15, fontFamily: 'serif', color: kText, height: 1.5)),
+              Text(txt, style: TextStyle(fontSize: 15, fontFamily: 'serif', color: kText, height: 1.55)),
             ],
           ),
         ),
@@ -1129,7 +1214,7 @@ class _HadithBookReaderPageState extends State<HadithBookReaderPage> {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [Text('Hadith #$num', style: TextStyle(color: widget.accentColor, fontWeight: FontWeight.bold, fontSize: 12)), Text('Tap for full →', style: TextStyle(color: kSecondary, fontSize: 10.5))]),
+                              Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [Text('Hadith #$num', style: TextStyle(color: widget.accentColor, fontWeight: FontWeight.bold, fontSize: 12)), Text('View Full Hadith', style: TextStyle(color: kSecondary, fontSize: 10.5, fontWeight: FontWeight.bold))]),
                               const SizedBox(height: 6),
                               Text(txt, maxLines: 2, overflow: TextOverflow.ellipsis, style: TextStyle(color: kText, fontSize: 13.5)),
                             ],
@@ -1222,15 +1307,13 @@ class SettingsProfileScreen extends StatefulWidget {
 }
 
 class _SettingsProfileScreenState extends State<SettingsProfileScreen> {
-  final feedbackCtrl = TextEditingController();
-
   void _openUserNameAndWidgets() {
     final ctrl = TextEditingController(text: globalUserName);
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
         backgroundColor: kCard,
-        title: Text('👤 Enter Username for Widget', style: TextStyle(color: kPrimary, fontWeight: FontWeight.bold)),
+        title: Text('Profile Name & Widgets', style: TextStyle(color: kPrimary, fontWeight: FontWeight.bold)),
         content: TextField(controller: ctrl, decoration: const InputDecoration(hintText: 'Your Name')),
         actions: [
           ElevatedButton(
@@ -1240,7 +1323,7 @@ class _SettingsProfileScreenState extends State<SettingsProfileScreen> {
               if (n.isNotEmpty) {
                 final p = await SharedPreferences.getInstance();
                 await p.setString('user_name', n);
-                await p.setString('wp_user', 'SALAH RADAR • ${n.toUpperCase()}');
+                await p.setString('wp_user', n.toUpperCase());
                 globalUserName = n;
                 await triggerNativeWidgetBroadcast();
                 widget.onRebuild();
@@ -1251,7 +1334,7 @@ class _SettingsProfileScreenState extends State<SettingsProfileScreen> {
                 Navigator.push(context, MaterialPageRoute(builder: (_) => const LiveAnimatedWidgetStudioPage()));
               }
             },
-            child: const Text('Save & Open Live Widgets', style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
+            child: const Text('Save & Open Widgets', style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
           ),
         ],
       ),
@@ -1264,7 +1347,7 @@ class _SettingsProfileScreenState extends State<SettingsProfileScreen> {
       context: context,
       builder: (ctx) => AlertDialog(
         backgroundColor: kCard,
-        title: Text('🔐 Admin PIN (Default: 7860)', style: TextStyle(color: kPrimary)),
+        title: Text('Admin Access (PIN: 7860)', style: TextStyle(color: kPrimary)),
         content: TextField(controller: pinC, obscureText: true, keyboardType: TextInputType.number),
         actions: [
           ElevatedButton(
@@ -1282,30 +1365,51 @@ class _SettingsProfileScreenState extends State<SettingsProfileScreen> {
     );
   }
 
+  Widget _brandBadge(bool isInsta, String handle) {
+    return GestureDetector(
+      onTap: () {
+        Clipboard.setData(ClipboardData(text: handle));
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(backgroundColor: kPrimary, content: Text('Copied $handle', style: const TextStyle(color: Colors.black))));
+      },
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+        decoration: BoxDecoration(color: kBg, borderRadius: BorderRadius.circular(14), border: Border.all(color: kBorder)),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            SizedBox(width: 16, height: 16, child: CustomPaint(painter: SocialLogoPainter(isInstagram: isInsta, color: isInsta ? kPrimary : kSecondary))),
+            const SizedBox(width: 7),
+            Text(handle, style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: kText)),
+          ],
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return SafeArea(
       child: ListView(
         padding: const EdgeInsets.fromLTRB(18, 16, 18, 100),
         children: [
-          // 1. TOP APP LOGO & HANDLES
+          // 1. TOP APP LOGO & VECTOR SOCIAL HANDLES
           GestureDetector(
             onLongPress: _openAdminPin,
             child: Container(
               padding: const EdgeInsets.all(20),
-              decoration: BoxDecoration(color: kCard, borderRadius: BorderRadius.circular(24), border: Border.all(color: kPrimary.withOpacity(0.45))),
+              decoration: BoxDecoration(color: kCard, borderRadius: BorderRadius.circular(22), border: Border.all(color: kPrimary.withOpacity(0.45))),
               child: Column(
                 children: [
-                  Container(width: 60, height: 60, decoration: BoxDecoration(color: kPrimary, borderRadius: BorderRadius.circular(18)), child: const Icon(Icons.mosque_rounded, size: 32, color: Colors.black)),
+                  Container(width: 58, height: 58, decoration: BoxDecoration(color: kPrimary, borderRadius: BorderRadius.circular(16)), child: const Icon(Icons.mosque_outlined, size: 30, color: Colors.black)),
                   const SizedBox(height: 10),
-                  Text('NOOR ISLAMIC PRO', style: TextStyle(fontSize: 19, fontWeight: FontWeight.w900, color: kText)),
-                  const SizedBox(height: 10),
+                  Text('NOOR ARCHITECTURAL', style: TextStyle(fontSize: 18, fontFamily: 'serif', fontWeight: FontWeight.w900, color: kText, letterSpacing: 1.2)),
+                  const SizedBox(height: 12),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Text('📸 $adminAppInsta', style: TextStyle(fontSize: 11, color: kPrimary, fontWeight: FontWeight.bold)),
-                      const SizedBox(width: 14),
-                      Text('📘 $adminAppFb', style: TextStyle(fontSize: 11, color: kSecondary, fontWeight: FontWeight.bold)),
+                      _brandBadge(true, adminAppInsta),
+                      const SizedBox(width: 10),
+                      _brandBadge(false, adminAppFb),
                     ],
                   ),
                 ],
@@ -1321,7 +1425,7 @@ class _SettingsProfileScreenState extends State<SettingsProfileScreen> {
             child: SwitchListTile(
               contentPadding: EdgeInsets.zero,
               activeColor: kPrimary,
-              title: Text(isDarkMode ? '🌙 Dark Theme' : '☀️ Light Theme', style: TextStyle(fontWeight: FontWeight.bold, color: kText)),
+              title: Text(isDarkMode ? 'Dark Appearance' : 'Light Appearance', style: TextStyle(fontWeight: FontWeight.bold, color: kText)),
               value: isDarkMode,
               onChanged: (v) async {
                 final p = await SharedPreferences.getInstance();
@@ -1334,30 +1438,26 @@ class _SettingsProfileScreenState extends State<SettingsProfileScreen> {
           ),
           const SizedBox(height: 14),
 
-          // 🌟 3. USERNAME & LIVE WIDGET STUDIO (DIRECTLY ABOVE LANGUAGE AS REQUESTED!) 🌟
+          // 3. USERNAME & WIDGET STUDIO (DIRECTLY ABOVE LANGUAGE!)
           GestureDetector(
             onTap: _openUserNameAndWidgets,
             child: Container(
               padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                gradient: LinearGradient(colors: [kSecondary.withOpacity(0.22), kCard]),
-                borderRadius: BorderRadius.circular(20),
-                border: Border.all(color: kSecondary, width: 1.5),
-              ),
+              decoration: BoxDecoration(color: kCardAlt, borderRadius: BorderRadius.circular(18), border: Border.all(color: kSecondary)),
               child: Row(
                 children: [
-                  CircleAvatar(backgroundColor: kSecondary, child: const Icon(Icons.widgets_rounded, color: Colors.black)),
+                  CircleAvatar(backgroundColor: kSecondary, child: const Icon(Icons.layers_outlined, color: Colors.black)),
                   const SizedBox(width: 12),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text('⚡ User: $globalUserName • Live Widgets', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 14, color: kText)),
-                        Text('Tap to set Username & view Live Animated Widgets', style: TextStyle(fontSize: 11, color: kSecondary, fontWeight: FontWeight.bold)),
+                        Text('User: $globalUserName • Home Widgets', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 13.5, color: kText)),
+                        Text('Tap to set Username and sync Dual-Pane Widgets', style: TextStyle(fontSize: 11, color: kSecondary, fontWeight: FontWeight.bold)),
                       ],
                     ),
                   ),
-                  Icon(Icons.arrow_forward_ios_rounded, size: 16, color: kSecondary),
+                  Icon(Icons.arrow_forward_ios_rounded, size: 15, color: kSecondary),
                 ],
               ),
             ),
@@ -1371,11 +1471,11 @@ class _SettingsProfileScreenState extends State<SettingsProfileScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('🌐 APP LANGUAGE', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w900, color: kPrimary)),
+                Text('LANGUAGE', style: TextStyle(fontSize: 10.5, fontWeight: FontWeight.w900, color: kPrimary, letterSpacing: 1)),
                 const SizedBox(height: 10),
                 Row(
                   children: [
-                    for (var l in [{'c': 'en', 'n': 'English'}, {'c': 'hi', 'n': 'हिंदी'}, {'c': 'ur', 'n': 'اردو'}, {'c': 'ro', 'n': 'Hinglish'}])
+                    for (var l in [{'c': 'en', 'n': 'English'}, {'c': 'hi', 'n': 'Hindi'}, {'c': 'ur', 'n': 'Urdu'}, {'c': 'ro', 'n': 'Hinglish'}])
                       Expanded(
                         child: GestureDetector(
                           onTap: () async {
@@ -1401,14 +1501,14 @@ class _SettingsProfileScreenState extends State<SettingsProfileScreen> {
           ),
           const SizedBox(height: 14),
 
-          // 5. THEME COLOR PICKER
+          // 5. THEME COLOUR
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(color: kCard, borderRadius: BorderRadius.circular(18), border: Border.all(color: kBorder)),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('🎨 THEME COLOUR', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w900, color: kPrimary)),
+                Text('THEME ACCENT COLOUR', style: TextStyle(fontSize: 10.5, fontWeight: FontWeight.w900, color: kPrimary, letterSpacing: 1)),
                 const SizedBox(height: 10),
                 Wrap(
                   spacing: 8,
@@ -1424,7 +1524,7 @@ class _SettingsProfileScreenState extends State<SettingsProfileScreen> {
                         setState(() {});
                       },
                       child: Chip(
-                        backgroundColor: (pal['primary'] as Color).withOpacity(0.2),
+                        backgroundColor: (pal['primary'] as Color).withOpacity(0.18),
                         avatar: CircleAvatar(backgroundColor: pal['primary'] as Color),
                         label: Text(pal['name'] as String, style: TextStyle(fontSize: 11, color: kText)),
                       ),
@@ -1436,21 +1536,28 @@ class _SettingsProfileScreenState extends State<SettingsProfileScreen> {
           ),
           const SizedBox(height: 14),
 
-          // 6. FEEDBACK & DEVELOPER PROFILE
+          // 6. DEVELOPER PROFILE WITH VECTOR INSTA & FB LOGOS
           Container(
             padding: const EdgeInsets.all(18),
             decoration: BoxDecoration(color: kCard, borderRadius: BorderRadius.circular(22), border: Border.all(color: kBorder)),
             child: Column(
               children: [
-                CircleAvatar(radius: 34, backgroundColor: kPrimary, child: const Icon(Icons.person_rounded, size: 36, color: Colors.black)),
+                CircleAvatar(radius: 32, backgroundColor: kPrimary, child: const Icon(Icons.person_outline_rounded, size: 34, color: Colors.black)),
                 const SizedBox(height: 8),
                 Text(adminDevName, style: TextStyle(fontSize: 16, fontWeight: FontWeight.w900, color: kText)),
                 const SizedBox(height: 4),
                 Text(adminDevBio, textAlign: TextAlign.center, style: TextStyle(fontSize: 11.5, color: kMuted)),
-                const SizedBox(height: 8),
-                Text('📸 $adminDevInsta  •  📘 $adminDevFb', style: TextStyle(fontSize: 11, color: kSecondary, fontWeight: FontWeight.bold)),
                 const SizedBox(height: 12),
-                OutlinedButton.icon(onPressed: _openAdminPin, icon: Icon(Icons.admin_panel_settings, size: 16, color: kPrimary), label: Text('Owner Admin Panel', style: TextStyle(color: kPrimary))),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    _brandBadge(true, adminDevInsta),
+                    const SizedBox(width: 10),
+                    _brandBadge(false, adminDevFb),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                OutlinedButton.icon(onPressed: _openAdminPin, icon: Icon(Icons.lock_outline_rounded, size: 15, color: kPrimary), label: Text('Owner Admin Panel', style: TextStyle(color: kPrimary, fontSize: 12))),
               ],
             ),
           ),
@@ -1476,7 +1583,7 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('👑 Admin Control Panel'), backgroundColor: kBg),
+      appBar: AppBar(title: const Text('Owner Admin Control Panel'), backgroundColor: kBg),
       body: ListView(
         padding: const EdgeInsets.all(18),
         children: [
@@ -1513,8 +1620,3 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
     );
   }
 }
-
-
-
-
-
