@@ -18,16 +18,19 @@ jobs:
         with:
           channel: 'stable'
 
-      - name: Build Project with Direct Dual-Pane Widgets
+      - name: Build Project with Quran.com Font, Alarms & Widgets
         run: |
           cp lib/main.dart /tmp/main.dart
           rm -rf lib pubspec.yaml
           flutter create . --project-name islamic_app --org com.noor
           cp /tmp/main.dart lib/main.dart
 
+          mkdir -p assets/fonts
+          curl -L -s "https://github.com/google/fonts/raw/main/ofl/amiriquran/AmiriQuran-Regular.ttf" -o assets/fonts/QuranFont.ttf
+
           mkdir -p android/app/src/main/res/layout android/app/src/main/res/xml android/app/src/main/res/drawable
 
-          cat << 'EOF' > android/app/src/main/res/drawable/bg_pro_widget.xml
+          cat << 'EOF' > android/app/src/main/res/drawable/bg_wid_0.xml
           <?xml version="1.0" encoding="utf-8"?>
           <shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="rectangle">
               <gradient android:startColor="#0D2621" android:centerColor="#091916" android:endColor="#060D0B" android:angle="135"/>
@@ -36,21 +39,40 @@ jobs:
           </shape>
           EOF
 
+          cat << 'EOF' > android/app/src/main/res/drawable/bg_wid_1.xml
+          <?xml version="1.0" encoding="utf-8"?>
+          <shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="rectangle">
+              <gradient android:startColor="#241A0E" android:centerColor="#14100A" android:endColor="#080705" android:angle="135"/>
+              <corners android:radius="24dp"/>
+              <stroke android:width="1.5dp" android:color="#D6B36A"/>
+          </shape>
+          EOF
+
+          cat << 'EOF' > android/app/src/main/res/drawable/bg_wid_2.xml
+          <?xml version="1.0" encoding="utf-8"?>
+          <shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="rectangle">
+              <gradient android:startColor="#0F1E36" android:centerColor="#0A1324" android:endColor="#050912" android:angle="135"/>
+              <corners android:radius="24dp"/>
+              <stroke android:width="1.5dp" android:color="#38BDF8"/>
+          </shape>
+          EOF
+
           cat << 'EOF' > android/app/src/main/res/drawable/bg_pro_pill.xml
           <?xml version="1.0" encoding="utf-8"?>
           <shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="rectangle">
-              <solid android:color="#132A24"/>
+              <solid android:color="#1AFFFFFF"/>
               <corners android:radius="14dp"/>
-              <stroke android:width="1dp" android:color="#D6B36A"/>
+              <stroke android:width="1dp" android:color="#4DD6B36A"/>
           </shape>
           EOF
 
           cat << 'EOF' > android/app/src/main/res/layout/widget_prayer.xml
           <?xml version="1.0" encoding="utf-8"?>
           <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+              android:id="@+id/wp_root"
               android:layout_width="match_parent" android:layout_height="match_parent"
               android:orientation="horizontal" android:padding="16dp"
-              android:background="@drawable/bg_pro_widget">
+              android:background="@drawable/bg_wid_0">
               <LinearLayout android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="5" android:orientation="vertical">
                   <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:gravity="center_vertical">
                       <TextView android:id="@+id/wp_loc" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="NOOR" android:textColor="#D6B36A" android:textSize="11sp" android:textStyle="bold" />
@@ -73,9 +95,10 @@ jobs:
           cat << 'EOF' > android/app/src/main/res/layout/widget_quran.xml
           <?xml version="1.0" encoding="utf-8"?>
           <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+              android:id="@+id/wq_root"
               android:layout_width="match_parent" android:layout_height="match_parent"
               android:orientation="vertical" android:padding="16dp"
-              android:gravity="center_vertical" android:background="@drawable/bg_pro_widget">
+              android:gravity="center_vertical" android:background="@drawable/bg_wid_0">
               <TextView android:id="@+id/wq_ref" android:layout_width="wrap_content" android:layout_height="wrap_content" android:background="@drawable/bg_pro_pill" android:paddingLeft="10dp" android:paddingRight="10dp" android:paddingTop="3dp" android:paddingBottom="3dp" android:text="DAILY QURAN VERSE" android:textColor="#D6B36A" android:textSize="9.5sp" android:textStyle="bold" />
               <TextView android:id="@+id/wq_arab" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="8dp" android:gravity="right" android:text="فَإِنَّ مَعَ الْعُسْرِ يُسْرًا" android:textColor="#FFFFFF" android:textSize="22sp" android:textStyle="bold" />
               <TextView android:id="@+id/wq_hinglish" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="8dp" android:background="@drawable/bg_pro_pill" android:padding="8dp" android:fontFamily="serif" android:text="Indeed, with hardship comes ease." android:textColor="#2DD4BF" android:textSize="11.5sp" android:textStyle="italic" />
@@ -84,55 +107,151 @@ jobs:
 
           cat << 'EOF' > android/app/src/main/res/xml/info_quran.xml
           <?xml version="1.0" encoding="utf-8"?>
-          <appwidget-provider xmlns:android="http://schemas.android.com/apk/res/android" android:minWidth="280dp" android:minHeight="110dp" android:updatePeriodMillis="1800000" android:initialLayout="@layout/widget_quran" android:resizeMode="horizontal|vertical" android:widgetCategory="home_screen" />
+          <appwidget-provider xmlns:android="http://schemas.android.com/apk/res/android"
+              android:minWidth="280dp" android:minHeight="110dp" android:updatePeriodMillis="1800000"
+              android:initialLayout="@layout/widget_quran" android:resizeMode="horizontal|vertical" android:widgetCategory="home_screen" />
           EOF
 
           cat << 'EOF' > android/app/src/main/res/xml/info_prayer.xml
           <?xml version="1.0" encoding="utf-8"?>
-          <appwidget-provider xmlns:android="http://schemas.android.com/apk/res/android" android:minWidth="280dp" android:minHeight="125dp" android:updatePeriodMillis="1800000" android:initialLayout="@layout/widget_prayer" android:resizeMode="horizontal|vertical" android:widgetCategory="home_screen" />
+          <appwidget-provider xmlns:android="http://schemas.android.com/apk/res/android"
+              android:minWidth="280dp" android:minHeight="125dp" android:updatePeriodMillis="1800000"
+              android:initialLayout="@layout/widget_prayer" android:resizeMode="horizontal|vertical" android:widgetCategory="home_screen" />
           EOF
 
           PKG_DIR=$(find android/app/src/main/kotlin -type d | tail -n 1)
           PKG_NAME=$(grep -oP 'package\s+\K[^\s;]+' "$PKG_DIR/MainActivity.kt")
 
+          cat << EOF > "$PKG_DIR/PrayerAlarmReceiver.kt"
+          package $PKG_NAME
+          import android.app.NotificationChannel
+          import android.app.NotificationManager
+          import android.content.BroadcastReceiver
+          import android.content.Context
+          import android.content.Intent
+          import android.os.Build
+          import androidx.core.app.NotificationCompat
+
+          class PrayerAlarmReceiver : BroadcastReceiver() {
+              override fun onReceive(context: Context, intent: Intent) {
+                  val prayer = intent.getStringExtra("prayer") ?: "Salah"
+                  showPrayerNotification(context, prayer)
+              }
+              companion object {
+                  fun showPrayerNotification(context: Context, prayer: String) {
+                      val mgr = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+                      val chId = "noor_prayer_alerts"
+                      if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                          val ch = NotificationChannel(chId, "Prayer Time Alerts", NotificationManager.IMPORTANCE_HIGH)
+                          mgr.createNotificationChannel(ch)
+                      }
+                      val notif = NotificationCompat.Builder(context, chId)
+                          .setSmallIcon(android.R.drawable.ic_lock_idle_alarm)
+                          .setContentTitle("Time for \$prayer Prayer")
+                          .setContentText("It is time for \$prayer. May Allah accept your prayers.")
+                          .setPriority(NotificationCompat.PRIORITY_HIGH)
+                          .setAutoCancel(true)
+                          .build()
+                      mgr.notify(prayer.hashCode(), notif)
+                  }
+              }
+          }
+          EOF
+
           cat << EOF > "$PKG_DIR/MainActivity.kt"
           package $PKG_NAME
+          import android.app.AlarmManager
+          import android.app.PendingIntent
           import android.appwidget.AppWidgetManager
           import android.content.ComponentName
           import android.content.Context
+          import android.content.Intent
+          import android.os.Build
           import android.os.SystemClock
+          import android.util.TypedValue
           import android.widget.RemoteViews
           import io.flutter.embedding.android.FlutterActivity
           import io.flutter.embedding.engine.FlutterEngine
           import io.flutter.plugin.common.MethodChannel
+          import java.util.Calendar
 
           class MainActivity: FlutterActivity() {
               override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
                   super.configureFlutterEngine(flutterEngine)
+                  if (Build.VERSION.SDK_INT >= 33) {
+                      requestPermissions(arrayOf("android.permission.POST_NOTIFICATIONS"), 101)
+                  }
                   MethodChannel(flutterEngine.dartExecutor.binaryMessenger, "com.noor/widgets").setMethodCallHandler { call, result ->
-                      if (call.method == "refreshWidgets") {
-                          pushWidgetsDirectly(applicationContext)
-                          result.success(true)
-                      } else result.notImplemented()
+                      when (call.method) {
+                          "refreshWidgets" -> {
+                              pushWidgetsDirectly(applicationContext)
+                              result.success(true)
+                          }
+                          "testNotification" -> {
+                              val p = call.argument<String>("prayer") ?: "Fajr"
+                              PrayerAlarmReceiver.showPrayerNotification(applicationContext, p)
+                              result.success(true)
+                          }
+                          "scheduleAlarms" -> {
+                              val map = call.arguments as? Map<String, String>
+                              if (map != null) scheduleDailyAlarms(applicationContext, map)
+                              result.success(true)
+                          }
+                          else -> result.notImplemented()
+                      }
                   }
               }
               override fun onResume() {
                   super.onResume()
                   pushWidgetsDirectly(applicationContext)
               }
+              private fun scheduleDailyAlarms(context: Context, times: Map<String, String>) {
+                  val am = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
+                  var reqCode = 200
+                  for ((prayer, timeStr) in times) {
+                      val parts = timeStr.split(" ")[0].split(":")
+                      if (parts.size >= 2) {
+                          val h = parts[0].toIntOrNull() ?: continue
+                          val m = parts[1].toIntOrNull() ?: continue
+                          val cal = Calendar.getInstance().apply {
+                              set(Calendar.HOUR_OF_DAY, h)
+                              set(Calendar.MINUTE, m)
+                              set(Calendar.SECOND, 0)
+                              if (before(Calendar.getInstance())) add(Calendar.DAY_OF_YEAR, 1)
+                          }
+                          val intent = Intent(context, PrayerAlarmReceiver::class.java).apply { putExtra("prayer", prayer) }
+                          val pi = PendingIntent.getBroadcast(context, reqCode++, intent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
+                          try {
+                              am.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, cal.timeInMillis, pi)
+                          } catch (_: Exception) {
+                              am.set(AlarmManager.RTC_WAKEUP, cal.timeInMillis, pi)
+                          }
+                      }
+                  }
+              }
               companion object {
                   fun pushWidgetsDirectly(context: Context) {
                       val prefs = context.getSharedPreferences("FlutterSharedPreferences", Context.MODE_PRIVATE)
                       val mgr = AppWidgetManager.getInstance(context)
+                      val themeIdx = prefs.getLong("flutter.wid_theme", 0L).toInt()
+                      val ayahSize = prefs.getLong("flutter.wid_size", 22L).toFloat()
+                      val bgRes = when (themeIdx) {
+                          1 -> R.drawable.bg_wid_1
+                          2 -> R.drawable.bg_wid_2
+                          else -> R.drawable.bg_wid_0
+                      }
                       val qViews = RemoteViews(context.packageName, R.layout.widget_quran).apply {
+                          setInt(R.id.wq_root, "setBackgroundResource", bgRes)
                           setTextViewText(R.id.wq_ref, prefs.getString("flutter.wq_ref", "DAILY QURAN VERSE"))
                           setTextViewText(R.id.wq_arab, prefs.getString("flutter.wq_arab", "فَإِنَّ مَعَ الْعُسْرِ يُسْرًا"))
+                          setTextViewTextSize(R.id.wq_arab, TypedValue.COMPLEX_UNIT_SP, ayahSize)
                           setTextViewText(R.id.wq_hinglish, prefs.getString("flutter.wq_hing", "Indeed, with hardship comes ease."))
                       }
                       mgr.updateAppWidget(ComponentName(context, QuranWidget::class.java), qViews)
 
                       val remSec = prefs.getLong("flutter.wp_rem_sec", 3600L)
                       val pViews = RemoteViews(context.packageName, R.layout.widget_prayer).apply {
+                          setInt(R.id.wp_root, "setBackgroundResource", bgRes)
                           setTextViewText(R.id.wp_loc, prefs.getString("flutter.wp_loc", "NOOR"))
                           setTextViewText(R.id.wp_user, prefs.getString("flutter.wp_user", "LIVE"))
                           setTextViewText(R.id.wp_next_name, prefs.getString("flutter.wp_next_name", "Dhuhr"))
@@ -152,9 +271,7 @@ jobs:
           import android.appwidget.AppWidgetProvider
           import android.content.Context
           class QuranWidget : AppWidgetProvider() {
-              override fun onUpdate(context: Context, manager: AppWidgetManager, ids: IntArray) {
-                  MainActivity.pushWidgetsDirectly(context)
-              }
+              override fun onUpdate(context: Context, manager: AppWidgetManager, ids: IntArray) { MainActivity.pushWidgetsDirectly(context) }
           }
           EOF
 
@@ -164,16 +281,20 @@ jobs:
           import android.appwidget.AppWidgetProvider
           import android.content.Context
           class PrayerWidget : AppWidgetProvider() {
-              override fun onUpdate(context: Context, manager: AppWidgetManager, ids: IntArray) {
-                  MainActivity.pushWidgetsDirectly(context)
-              }
+              override fun onUpdate(context: Context, manager: AppWidgetManager, ids: IntArray) { MainActivity.pushWidgetsDirectly(context) }
           }
           EOF
 
-          sed -i '/<manifest/a <uses-permission android:name="android.permission.INTERNET"/>' android/app/src/main/AndroidManifest.xml
-          sed -i 's/<\/application>/<receiver android:name=".QuranWidget" android:label="Noor Verse Widget" android:exported="true"><intent-filter><action android:name="android.appwidget.action.APPWIDGET_UPDATE"\/><\/intent-filter><meta-data android:name="android.appwidget.provider" android:resource="@xml\/info_quran"\/><\/receiver><receiver android:name=".PrayerWidget" android:label="Noor Dual-Pane Prayer Widget" android:exported="true"><intent-filter><action android:name="android.appwidget.action.APPWIDGET_UPDATE"\/><\/intent-filter><meta-data android:name="android.appwidget.provider" android:resource="@xml\/info_prayer"\/><\/receiver><\/application>/g' android/app/src/main/AndroidManifest.xml
+          sed -i '/<manifest/a <uses-permission android:name="android.permission.INTERNET"/><uses-permission android:name="android.permission.POST_NOTIFICATIONS"/><uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM"/><uses-permission android:name="android.permission.USE_EXACT_ALARM"/>' android/app/src/main/AndroidManifest.xml
+          sed -i 's/<\/application>/<receiver android:name=".PrayerAlarmReceiver" android:exported="true"\/><receiver android:name=".QuranWidget" android:label="Noor Verse Widget" android:exported="true"><intent-filter><action android:name="android.appwidget.action.APPWIDGET_UPDATE"\/><\/intent-filter><meta-data android:name="android.appwidget.provider" android:resource="@xml\/info_quran"\/><\/receiver><receiver android:name=".PrayerWidget" android:label="Noor Dual-Pane Prayer Widget" android:exported="true"><intent-filter><action android:name="android.appwidget.action.APPWIDGET_UPDATE"\/><\/intent-filter><meta-data android:name="android.appwidget.provider" android:resource="@xml\/info_prayer"\/><\/receiver><\/application>/g' android/app/src/main/AndroidManifest.xml
 
           flutter pub add http shared_preferences audioplayers
+          cat << 'EOF' >> pubspec.yaml
+            fonts:
+              - family: QuranFont
+                fonts:
+                  - asset: assets/fonts/QuranFont.ttf
+          EOF
           flutter build apk --release
 
       - name: Upload Android APK
