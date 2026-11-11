@@ -1,4 +1,4 @@
-[ai_studio_code (36).txt](https://github.com/user-attachments/files/34687807/ai_studio_code.36.txt)
+
 # SIRAT (صِرَاط) — Architectural Islamic Companion
 
 **Sirat** is an ad-free, architectural Islamic super-app built with Flutter & Native Android Instruments. Designed as a *Sadaqah Jariyah* for the global Ummah.
