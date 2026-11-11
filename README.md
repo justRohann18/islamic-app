@@ -32,10 +32,10 @@
   </tr>
   <tr>
     <td><img src="1.jpg"/></td>
-    <td><img src="https://placehold.co/320x660/060D0B/2DD4BF.png?text=BARPAKA+%E2%80%A2+1448+AH%0A%0ANEXT+PRAYER%0ADhuhr+12:15+PM%0ARemaining+-02:14:30%0A%0A%E2%94%81%E2%94%81%E2%94%81%E2%94%81%E2%94%81%E2%94%81%E2%94%81%E2%94%81%0AFajr+JAMAAT+%E2%9C%93%0ADhuhr+ONTIME+%E2%9C%93%0AAsr+15:25%0AMaghrib+16:45%0AIsha+18:15%0A%0ADaily+Quranic+Verse%0ASurah+Ash-Sharh+94:5" width="210" alt="Dual-Pane Home"/></td>
-    <td><img src="https://placehold.co/320x660/091916/D6B36A.png?text=WIDGET+ATELIER%0A%0A%5B+Pine+%7C+Gold+%7C+Sapphire+%5D%0AAyah+Size:+22sp%0A%0A%E2%94%81%E2%94%81%E2%94%81%E2%94%81%E2%94%81%E2%94%81%E2%94%81%E2%94%81%0ADUAL-PANE+WIDGET%0ANext:+Dhuhr+12:15+PM%0AChronometer+-02:14:30%0A%0AVERSE+WIDGET%0ASurah+Ash-Sharh+94:5%0A%0A%5B+FORCE+SYNC+NOW+%5D" width="210" alt="Widget Studio"/></td>
-    <td><img src="https://placehold.co/320x660/060D0B/38BDF8.png?text=KITAB+%26+HADITH+VAULT%0A%0A%5B+Search+36,000%2B+Hadiths+%5D%0A%0A%E2%94%81%E2%94%81%E2%94%81%E2%94%81%E2%94%81%E2%94%81%E2%94%81%E2%94%81%0ASahih+al-Bukhari+(7589)%0ASahih+Muslim+(7563)%0ASunan+an-Nasai+(5765)%0ASunan+Abu+Dawud+(5274)%0AJami+at-Tirmidhi+(3998)%0ASunan+Ibn+Majah+(4343)%0AMuwatta+Malik+(1858)%0AAn-Nawawi+40+(42)" width="210" alt="Hadith Vault"/></td>
-    <td><img src="https://placehold.co/320x660/0E1A16/10B981.png?text=SPIRITUAL+STREAK%0A%0A%28+92%25+Consistency+%29%0A14+DAY+ACTIVE+STREAK%0A%0A%E2%94%81%E2%94%81%E2%94%81%E2%94%81%E2%94%81%E2%94%81%E2%94%81%E2%94%81%0A7-DAY+BAR+CHART%0AM+T+W+T+F+S+S%0A%0APRAYER+DISCIPLINE%0AFajr+95%25%0ADhuhr+100%25%0AAsr+90%25%0AMaghrib+100%25%0AIsha+88%25" width="210" alt="Streak Analytics"/></td>
+    <td><img src="2.jpg"/></td>
+    <td><img src="3.jpg"/></td>
+    <td><img src="4.jpg"/></td>
+    <td><img src="5.jpg"/></td>
   </tr>
 </table>
 
