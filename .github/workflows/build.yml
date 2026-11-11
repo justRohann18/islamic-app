@@ -18,195 +18,72 @@ jobs:
         with:
           channel: 'stable'
 
-      - name: Build Project with Identical Live-Sync Widgets
+      - name: Build Project with Live Chronometer Widgets
         run: |
           cp lib/main.dart /tmp/main.dart
           rm -rf lib pubspec.yaml
           flutter create . --project-name islamic_app --org com.noor
           cp /tmp/main.dart lib/main.dart
 
-          mkdir -p android/app/src/main/res/layout
-          mkdir -p android/app/src/main/res/xml
-          mkdir -p android/app/src/main/res/drawable
+          mkdir -p android/app/src/main/res/layout android/app/src/main/res/xml android/app/src/main/res/drawable
 
-          cat << 'EOF' > android/app/src/main/res/drawable/bg_noor_widget.xml
+          cat << 'EOF' > android/app/src/main/res/drawable/bg_cyber_widget.xml
           <?xml version="1.0" encoding="utf-8"?>
           <shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="rectangle">
-              <gradient android:startColor="#24170D" android:centerColor="#0E1A16" android:endColor="#080C0B" android:angle="135"/>
+              <gradient android:startColor="#0F2922" android:centerColor="#091512" android:endColor="#050807" android:angle="135"/>
               <corners android:radius="26dp"/>
-              <stroke android:width="1.8dp" android:color="#F59E0B"/>
+              <stroke android:width="2dp" android:color="#2DD4BF"/>
           </shape>
           EOF
 
-          cat << 'EOF' > android/app/src/main/res/drawable/bg_noor_inner.xml
+          cat << 'EOF' > android/app/src/main/res/drawable/bg_cyber_pill.xml
           <?xml version="1.0" encoding="utf-8"?>
           <shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="rectangle">
-              <solid android:color="#15221E"/>
-              <corners android:radius="16dp"/>
-              <stroke android:width="1dp" android:color="#2DD4BF"/>
+              <solid android:color="#132A24"/>
+              <corners android:radius="14dp"/>
+              <stroke android:width="1dp" android:color="#F59E0B"/>
           </shape>
           EOF
 
           cat << 'EOF' > android/app/src/main/res/layout/widget_prayer.xml
           <?xml version="1.0" encoding="utf-8"?>
           <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-              android:layout_width="match_parent"
-              android:layout_height="match_parent"
-              android:orientation="vertical"
-              android:padding="16dp"
-              android:gravity="center_vertical"
-              android:background="@drawable/bg_noor_widget">
-
-              <LinearLayout
-                  android:layout_width="match_parent"
-                  android:layout_height="wrap_content"
-                  android:orientation="horizontal"
-                  android:gravity="center_vertical">
-                  <TextView
-                      android:id="@+id/wp_loc"
-                      android:layout_width="0dp"
-                      android:layout_height="wrap_content"
-                      android:layout_weight="1"
-                      android:text="🕌 NOOR • BARPAKA"
-                      android:textColor="#F59E0B"
-                      android:textSize="11sp"
-                      android:textStyle="bold" />
-                  <TextView
-                      android:id="@+id/wp_suhur_iftar"
-                      android:layout_width="wrap_content"
-                      android:layout_height="wrap_content"
-                      android:background="@drawable/bg_noor_inner"
-                      android:paddingLeft="8dp"
-                      android:paddingRight="8dp"
-                      android:paddingTop="3dp"
-                      android:paddingBottom="3dp"
-                      android:text="🌙 SUHUR &amp; IFTAR LIVE"
-                      android:textColor="#2DD4BF"
-                      android:textSize="9sp"
-                      android:textStyle="bold" />
+              android:layout_width="match_parent" android:layout_height="match_parent"
+              android:orientation="vertical" android:padding="14dp"
+              android:gravity="center_vertical" android:background="@drawable/bg_cyber_widget">
+              <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:gravity="center_vertical">
+                  <TextView android:id="@+id/wp_loc" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="⚡ NOOR LIVE" android:textColor="#2DD4BF" android:textSize="11sp" android:textStyle="bold" />
+                  <Chronometer android:id="@+id/wp_chrono" android:layout_width="wrap_content" android:layout_height="wrap_content" android:background="@drawable/bg_cyber_pill" android:paddingLeft="10dp" android:paddingRight="10dp" android:paddingTop="3dp" android:paddingBottom="3dp" android:countDown="true" android:textColor="#F59E0B" android:textSize="12sp" android:textStyle="bold" />
               </LinearLayout>
-
-              <LinearLayout
-                  android:layout_width="match_parent"
-                  android:layout_height="wrap_content"
-                  android:layout_marginTop="8dp"
-                  android:orientation="horizontal"
-                  android:gravity="bottom">
-                  <LinearLayout
-                      android:layout_width="0dp"
-                      android:layout_height="wrap_content"
-                      android:layout_weight="1"
-                      android:orientation="vertical">
-                      <TextView
-                          android:layout_width="wrap_content"
-                          android:layout_height="wrap_content"
-                          android:text="UPCOMING SALAH"
-                          android:textColor="#8E9E99"
-                          android:textSize="9sp"
-                          android:textStyle="bold" />
-                      <TextView
-                          android:id="@+id/wp_next_name"
-                          android:layout_width="wrap_content"
-                          android:layout_height="wrap_content"
-                          android:text="Dhuhr"
-                          android:textColor="#FFFFFF"
-                          android:textSize="26sp"
-                          android:textStyle="bold" />
-                  </LinearLayout>
-                  <TextView
-                      android:id="@+id/wp_next"
-                      android:layout_width="wrap_content"
-                      android:layout_height="wrap_content"
-                      android:fontFamily="serif"
-                      android:text="12:15 PM"
-                      android:textColor="#F59E0B"
-                      android:textSize="24sp"
-                      android:textStyle="bold" />
+              <TextView android:id="@+id/wp_user" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="6dp" android:text="SALAH RADAR • MUMIN" android:textColor="#8E9E99" android:textSize="9sp" android:textStyle="bold" />
+              <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:gravity="bottom">
+                  <TextView android:id="@+id/wp_next_name" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="Dhuhr" android:textColor="#FFFFFF" android:textSize="24sp" android:textStyle="bold" />
+                  <TextView android:id="@+id/wp_next" android:layout_width="wrap_content" android:layout_height="wrap_content" android:fontFamily="serif" android:text="12:15 PM" android:textColor="#2DD4BF" android:textSize="22sp" android:textStyle="bold" />
               </LinearLayout>
-
-              <TextView
-                  android:id="@+id/wp_strip"
-                  android:layout_width="match_parent"
-                  android:layout_height="wrap_content"
-                  android:layout_marginTop="10dp"
-                  android:background="@drawable/bg_noor_inner"
-                  android:padding="9dp"
-                  android:gravity="center"
-                  android:text="Fajr 04:15  •  Dhuhr 12:15  •  Asr 03:25  •  Mag 04:45  •  Isha 06:15"
-                  android:textColor="#FFFFFF"
-                  android:textSize="10.5sp"
-                  android:textStyle="bold" />
+              <TextView android:id="@+id/wp_strip" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="8dp" android:background="@drawable/bg_cyber_pill" android:padding="7dp" android:gravity="center" android:text="Fajr 04:15 • Dhuhr 12:15 • Asr 03:25 • Mag 04:45 • Isha 06:15" android:textColor="#FFFFFF" android:textSize="10sp" android:textStyle="bold" />
           </LinearLayout>
           EOF
 
           cat << 'EOF' > android/app/src/main/res/layout/widget_quran.xml
           <?xml version="1.0" encoding="utf-8"?>
           <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-              android:layout_width="match_parent"
-              android:layout_height="match_parent"
-              android:orientation="vertical"
-              android:padding="16dp"
-              android:gravity="center"
-              android:background="@drawable/bg_noor_widget">
-              <TextView
-                  android:id="@+id/wq_ref"
-                  android:layout_width="wrap_content"
-                  android:layout_height="wrap_content"
-                  android:background="@drawable/bg_noor_inner"
-                  android:paddingLeft="10dp"
-                  android:paddingRight="10dp"
-                  android:paddingTop="3dp"
-                  android:paddingBottom="3dp"
-                  android:text="✨ LIVE AYAH OF THE DAY"
-                  android:textColor="#F59E0B"
-                  android:textSize="10sp"
-                  android:textStyle="bold" />
-              <TextView
-                  android:id="@+id/wq_arab"
-                  android:layout_width="match_parent"
-                  android:layout_height="wrap_content"
-                  android:layout_marginTop="8dp"
-                  android:gravity="center"
-                  android:text="فَإِنَّ مَعَ الْعُسْرِ يُسْرًا"
-                  android:textColor="#FFFFFF"
-                  android:textSize="22sp"
-                  android:textStyle="bold" />
-              <TextView
-                  android:id="@+id/wq_hinglish"
-                  android:layout_width="match_parent"
-                  android:layout_height="wrap_content"
-                  android:layout_marginTop="8dp"
-                  android:background="@drawable/bg_noor_inner"
-                  android:padding="8dp"
-                  android:gravity="center"
-                  android:fontFamily="serif"
-                  android:text="Indeed, with hardship comes ease."
-                  android:textColor="#2DD4BF"
-                  android:textSize="12sp"
-                  android:textStyle="italic" />
+              android:layout_width="match_parent" android:layout_height="match_parent"
+              android:orientation="vertical" android:padding="14dp"
+              android:gravity="center" android:background="@drawable/bg_cyber_widget">
+              <TextView android:id="@+id/wq_ref" android:layout_width="wrap_content" android:layout_height="wrap_content" android:background="@drawable/bg_cyber_pill" android:paddingLeft="10dp" android:paddingRight="10dp" android:paddingTop="3dp" android:paddingBottom="3dp" android:text="✨ LIVE AYAH STREAM" android:textColor="#F59E0B" android:textSize="10sp" android:textStyle="bold" />
+              <TextView android:id="@+id/wq_arab" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="8dp" android:gravity="center" android:text="فَإِنَّ مَعَ الْعُسْرِ يُسْرًا" android:textColor="#FFFFFF" android:textSize="21sp" android:textStyle="bold" />
+              <TextView android:id="@+id/wq_hinglish" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="8dp" android:background="@drawable/bg_cyber_pill" android:padding="7dp" android:gravity="center" android:fontFamily="serif" android:text="Indeed, with hardship comes ease." android:textColor="#2DD4BF" android:textSize="11.5sp" android:textStyle="italic" />
           </LinearLayout>
           EOF
 
           cat << 'EOF' > android/app/src/main/res/xml/info_quran.xml
           <?xml version="1.0" encoding="utf-8"?>
-          <appwidget-provider xmlns:android="http://schemas.android.com/apk/res/android"
-              android:minWidth="280dp"
-              android:minHeight="110dp"
-              android:updatePeriodMillis="1800000"
-              android:initialLayout="@layout/widget_quran"
-              android:resizeMode="horizontal|vertical"
-              android:widgetCategory="home_screen" />
+          <appwidget-provider xmlns:android="http://schemas.android.com/apk/res/android" android:minWidth="280dp" android:minHeight="110dp" android:updatePeriodMillis="1800000" android:initialLayout="@layout/widget_quran" android:resizeMode="horizontal|vertical" android:widgetCategory="home_screen" />
           EOF
 
           cat << 'EOF' > android/app/src/main/res/xml/info_prayer.xml
           <?xml version="1.0" encoding="utf-8"?>
-          <appwidget-provider xmlns:android="http://schemas.android.com/apk/res/android"
-              android:minWidth="280dp"
-              android:minHeight="120dp"
-              android:updatePeriodMillis="1800000"
-              android:initialLayout="@layout/widget_prayer"
-              android:resizeMode="horizontal|vertical"
-              android:widgetCategory="home_screen" />
+          <appwidget-provider xmlns:android="http://schemas.android.com/apk/res/android" android:minWidth="280dp" android:minHeight="120dp" android:updatePeriodMillis="1800000" android:initialLayout="@layout/widget_prayer" android:resizeMode="horizontal|vertical" android:widgetCategory="home_screen" />
           EOF
 
           PKG_DIR=$(find android/app/src/main/kotlin -type d | tail -n 1)
@@ -229,20 +106,10 @@ jobs:
                           val mgr = AppWidgetManager.getInstance(applicationContext)
                           val qIds = mgr.getAppWidgetIds(ComponentName(applicationContext, QuranWidget::class.java))
                           val pIds = mgr.getAppWidgetIds(ComponentName(applicationContext, PrayerWidget::class.java))
-                          val qi = Intent(applicationContext, QuranWidget::class.java).apply {
-                              action = AppWidgetManager.ACTION_APPWIDGET_UPDATE
-                              putExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS, qIds)
-                          }
-                          val pi = Intent(applicationContext, PrayerWidget::class.java).apply {
-                              action = AppWidgetManager.ACTION_APPWIDGET_UPDATE
-                              putExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS, pIds)
-                          }
-                          applicationContext.sendBroadcast(qi)
-                          applicationContext.sendBroadcast(pi)
+                          applicationContext.sendBroadcast(Intent(applicationContext, QuranWidget::class.java).apply { action = AppWidgetManager.ACTION_APPWIDGET_UPDATE; putExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS, qIds) })
+                          applicationContext.sendBroadcast(Intent(applicationContext, PrayerWidget::class.java).apply { action = AppWidgetManager.ACTION_APPWIDGET_UPDATE; putExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS, pIds) })
                           result.success(true)
-                      } else {
-                          result.notImplemented()
-                      }
+                      } else result.notImplemented()
                   }
               }
           }
@@ -258,14 +125,11 @@ jobs:
           class QuranWidget : AppWidgetProvider() {
               override fun onUpdate(context: Context, manager: AppWidgetManager, ids: IntArray) {
                   val prefs = context.getSharedPreferences("FlutterSharedPreferences", Context.MODE_PRIVATE)
-                  val ref = prefs.getString("flutter.wq_ref", "✨ LIVE AYAH OF THE DAY")
-                  val arab = prefs.getString("flutter.wq_arab", "فَإِنَّ مَعَ الْعُسْرِ يُسْرًا")
-                  val hing = prefs.getString("flutter.wq_hing", "Indeed, with hardship comes ease.")
                   for (id in ids) {
                       val v = RemoteViews(context.packageName, R.layout.widget_quran)
-                      v.setTextViewText(R.id.wq_ref, ref)
-                      v.setTextViewText(R.id.wq_arab, arab)
-                      v.setTextViewText(R.id.wq_hinglish, hing)
+                      v.setTextViewText(R.id.wq_ref, prefs.getString("flutter.wq_ref", "✨ LIVE AYAH STREAM"))
+                      v.setTextViewText(R.id.wq_arab, prefs.getString("flutter.wq_arab", "فَإِنَّ مَعَ الْعُسْرِ يُسْرًا"))
+                      v.setTextViewText(R.id.wq_hinglish, prefs.getString("flutter.wq_hing", "Indeed, with hardship comes ease."))
                       manager.updateAppWidget(id, v)
                   }
               }
@@ -277,21 +141,21 @@ jobs:
           import android.appwidget.AppWidgetManager
           import android.appwidget.AppWidgetProvider
           import android.content.Context
+          import android.os.SystemClock
           import android.widget.RemoteViews
 
           class PrayerWidget : AppWidgetProvider() {
               override fun onUpdate(context: Context, manager: AppWidgetManager, ids: IntArray) {
                   val prefs = context.getSharedPreferences("FlutterSharedPreferences", Context.MODE_PRIVATE)
-                  val loc = prefs.getString("flutter.wp_loc", "🕌 NOOR • BARPAKA")
-                  val nextName = prefs.getString("flutter.wp_next_name", "Dhuhr")
-                  val nextTime = prefs.getString("flutter.wp_next", "12:15 PM")
-                  val strip = prefs.getString("flutter.wp_strip", "Fajr 04:15 • Dhuhr 12:15 • Asr 03:25 • Mag 04:45 • Isha 06:15")
+                  val remSec = prefs.getLong("flutter.wp_rem_sec", 3600L)
                   for (id in ids) {
                       val v = RemoteViews(context.packageName, R.layout.widget_prayer)
-                      v.setTextViewText(R.id.wp_loc, loc)
-                      v.setTextViewText(R.id.wp_next_name, nextName)
-                      v.setTextViewText(R.id.wp_next, nextTime)
-                      v.setTextViewText(R.id.wp_strip, strip)
+                      v.setTextViewText(R.id.wp_loc, prefs.getString("flutter.wp_loc", "⚡ NOOR LIVE"))
+                      v.setTextViewText(R.id.wp_user, prefs.getString("flutter.wp_user", "SALAH RADAR • MUMIN"))
+                      v.setTextViewText(R.id.wp_next_name, prefs.getString("flutter.wp_next_name", "Dhuhr"))
+                      v.setTextViewText(R.id.wp_next, prefs.getString("flutter.wp_next", "12:15 PM"))
+                      v.setTextViewText(R.id.wp_strip, prefs.getString("flutter.wp_strip", "Fajr 04:15 • Dhuhr 12:15 • Asr 03:25 • Mag 04:45 • Isha 06:15"))
+                      v.setChronometer(R.id.wp_chrono, SystemClock.elapsedRealtime() + (remSec * 1000L), null, true)
                       manager.updateAppWidget(id, v)
                   }
               }
@@ -299,7 +163,7 @@ jobs:
           EOF
 
           sed -i '/<manifest/a <uses-permission android:name="android.permission.INTERNET"/>' android/app/src/main/AndroidManifest.xml
-          sed -i 's/<\/application>/<receiver android:name=".QuranWidget" android:label="Noor Live Verse Widget" android:exported="true"><intent-filter><action android:name="android.appwidget.action.APPWIDGET_UPDATE"\/><\/intent-filter><meta-data android:name="android.appwidget.provider" android:resource="@xml\/info_quran"\/><\/receiver><receiver android:name=".PrayerWidget" android:label="Noor Salah Pass Widget" android:exported="true"><intent-filter><action android:name="android.appwidget.action.APPWIDGET_UPDATE"\/><\/intent-filter><meta-data android:name="android.appwidget.provider" android:resource="@xml\/info_prayer"\/><\/receiver><\/application>/g' android/app/src/main/AndroidManifest.xml
+          sed -i 's/<\/application>/<receiver android:name=".QuranWidget" android:label="Noor Live Verse Widget" android:exported="true"><intent-filter><action android:name="android.appwidget.action.APPWIDGET_UPDATE"\/><\/intent-filter><meta-data android:name="android.appwidget.provider" android:resource="@xml\/info_quran"\/><\/receiver><receiver android:name=".PrayerWidget" android:label="Noor Live Countdown Widget" android:exported="true"><intent-filter><action android:name="android.appwidget.action.APPWIDGET_UPDATE"\/><\/intent-filter><meta-data android:name="android.appwidget.provider" android:resource="@xml\/info_prayer"\/><\/receiver><\/application>/g' android/app/src/main/AndroidManifest.xml
 
           flutter pub add http shared_preferences audioplayers
           flutter build apk --release
