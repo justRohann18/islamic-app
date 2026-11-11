@@ -19,11 +19,30 @@ int accentIndex = 0;
 String appLang = 'en';
 bool use12Hour = true;
 
-// ---------------- LIVE ADMIN REMOTE CONFIG STATE ----------------
-String adminCloudUrl = ''; // Optional: Paste your GitHub Raw admin_config.json URL in Admin Panel!
+// ---------------- MASTER ADMIN REMOTE CONTROL STATE ----------------
+String adminPinCode = '7860';
+String adminCloudUrl = '';
+
+// 1. Top Announcement Banner
 bool adminShowBanner = true;
-String adminBannerTitle = '🌙 Noor Official Update';
-String adminBannerMsg = 'Welcome to Noor Pro! Track your daily Salah & read Live Quran.';
+String adminBannerTitle = '🌙 Noor Official Reminder';
+String adminBannerMsg = 'Recite Surah Al-Mulk before sleeping & track your 5 daily prayers!';
+
+// 2. Live Broadcast Popup Alert
+bool adminShowPopup = false;
+String adminPopupTitle = '✨ Special Islamic Broadcast';
+String adminPopupBody = 'Assalamu Alaikum! May Allah accept your prayers and good deeds today.';
+
+// 3. OTA App Update Pusher
+bool adminUpdateAvailable = false;
+String adminLatestVer = 'v10.0 Pro';
+String adminUpdateUrl = 'https://github.com/';
+
+// 4. Custom Ayah & Dua Overrides
+bool adminForceCustomAyah = false;
+bool adminForceCustomDua = false;
+
+// 5. App & Developer Branding
 String adminAppInsta = '@noor.islamic.app';
 String adminAppFb = 'fb.com/NoorIslamicApp';
 String adminDevName = 'Lead Creator & Developer';
@@ -31,7 +50,6 @@ String adminDevBio = 'Passionate about building modern, ad-free, and authentic I
 String adminDevImage = '';
 String adminDevInsta = '@developer.noor';
 String adminDevFb = 'fb.com/developer.noor';
-bool adminForceCustomAyah = false;
 
 final List<Map<String, dynamic>> kAccentPalettes = [
   {'name': 'Amber Gold', 'primary': const Color(0xFFF59E0B), 'sec': const Color(0xFF2DD4BF)},
@@ -85,18 +103,22 @@ String tr(String en, String hi, String ur, String ro) {
 }
 
 Future<void> triggerNativeWidgetBroadcast() async {
-  try {
-    await _widgetChannel.invokeMethod('refreshWidgets');
-  } catch (_) {}
+  try { await _widgetChannel.invokeMethod('refreshWidgets'); } catch (_) {}
 }
 
-// Load Local + Cloud Admin Settings
 Future<void> syncAdminRemoteConfig() async {
   final p = await SharedPreferences.getInstance();
+  adminPinCode = p.getString('adm_pin') ?? '7860';
   adminCloudUrl = p.getString('adm_url') ?? '';
   adminShowBanner = p.getBool('adm_show_ban') ?? true;
   adminBannerTitle = p.getString('adm_ban_t') ?? adminBannerTitle;
   adminBannerMsg = p.getString('adm_ban_m') ?? adminBannerMsg;
+  adminShowPopup = p.getBool('adm_show_pop') ?? false;
+  adminPopupTitle = p.getString('adm_pop_t') ?? adminPopupTitle;
+  adminPopupBody = p.getString('adm_pop_b') ?? adminPopupBody;
+  adminUpdateAvailable = p.getBool('adm_upd_on') ?? false;
+  adminLatestVer = p.getString('adm_upd_v') ?? adminLatestVer;
+  adminUpdateUrl = p.getString('adm_upd_u') ?? adminUpdateUrl;
   adminAppInsta = p.getString('adm_app_ig') ?? adminAppInsta;
   adminAppFb = p.getString('adm_app_fb') ?? adminAppFb;
   adminDevName = p.getString('adm_dev_n') ?? adminDevName;
@@ -105,6 +127,7 @@ Future<void> syncAdminRemoteConfig() async {
   adminDevInsta = p.getString('adm_dev_ig') ?? adminDevInsta;
   adminDevFb = p.getString('adm_dev_fb') ?? adminDevFb;
   adminForceCustomAyah = p.getBool('adm_force_ayah') ?? false;
+  adminForceCustomDua = p.getBool('adm_force_dua') ?? false;
 
   if (adminCloudUrl.trim().startsWith('http')) {
     try {
@@ -114,6 +137,12 @@ Future<void> syncAdminRemoteConfig() async {
         adminShowBanner = d['show_banner'] ?? adminShowBanner;
         adminBannerTitle = d['banner_title'] ?? adminBannerTitle;
         adminBannerMsg = d['banner_message'] ?? adminBannerMsg;
+        adminShowPopup = d['show_popup'] ?? adminShowPopup;
+        adminPopupTitle = d['popup_title'] ?? adminPopupTitle;
+        adminPopupBody = d['popup_body'] ?? adminPopupBody;
+        adminUpdateAvailable = d['update_available'] ?? adminUpdateAvailable;
+        adminLatestVer = d['latest_version'] ?? adminLatestVer;
+        adminUpdateUrl = d['update_url'] ?? adminUpdateUrl;
         adminAppInsta = d['app_insta'] ?? adminAppInsta;
         adminAppFb = d['app_fb'] ?? adminAppFb;
         adminDevName = d['dev_name'] ?? adminDevName;
@@ -122,10 +151,16 @@ Future<void> syncAdminRemoteConfig() async {
         adminDevInsta = d['dev_insta'] ?? adminDevInsta;
         adminDevFb = d['dev_fb'] ?? adminDevFb;
         adminForceCustomAyah = d['force_custom_ayah'] ?? false;
+        adminForceCustomDua = d['force_custom_dua'] ?? false;
         if (adminForceCustomAyah) {
           liveAyahRef = d['custom_ayah_ref'] ?? liveAyahRef;
           liveAyahArab = d['custom_ayah_arab'] ?? liveAyahArab;
-          liveAyahTrans = '"${d['custom_ayah_trans'] ?? liveAyahTrans}"';
+          liveAyahTrans = d['custom_ayah_trans'] ?? liveAyahTrans;
+        }
+        if (adminForceCustomDua) {
+          liveDuaRef = d['custom_dua_ref'] ?? liveDuaRef;
+          liveDuaArab = d['custom_dua_arab'] ?? liveDuaArab;
+          liveDuaTrans = d['custom_dua_trans'] ?? liveDuaTrans;
         }
       }
     } catch (_) {}
@@ -135,42 +170,46 @@ Future<void> syncAdminRemoteConfig() async {
 Future<void> fetchLiveDailyAyahAndDua({bool forceRandom = false}) async {
   try {
     await syncAdminRemoteConfig();
+    final p = await SharedPreferences.getInstance();
+    final now = DateTime.now();
+    int dayOfYear = now.difference(DateTime(now.year, 1, 1)).inDays + 1;
+    String ed = appLang == 'hi' ? 'hi.hindi' : (appLang == 'ur' ? 'ur.jalandhry' : 'en.asad');
+
     if (adminForceCustomAyah && !forceRandom) {
-      final p = await SharedPreferences.getInstance();
       liveAyahRef = p.getString('adm_ayah_ref') ?? liveAyahRef;
       liveAyahArab = p.getString('adm_ayah_ar') ?? liveAyahArab;
       liveAyahTrans = p.getString('adm_ayah_tr') ?? liveAyahTrans;
-      return;
+    } else {
+      int ayahNum = forceRandom ? (math.Random().nextInt(6200) + 10) : ((dayOfYear * 37 + now.year) % 6220) + 7;
+      final r = await http.get(Uri.parse('https://api.alquran.cloud/v1/ayah/$ayahNum/editions/ar.alafasy,$ed'));
+      if (r.statusCode == 200) {
+        final d = json.decode(r.body)['data'];
+        liveAyahArab = d[0]['text'];
+        liveAyahAudio = d[0]['audio'] ?? liveAyahAudio;
+        liveAyahTrans = '"${d[1]['text']}"';
+        liveAyahRef = '${d[0]['surah']['englishName']} • ${d[0]['surah']['number']}:${d[0]['numberInSurah']}';
+      }
     }
 
-    final now = DateTime.now();
-    int dayOfYear = now.difference(DateTime(now.year, 1, 1)).inDays + 1;
-    int ayahNum = forceRandom ? (math.Random().nextInt(6200) + 10) : ((dayOfYear * 37 + now.year) % 6220) + 7;
-    String ed = appLang == 'hi' ? 'hi.hindi' : (appLang == 'ur' ? 'ur.jalandhry' : 'en.asad');
-
-    final r = await http.get(Uri.parse('https://api.alquran.cloud/v1/ayah/$ayahNum/editions/ar.alafasy,$ed'));
-    if (r.statusCode == 200) {
-      final d = json.decode(r.body)['data'];
-      liveAyahArab = d[0]['text'];
-      liveAyahAudio = d[0]['audio'] ?? liveAyahAudio;
-      liveAyahTrans = '"${d[1]['text']}"';
-      liveAyahRef = '${d[0]['surah']['englishName']} • ${d[0]['surah']['number']}:${d[0]['numberInSurah']}';
+    if (adminForceCustomDua && !forceRandom) {
+      liveDuaRef = p.getString('adm_dua_ref') ?? liveDuaRef;
+      liveDuaArab = p.getString('adm_dua_ar') ?? liveDuaArab;
+      liveDuaTrans = p.getString('adm_dua_tr') ?? liveDuaTrans;
+    } else {
+      const duaAyahNumbers = [208, 293, 301, 1750, 2373, 2935, 3189, 4153, 5150];
+      int duaAyah = duaAyahNumbers[(forceRandom ? math.Random().nextInt(9) : dayOfYear) % duaAyahNumbers.length];
+      final dr = await http.get(Uri.parse('https://api.alquran.cloud/v1/ayah/$duaAyah/editions/ar.alafasy,$ed'));
+      if (dr.statusCode == 200) {
+        final dd = json.decode(dr.body)['data'];
+        liveDuaArab = dd[0]['text'];
+        liveDuaTrans = '"${dd[1]['text']}"';
+        liveDuaRef = 'Daily Dua • ${dd[0]['surah']['englishName']} ${dd[0]['surah']['number']}:${dd[0]['numberInSurah']}';
+      }
     }
 
-    const duaAyahNumbers = [208, 293, 301, 1750, 2373, 2935, 3189, 4153, 5150];
-    int duaAyah = duaAyahNumbers[(forceRandom ? math.Random().nextInt(9) : dayOfYear) % duaAyahNumbers.length];
-    final dr = await http.get(Uri.parse('https://api.alquran.cloud/v1/ayah/$duaAyah/editions/ar.alafasy,$ed'));
-    if (dr.statusCode == 200) {
-      final dd = json.decode(dr.body)['data'];
-      liveDuaArab = dd[0]['text'];
-      liveDuaTrans = '"${dd[1]['text']}"';
-      liveDuaRef = 'Daily Dua • ${dd[0]['surah']['englishName']} ${dd[0]['surah']['number']}:${dd[0]['numberInSurah']}';
-    }
-
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString('wq_ref', '✨ $liveAyahRef');
-    await prefs.setString('wq_arab', liveAyahArab);
-    await prefs.setString('wq_hing', liveAyahTrans);
+    await p.setString('wq_ref', '✨ $liveAyahRef');
+    await p.setString('wq_arab', liveAyahArab);
+    await p.setString('wq_hing', liveAyahTrans);
     await triggerNativeWidgetBroadcast();
   } catch (_) {}
 }
@@ -228,11 +267,34 @@ class MainShell extends StatefulWidget {
 class _MainShellState extends State<MainShell> {
   int idx = 0;
   int kitSub = 0;
+  bool popupShownSession = false;
 
   void _nav(int i, {int sub = 0}) => setState(() { idx = i; kitSub = sub; });
 
   @override
   Widget build(BuildContext context) {
+    if (adminShowPopup && !popupShownSession) {
+      popupShownSession = true;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        showDialog(
+          context: context,
+          builder: (ctx) => AlertDialog(
+            backgroundColor: kCard,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22), side: BorderSide(color: kPrimary, width: 1.5)),
+            title: Text(adminPopupTitle, style: TextStyle(color: kPrimary, fontWeight: FontWeight.w900)),
+            content: Text(adminPopupBody, style: TextStyle(color: kText, height: 1.4)),
+            actions: [
+              ElevatedButton(
+                style: ElevatedButton.styleFrom(backgroundColor: kPrimary),
+                onPressed: () => Navigator.pop(ctx),
+                child: const Text('JazakAllah Khair', style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
+              ),
+            ],
+          ),
+        );
+      });
+    }
+
     final pages = [
       InteractiveHomeScreen(onNav: _nav, onRebuild: widget.onAppRebuild),
       UniqueWidgetStudioScreen(onRebuild: widget.onAppRebuild),
@@ -274,17 +336,11 @@ class _MainShellState extends State<MainShell> {
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
         padding: EdgeInsets.symmetric(horizontal: sel ? 13 : 9, vertical: 9),
-        decoration: BoxDecoration(
-          color: sel ? kPrimary : Colors.transparent,
-          borderRadius: BorderRadius.circular(20),
-        ),
+        decoration: BoxDecoration(color: sel ? kPrimary : Colors.transparent, borderRadius: BorderRadius.circular(20)),
         child: Row(
           children: [
             Icon(ic, size: 19, color: sel ? Colors.black : kMuted),
-            if (sel) ...[
-              const SizedBox(width: 5),
-              Text(label, style: const TextStyle(color: Colors.black, fontSize: 11.5, fontWeight: FontWeight.w900)),
-            ],
+            if (sel) ...[const SizedBox(width: 5), Text(label, style: const TextStyle(color: Colors.black, fontSize: 11.5, fontWeight: FontWeight.w900))],
           ],
         ),
       ),
@@ -309,6 +365,8 @@ class MihrabArchPainter extends CustomPainter {
   @override
   bool shouldRepaint(covariant CustomPainter oldDelegate) => true;
 }
+
+
 
 
 
@@ -480,6 +538,44 @@ class _InteractiveHomeScreenState extends State<InteractiveHomeScreen> {
       child: ListView(
         padding: const EdgeInsets.fromLTRB(18, 12, 18, 100),
         children: [
+          // ADMIN LIVE UPDATE BANNER (IF ENABLED IN ADMIN PANEL)
+          if (adminUpdateAvailable)
+            Container(
+              margin: const EdgeInsets.only(bottom: 12),
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+              decoration: BoxDecoration(color: kSecondary.withOpacity(0.18), borderRadius: BorderRadius.circular(16), border: Border.all(color: kSecondary)),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Expanded(child: Text('🚀 New Update ($adminLatestVer) is Live!', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 12.5, color: kText))),
+                  ElevatedButton(
+                    style: ElevatedButton.styleFrom(backgroundColor: kSecondary, padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4)),
+                    onPressed: () {
+                      Clipboard.setData(ClipboardData(text: adminUpdateUrl));
+                      ScaffoldMessenger.of(context).showSnackBar(SnackBar(backgroundColor: kSecondary, content: Text('Copied Update Link: $adminUpdateUrl', style: const TextStyle(color: Colors.black, fontWeight: FontWeight.bold))));
+                    },
+                    child: const Text('Copy APK Link', style: TextStyle(color: Colors.black, fontSize: 11, fontWeight: FontWeight.bold)),
+                  ),
+                ],
+              ),
+            ),
+
+          // ADMIN LIVE ANNOUNCEMENT BANNER
+          if (adminShowBanner)
+            Container(
+              margin: const EdgeInsets.only(bottom: 14),
+              padding: const EdgeInsets.all(14),
+              decoration: BoxDecoration(color: kPrimary.withOpacity(0.14), borderRadius: BorderRadius.circular(18), border: Border.all(color: kPrimary.withOpacity(0.6))),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(adminBannerTitle, style: TextStyle(fontWeight: FontWeight.w900, fontSize: 13, color: kPrimary)),
+                  const SizedBox(height: 3),
+                  Text(adminBannerMsg, style: TextStyle(fontSize: 12, color: kText)),
+                ],
+              ),
+            ),
+
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
@@ -971,8 +1067,6 @@ class _UniqueWidgetStudioScreenState extends State<UniqueWidgetStudioScreen> {
 
 
 
-
-
 // ---------------- 3. UNIQUE STREAK, BADGES & CONSISTENCY TAB ----------------
 class UniqueStreakScreen extends StatefulWidget {
   const UniqueStreakScreen({super.key});
@@ -1028,20 +1122,6 @@ class _UniqueStreakScreenState extends State<UniqueStreakScreen> {
       child: ListView(
         padding: const EdgeInsets.fromLTRB(18, 14, 18, 100),
         children: [
-          if (adminShowBanner)
-            Container(
-              margin: const EdgeInsets.only(bottom: 14),
-              padding: const EdgeInsets.all(14),
-              decoration: BoxDecoration(color: kPrimary.withOpacity(0.15), borderRadius: BorderRadius.circular(18), border: Border.all(color: kPrimary)),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(adminBannerTitle, style: TextStyle(fontWeight: FontWeight.w900, fontSize: 13, color: kPrimary)),
-                  const SizedBox(height: 4),
-                  Text(adminBannerMsg, style: TextStyle(fontSize: 12, color: kText)),
-                ],
-              ),
-            ),
           Text('🔥 SPIRITUAL STREAK & MILESTONES', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w900, color: kPrimary, letterSpacing: 1.4)),
           const SizedBox(height: 4),
           Text('Your Daily Salah Journey', style: TextStyle(fontSize: 22, fontFamily: 'serif', fontWeight: FontWeight.bold, color: kText)),
@@ -1226,12 +1306,7 @@ class _KitabScreenState extends State<KitabScreen> {
             Container(
               padding: const EdgeInsets.all(4),
               decoration: BoxDecoration(color: kCard, borderRadius: BorderRadius.circular(16), border: Border.all(color: kBorder)),
-              child: Row(
-                children: [
-                  _segBtn('📖 AL-QURAN (114)', 0),
-                  _segBtn('📚 10 HADITH BOOKS', 1),
-                ],
-              ),
+              child: Row(children: [_segBtn('📖 AL-QURAN (114)', 0), _segBtn('📚 10 HADITH BOOKS', 1)]),
             ),
             const SizedBox(height: 14),
             Expanded(child: tab == 0 ? _buildQuranView(fS) : _buildHadithBooksGrid()),
@@ -1369,10 +1444,7 @@ class _HadithBookReaderPageState extends State<HadithBookReaderPage> {
   String search = '';
 
   @override
-  void initState() {
-    super.initState();
-    _loadChapter();
-  }
+  void initState() { super.initState(); _loadChapter(); }
 
   Future<void> _loadChapter() async {
     setState(() => loading = true);
@@ -1384,18 +1456,12 @@ class _HadithBookReaderPageState extends State<HadithBookReaderPage> {
       if (res[0].statusCode == 200 && mounted) {
         final td = json.decode(res[0].body);
         final ad = res[1].statusCode == 200 ? json.decode(res[1].body) : null;
-        setState(() {
-          chapterHadiths = td['hadiths'] ?? [];
-          arabHadiths = ad != null ? (ad['hadiths'] ?? []) : [];
-          loading = false;
-        });
+        setState(() { chapterHadiths = td['hadiths'] ?? []; arabHadiths = ad != null ? (ad['hadiths'] ?? []) : []; loading = false; });
       } else if (mounted) {
         if (hLang == 'urd') { hLang = 'eng'; _loadChapter(); return; }
         setState(() => loading = false);
       }
-    } catch (_) {
-      if (mounted) setState(() => loading = false);
-    }
+    } catch (_) { if (mounted) setState(() => loading = false); }
   }
 
   Future<void> _ensureFullBookLoadedForSearch() async {
@@ -1406,28 +1472,16 @@ class _HadithBookReaderPageState extends State<HadithBookReaderPage> {
       final r = await http.get(Uri.parse(url));
       if (r.statusCode == 200 && mounted) {
         final d = json.decode(r.body);
-        setState(() {
-          fullBookCache = d['hadiths'] ?? [];
-          loadingGlobalSearch = false;
-        });
-      } else if (mounted) {
-        setState(() => loadingGlobalSearch = false);
-      }
-    } catch (_) {
-      if (mounted) setState(() => loadingGlobalSearch = false);
-    }
+        setState(() { fullBookCache = d['hadiths'] ?? []; loadingGlobalSearch = false; });
+      } else if (mounted) { setState(() => loadingGlobalSearch = false); }
+    } catch (_) { if (mounted) setState(() => loadingGlobalSearch = false); }
   }
 
   @override
   Widget build(BuildContext context) {
     final bool isSearchingGlobally = search.trim().isNotEmpty;
     final List sourceList = (isSearchingGlobally && fullBookCache != null) ? fullBookCache! : chapterHadiths;
-
-    final filtered = sourceList.where((h) {
-      final t = h['text']?.toString().toLowerCase() ?? '';
-      final n = h['hadithnumber']?.toString() ?? '';
-      return t.contains(search.toLowerCase()) || n.contains(search);
-    }).take(150).toList();
+    final filtered = sourceList.where((h) => (h['text']?.toString().toLowerCase() ?? '').contains(search.toLowerCase()) || (h['hadithnumber']?.toString() ?? '').contains(search)).take(150).toList();
 
     return Scaffold(
       appBar: AppBar(
@@ -1435,10 +1489,7 @@ class _HadithBookReaderPageState extends State<HadithBookReaderPage> {
         backgroundColor: kBg,
         actions: [
           TextButton(
-            onPressed: () {
-              setState(() { hLang = hLang == 'eng' ? 'urd' : 'eng'; fullBookCache = null; });
-              _loadChapter();
-            },
+            onPressed: () { setState(() { hLang = hLang == 'eng' ? 'urd' : 'eng'; fullBookCache = null; }); _loadChapter(); },
             child: Text(hLang == 'eng' ? 'اردو' : 'EN', style: TextStyle(color: kPrimary, fontWeight: FontWeight.bold)),
           ),
         ],
@@ -1461,10 +1512,7 @@ class _HadithBookReaderPageState extends State<HadithBookReaderPage> {
           Padding(
             padding: const EdgeInsets.all(12),
             child: TextField(
-              onChanged: (v) {
-                setState(() => search = v);
-                if (v.trim().isNotEmpty) _ensureFullBookLoadedForSearch();
-              },
+              onChanged: (v) { setState(() => search = v); if (v.trim().isNotEmpty) _ensureFullBookLoadedForSearch(); },
               decoration: InputDecoration(
                 hintText: '🔍 Search across ALL ${widget.maxSections} Chapters...',
                 prefixIcon: Icon(Icons.search, size: 18, color: widget.accentColor),
@@ -1475,14 +1523,6 @@ class _HadithBookReaderPageState extends State<HadithBookReaderPage> {
               ),
             ),
           ),
-          if (isSearchingGlobally)
-            Padding(
-              padding: const EdgeInsets.only(bottom: 8),
-              child: Text(
-                loadingGlobalSearch ? 'Searching all ${widget.maxSections} chapters...' : 'Found ${filtered.length} matches across entire ${widget.bookTitle}',
-                style: TextStyle(fontSize: 11, color: kSecondary, fontWeight: FontWeight.bold),
-              ),
-            ),
           Expanded(
             child: loading
                 ? Center(child: CircularProgressIndicator(color: widget.accentColor))
@@ -1589,7 +1629,7 @@ class _SurahReaderPageState extends State<SurahReaderPage> {
   }
 }
 
-// ---------------- 5. SETTINGS, THEME CUSTOMIZER, DEVELOPER PROFILE & ADMIN PANEL ----------------
+// ---------------- 5. SETTINGS, DEVELOPER PROFILE & SUPER ADMIN PANEL ----------------
 class SettingsProfileScreen extends StatefulWidget {
   final VoidCallback onRebuild;
   const SettingsProfileScreen({super.key, required this.onRebuild});
@@ -1602,9 +1642,7 @@ class _SettingsProfileScreenState extends State<SettingsProfileScreen> {
 
   void _copySocial(String handle) {
     Clipboard.setData(ClipboardData(text: handle));
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(backgroundColor: kPrimary, content: Text('Copied $handle!', style: const TextStyle(color: Colors.black, fontWeight: FontWeight.bold))),
-    );
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(backgroundColor: kPrimary, content: Text('Copied $handle!', style: const TextStyle(color: Colors.black, fontWeight: FontWeight.bold))));
   }
 
   void _openAdminPinDialog() {
@@ -1613,26 +1651,21 @@ class _SettingsProfileScreenState extends State<SettingsProfileScreen> {
       context: context,
       builder: (ctx) => AlertDialog(
         backgroundColor: kCard,
-        title: Text('🔐 Admin Control Access', style: TextStyle(color: kPrimary, fontWeight: FontWeight.bold)),
-        content: TextField(
-          controller: pinCtrl,
-          obscureText: true,
-          keyboardType: TextInputType.number,
-          decoration: const InputDecoration(hintText: 'Enter Admin PIN (Default: 7860)'),
-        ),
+        title: Text('🔐 Owner Admin Access', style: TextStyle(color: kPrimary, fontWeight: FontWeight.bold)),
+        content: TextField(controller: pinCtrl, obscureText: true, keyboardType: TextInputType.number, decoration: const InputDecoration(hintText: 'Enter Admin PIN')),
         actions: [
           TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
           ElevatedButton(
             style: ElevatedButton.styleFrom(backgroundColor: kPrimary),
             onPressed: () {
-              if (pinCtrl.text.trim() == '7860') {
+              if (pinCtrl.text.trim() == adminPinCode) {
                 Navigator.pop(ctx);
                 Navigator.push(context, MaterialPageRoute(builder: (_) => AdminDashboardPage(onRebuild: widget.onRebuild)));
               } else {
-                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('❌ Invalid Admin PIN! (Hint: 7860)')));
+                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('❌ Invalid Admin PIN!')));
               }
             },
-            child: const Text('Unlock Admin', style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
+            child: const Text('Unlock Panel', style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
           ),
         ],
       ),
@@ -1645,24 +1678,14 @@ class _SettingsProfileScreenState extends State<SettingsProfileScreen> {
       child: ListView(
         padding: const EdgeInsets.fromLTRB(18, 16, 18, 100),
         children: [
-          // 1. TOP APP LOGO (LONG-PRESS TO UNLOCK ADMIN PANEL!)
           GestureDetector(
             onLongPress: _openAdminPinDialog,
             child: Container(
               padding: const EdgeInsets.all(22),
-              decoration: BoxDecoration(
-                gradient: LinearGradient(colors: [kPrimary.withOpacity(0.22), kCard]),
-                borderRadius: BorderRadius.circular(26),
-                border: Border.all(color: kPrimary.withOpacity(0.45)),
-              ),
+              decoration: BoxDecoration(gradient: LinearGradient(colors: [kPrimary.withOpacity(0.22), kCard]), borderRadius: BorderRadius.circular(26), border: Border.all(color: kPrimary.withOpacity(0.45))),
               child: Column(
                 children: [
-                  Container(
-                    width: 68,
-                    height: 68,
-                    decoration: BoxDecoration(gradient: LinearGradient(colors: [kPrimary, kSecondary]), borderRadius: BorderRadius.circular(22)),
-                    child: const Icon(Icons.mosque_rounded, size: 36, color: Colors.black),
-                  ),
+                  Container(width: 68, height: 68, decoration: BoxDecoration(gradient: LinearGradient(colors: [kPrimary, kSecondary]), borderRadius: BorderRadius.circular(22)), child: const Icon(Icons.mosque_rounded, size: 36, color: Colors.black)),
                   const SizedBox(height: 12),
                   Text('NOOR ISLAMIC PRO', style: TextStyle(fontSize: 20, fontFamily: 'serif', fontWeight: FontWeight.w900, color: kText, letterSpacing: 1.2)),
                   Text('All-in-One Daily Salah, Live Quran & Hadith Companion', style: TextStyle(fontSize: 11.5, color: kMuted)),
@@ -1679,17 +1702,15 @@ class _SettingsProfileScreenState extends State<SettingsProfileScreen> {
               ),
             ),
           ),
-          const SizedBox(height: 20),
+          const SizedBox(height: 18),
 
-          // 2. DARK / LIGHT MODE
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
             decoration: BoxDecoration(color: kCard, borderRadius: BorderRadius.circular(20), border: Border.all(color: kBorder)),
             child: SwitchListTile(
               contentPadding: EdgeInsets.zero,
               activeColor: kPrimary,
               title: Text(isDarkMode ? '🌙 Dark Mode Active' : '☀️ Light Mode Active', style: TextStyle(fontWeight: FontWeight.bold, color: kText)),
-              subtitle: Text('Switch between Dark Obsidian and Clean Light theme', style: TextStyle(fontSize: 11.5, color: kMuted)),
               value: isDarkMode,
               onChanged: (v) async {
                 final p = await SharedPreferences.getInstance();
@@ -1700,16 +1721,15 @@ class _SettingsProfileScreenState extends State<SettingsProfileScreen> {
               },
             ),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 14),
 
-          // 3. THEME COLOR PICKER
           Container(
             padding: const EdgeInsets.all(18),
             decoration: BoxDecoration(color: kCard, borderRadius: BorderRadius.circular(20), border: Border.all(color: kBorder)),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('🎨 SELECT APP THEME COLOUR', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w900, color: kPrimary, letterSpacing: 1)),
+                Text('🎨 SELECT APP THEME COLOUR', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w900, color: kPrimary)),
                 const SizedBox(height: 12),
                 Wrap(
                   spacing: 10,
@@ -1727,11 +1747,7 @@ class _SettingsProfileScreenState extends State<SettingsProfileScreen> {
                       },
                       child: Container(
                         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                        decoration: BoxDecoration(
-                          color: (pal['primary'] as Color).withOpacity(0.16),
-                          borderRadius: BorderRadius.circular(14),
-                          border: Border.all(color: sel ? (pal['primary'] as Color) : kBorder, width: sel ? 2 : 1),
-                        ),
+                        decoration: BoxDecoration(color: (pal['primary'] as Color).withOpacity(0.16), borderRadius: BorderRadius.circular(14), border: Border.all(color: sel ? (pal['primary'] as Color) : kBorder, width: sel ? 2 : 1)),
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
@@ -1747,16 +1763,15 @@ class _SettingsProfileScreenState extends State<SettingsProfileScreen> {
               ],
             ),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 14),
 
-          // 4. LANGUAGE SELECTOR
           Container(
             padding: const EdgeInsets.all(18),
             decoration: BoxDecoration(color: kCard, borderRadius: BorderRadius.circular(20), border: Border.all(color: kBorder)),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('🌐 SELECT APP LANGUAGE', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w900, color: kPrimary, letterSpacing: 1)),
+                Text('🌐 SELECT APP LANGUAGE', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w900, color: kPrimary)),
                 const SizedBox(height: 10),
                 Row(
                   children: [
@@ -1784,71 +1799,26 @@ class _SettingsProfileScreenState extends State<SettingsProfileScreen> {
               ],
             ),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 14),
 
-          // 5. FEEDBACK
-          Container(
-            padding: const EdgeInsets.all(18),
-            decoration: BoxDecoration(color: kCard, borderRadius: BorderRadius.circular(20), border: Border.all(color: kBorder)),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text('💬 SEND FEEDBACK & SUGGESTIONS', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w900, color: kPrimary, letterSpacing: 1)),
-                const SizedBox(height: 10),
-                TextField(
-                  controller: feedbackCtrl,
-                  maxLines: 2,
-                  decoration: InputDecoration(
-                    hintText: 'Write your feedback or feature request...',
-                    filled: true,
-                    fillColor: kBg,
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: BorderSide(color: kBorder)),
-                  ),
-                ),
-                const SizedBox(height: 10),
-                SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton(
-                    style: ElevatedButton.styleFrom(backgroundColor: kPrimary),
-                    onPressed: () {
-                      feedbackCtrl.clear();
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(backgroundColor: kSecondary, content: const Text('JazakAllah Khair! Your feedback has been submitted.', style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold))),
-                      );
-                    },
-                    child: const Text('Submit Feedback', style: TextStyle(color: Colors.black, fontWeight: FontWeight.w900)),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 16),
-
-          // 6. DEVELOPER PROFILE CARD + ADMIN PANEL LAUNCH BUTTON
           Container(
             padding: const EdgeInsets.all(20),
-            decoration: BoxDecoration(
-              gradient: LinearGradient(colors: [kCardAlt, kCard]),
-              borderRadius: BorderRadius.circular(24),
-              border: Border.all(color: kSecondary.withOpacity(0.45), width: 1.4),
-            ),
+            decoration: BoxDecoration(gradient: LinearGradient(colors: [kCardAlt, kCard]), borderRadius: BorderRadius.circular(24), border: Border.all(color: kSecondary.withOpacity(0.45), width: 1.4)),
             child: Column(
               children: [
-                Text('👨‍💻 DEVELOPED WITH ❤️ FOR THE UMMAH', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w900, color: kSecondary, letterSpacing: 1.2)),
-                const SizedBox(height: 14),
+                Text('👨‍💻 DEVELOPED WITH ❤️ FOR THE UMMAH', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w900, color: kSecondary)),
+                const SizedBox(height: 12),
                 CircleAvatar(
-                  radius: 40,
+                  radius: 38,
                   backgroundColor: kPrimary,
                   backgroundImage: adminDevImage.trim().startsWith('http') ? NetworkImage(adminDevImage.trim()) : null,
-                  child: adminDevImage.trim().startsWith('http')
-                      ? null
-                      : Icon(Icons.person_rounded, size: 42, color: Colors.black),
+                  child: adminDevImage.trim().startsWith('http') ? null : const Icon(Icons.person_rounded, size: 40, color: Colors.black),
                 ),
                 const SizedBox(height: 10),
                 Text(adminDevName, style: TextStyle(fontSize: 17, fontWeight: FontWeight.w900, color: kText)),
-                const SizedBox(height: 6),
-                Text(adminDevBio, textAlign: TextAlign.center, style: TextStyle(fontSize: 12, color: kMuted, height: 1.4)),
-                const SizedBox(height: 14),
+                const SizedBox(height: 4),
+                Text(adminDevBio, textAlign: TextAlign.center, style: TextStyle(fontSize: 12, color: kMuted)),
+                const SizedBox(height: 12),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
@@ -1857,9 +1827,8 @@ class _SettingsProfileScreenState extends State<SettingsProfileScreen> {
                     _socialPill(Icons.facebook_rounded, adminDevFb, () => _copySocial(adminDevFb)),
                   ],
                 ),
-                const SizedBox(height: 14),
+                const SizedBox(height: 12),
                 OutlinedButton.icon(
-                  style: OutlinedButton.styleFrom(side: BorderSide(color: kPrimary.withOpacity(0.5))),
                   onPressed: _openAdminPinDialog,
                   icon: Icon(Icons.admin_panel_settings_rounded, size: 16, color: kPrimary),
                   label: Text('Owner Admin Control Panel', style: TextStyle(fontSize: 11.5, color: kPrimary, fontWeight: FontWeight.bold)),
@@ -1878,20 +1847,13 @@ class _SettingsProfileScreenState extends State<SettingsProfileScreen> {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
         decoration: BoxDecoration(color: kBg, borderRadius: BorderRadius.circular(20), border: Border.all(color: kBorder)),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(ic, size: 15, color: kPrimary),
-            const SizedBox(width: 6),
-            Text(handle, style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: kText)),
-          ],
-        ),
+        child: Row(mainAxisSize: MainAxisSize.min, children: [Icon(ic, size: 15, color: kPrimary), const SizedBox(width: 6), Text(handle, style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: kText))]),
       ),
     );
   }
 }
 
-// ---------------- 6. FULL OWNER ADMIN CONTROL PANEL SCREEN ----------------
+// ---------------- 6. SUPER ADMIN DASHBOARD PAGE ----------------
 class AdminDashboardPage extends StatefulWidget {
   final VoidCallback onRebuild;
   const AdminDashboardPage({super.key, required this.onRebuild});
@@ -1900,164 +1862,174 @@ class AdminDashboardPage extends StatefulWidget {
 }
 
 class _AdminDashboardPageState extends State<AdminDashboardPage> {
-  late TextEditingController urlCtrl, banTCtrl, banMCtrl, appIgCtrl, appFbCtrl;
-  late TextEditingController devNCtrl, devBCtrl, devImgCtrl, devIgCtrl, devFbCtrl;
-  late TextEditingController ayahRefCtrl, ayahArCtrl, ayahTrCtrl;
-  bool showBan = adminShowBanner;
-  bool forceAyah = adminForceCustomAyah;
+  late TextEditingController pinC, urlC, banTC, banMC, popTC, popBC, updVC, updUC;
+  late TextEditingController appIgC, appFbC, devNC, devBC, devImgC, devIgC, devFbC;
+  late TextEditingController ayRefC, ayArC, ayTrC, duRefC, duArC, duTrC;
+  bool sBan = adminShowBanner, sPop = adminShowPopup, sUpd = adminUpdateAvailable;
+  bool fAyah = adminForceCustomAyah, fDua = adminForceCustomDua;
 
   @override
   void initState() {
     super.initState();
-    urlCtrl = TextEditingController(text: adminCloudUrl);
-    banTCtrl = TextEditingController(text: adminBannerTitle);
-    banMCtrl = TextEditingController(text: adminBannerMsg);
-    appIgCtrl = TextEditingController(text: adminAppInsta);
-    appFbCtrl = TextEditingController(text: adminAppFb);
-    devNCtrl = TextEditingController(text: adminDevName);
-    devBCtrl = TextEditingController(text: adminDevBio);
-    devImgCtrl = TextEditingController(text: adminDevImage);
-    devIgCtrl = TextEditingController(text: adminDevInsta);
-    devFbCtrl = TextEditingController(text: adminDevFb);
-    ayahRefCtrl = TextEditingController(text: liveAyahRef);
-    ayahArCtrl = TextEditingController(text: liveAyahArab);
-    ayahTrCtrl = TextEditingController(text: liveAyahTrans);
+    pinC = TextEditingController(text: adminPinCode);
+    urlC = TextEditingController(text: adminCloudUrl);
+    banTC = TextEditingController(text: adminBannerTitle);
+    banMC = TextEditingController(text: adminBannerMsg);
+    popTC = TextEditingController(text: adminPopupTitle);
+    popBC = TextEditingController(text: adminPopupBody);
+    updVC = TextEditingController(text: adminLatestVer);
+    updUC = TextEditingController(text: adminUpdateUrl);
+    appIgC = TextEditingController(text: adminAppInsta);
+    appFbC = TextEditingController(text: adminAppFb);
+    devNC = TextEditingController(text: adminDevName);
+    devBC = TextEditingController(text: adminDevBio);
+    devImgC = TextEditingController(text: adminDevImage);
+    devIgC = TextEditingController(text: adminDevInsta);
+    devFbC = TextEditingController(text: adminDevFb);
+    ayRefC = TextEditingController(text: liveAyahRef);
+    ayArC = TextEditingController(text: liveAyahArab);
+    ayTrC = TextEditingController(text: liveAyahTrans);
+    duRefC = TextEditingController(text: liveDuaRef);
+    duArC = TextEditingController(text: liveDuaArab);
+    duTrC = TextEditingController(text: liveDuaTrans);
   }
 
-  Future<void> _saveAdminChanges() async {
+  Future<void> _saveAll() async {
     final p = await SharedPreferences.getInstance();
-    await p.setString('adm_url', urlCtrl.text.trim());
-    await p.setBool('adm_show_ban', showBan);
-    await p.setString('adm_ban_t', banTCtrl.text.trim());
-    await p.setString('adm_ban_m', banMCtrl.text.trim());
-    await p.setString('adm_app_ig', appIgCtrl.text.trim());
-    await p.setString('adm_app_fb', appFbCtrl.text.trim());
-    await p.setString('adm_dev_n', devNCtrl.text.trim());
-    await p.setString('adm_dev_b', devBCtrl.text.trim());
-    await p.setString('adm_dev_img', devImgCtrl.text.trim());
-    await p.setString('adm_dev_ig', devIgCtrl.text.trim());
-    await p.setString('adm_dev_fb', devFbCtrl.text.trim());
-    await p.setBool('adm_force_ayah', forceAyah);
-    await p.setString('adm_ayah_ref', ayahRefCtrl.text.trim());
-    await p.setString('adm_ayah_ar', ayahArCtrl.text.trim());
-    await p.setString('adm_ayah_tr', ayahTrCtrl.text.trim());
+    await p.setString('adm_pin', pinC.text.trim());
+    await p.setString('adm_url', urlC.text.trim());
+    await p.setBool('adm_show_ban', sBan);
+    await p.setString('adm_ban_t', banTC.text.trim());
+    await p.setString('adm_ban_m', banMC.text.trim());
+    await p.setBool('adm_show_pop', sPop);
+    await p.setString('adm_pop_t', popTC.text.trim());
+    await p.setString('adm_pop_b', popBC.text.trim());
+    await p.setBool('adm_upd_on', sUpd);
+    await p.setString('adm_upd_v', updVC.text.trim());
+    await p.setString('adm_upd_u', updUC.text.trim());
+    await p.setString('adm_app_ig', appIgC.text.trim());
+    await p.setString('adm_app_fb', appFbC.text.trim());
+    await p.setString('adm_dev_n', devNC.text.trim());
+    await p.setString('adm_dev_b', devBC.text.trim());
+    await p.setString('adm_dev_img', devImgC.text.trim());
+    await p.setString('adm_dev_ig', devIgC.text.trim());
+    await p.setString('adm_dev_fb', devFbC.text.trim());
+    await p.setBool('adm_force_ayah', fAyah);
+    await p.setString('adm_ayah_ref', ayRefC.text.trim());
+    await p.setString('adm_ayah_ar', ayArC.text.trim());
+    await p.setString('adm_ayah_tr', ayTrC.text.trim());
+    await p.setBool('adm_force_dua', fDua);
+    await p.setString('adm_dua_ref', duRefC.text.trim());
+    await p.setString('adm_dua_ar', duArC.text.trim());
+    await p.setString('adm_dua_tr', duTrC.text.trim());
 
-    await syncAdminRemoteConfig();
-    if (forceAyah) {
-      liveAyahRef = ayahRefCtrl.text.trim();
-      liveAyahArab = ayahArCtrl.text.trim();
-      liveAyahTrans = ayahTrCtrl.text.trim();
-    }
-    await triggerNativeWidgetBroadcast();
+    await fetchLiveDailyAyahAndDua();
     widget.onRebuild();
     if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(backgroundColor: kSecondary, content: const Text('✅ Admin Settings Applied Live across App & Widgets!', style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold))),
-      );
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(backgroundColor: kSecondary, content: const Text('✅ All Admin Controls Saved & Synced Live!', style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold))));
     }
   }
 
-  void _exportCloudJson() {
+  void _exportJson() {
     final map = {
-      'show_banner': showBan,
-      'banner_title': banTCtrl.text.trim(),
-      'banner_message': banMCtrl.text.trim(),
-      'app_insta': appIgCtrl.text.trim(),
-      'app_fb': appFbCtrl.text.trim(),
-      'dev_name': devNCtrl.text.trim(),
-      'dev_bio': devBCtrl.text.trim(),
-      'dev_image': devImgCtrl.text.trim(),
-      'dev_insta': devIgCtrl.text.trim(),
-      'dev_fb': devFbCtrl.text.trim(),
-      'force_custom_ayah': forceAyah,
-      'custom_ayah_ref': ayahRefCtrl.text.trim(),
-      'custom_ayah_arab': ayahArCtrl.text.trim(),
-      'custom_ayah_trans': ayahTrCtrl.text.trim(),
+      'show_banner': sBan,
+      'banner_title': banTC.text.trim(),
+      'banner_message': banMC.text.trim(),
+      'show_popup': sPop,
+      'popup_title': popTC.text.trim(),
+      'popup_body': popBC.text.trim(),
+      'update_available': sUpd,
+      'latest_version': updVC.text.trim(),
+      'update_url': updUC.text.trim(),
+      'app_insta': appIgC.text.trim(),
+      'app_fb': appFbC.text.trim(),
+      'dev_name': devNC.text.trim(),
+      'dev_bio': devBC.text.trim(),
+      'dev_image': devImgC.text.trim(),
+      'dev_insta': devIgC.text.trim(),
+      'dev_fb': devFbC.text.trim(),
+      'force_custom_ayah': fAyah,
+      'custom_ayah_ref': ayRefC.text.trim(),
+      'custom_ayah_arab': ayArC.text.trim(),
+      'custom_ayah_trans': ayTrC.text.trim(),
+      'force_custom_dua': fDua,
+      'custom_dua_ref': duRefC.text.trim(),
+      'custom_dua_arab': duArC.text.trim(),
+      'custom_dua_trans': duTrC.text.trim(),
     };
     Clipboard.setData(ClipboardData(text: const JsonEncoder.withIndent('  ').convert(map)));
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(backgroundColor: kPrimary, content: const Text('📋 Cloud JSON Copied! Paste it into admin_config.json on GitHub to update all users!', style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold))),
-    );
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(backgroundColor: kPrimary, content: const Text('📋 Cloud JSON Copied! Paste in admin_config.json on GitHub!', style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold))));
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('👑 Owner Admin Control Panel'),
+        title: const Text('👑 Super Admin Control Panel'),
         backgroundColor: kBg,
-        actions: [
-          IconButton(icon: Icon(Icons.copy_all_rounded, color: kPrimary), onPressed: _exportCloudJson, tooltip: 'Copy Cloud JSON'),
-        ],
+        actions: [IconButton(icon: Icon(Icons.copy_all_rounded, color: kPrimary), onPressed: _exportJson)],
       ),
       body: ListView(
         padding: const EdgeInsets.all(18),
         children: [
-          _secTitle('🌐 1. GITHUB CLOUD SYNC URL (OPTIONAL)'),
-          _field(urlCtrl, 'GitHub Raw URL for admin_config.json'),
-          const SizedBox(height: 16),
+          _hdr('🔑 1. SECURITY & CLOUD SYNC URL'),
+          _inp(pinC, 'Admin Secret PIN (Default: 7860)'),
+          _inp(urlC, 'GitHub Raw URL for admin_config.json'),
 
-          _secTitle('📢 2. LIVE ANNOUNCEMENT BANNER'),
-          SwitchListTile(
-            title: const Text('Show Announcement Banner in App'),
-            activeColor: kPrimary,
-            value: showBan,
-            onChanged: (v) => setState(() => showBan = v),
-          ),
-          _field(banTCtrl, 'Banner Heading (e.g. 🌙 Eid / Jummah Mubarak)'),
-          _field(banMCtrl, 'Banner Message'),
-          const SizedBox(height: 16),
+          _hdr('🔔 2. LIVE POPUP BROADCAST ALERT'),
+          SwitchListTile(title: const Text('Show Popup Dialog on App Startup'), activeColor: kPrimary, value: sPop, onChanged: (v) => setState(() => sPop = v)),
+          _inp(popTC, 'Popup Title (e.g. 🌙 Eid / Jummah Mubarak!)'),
+          _inp(popBC, 'Popup Broadcast Message'),
 
-          _secTitle('✨ 3. OVERRIDE DAILY AYAH & WIDGET'),
-          SwitchListTile(
-            title: const Text('Force Custom Ayah instead of Auto API'),
-            activeColor: kPrimary,
-            value: forceAyah,
-            onChanged: (v) => setState(() => forceAyah = v),
-          ),
-          _field(ayahRefCtrl, 'Custom Surah & Verse Reference'),
-          _field(ayahArCtrl, 'Custom Arabic Text'),
-          _field(ayahTrCtrl, 'Custom Translation'),
-          const SizedBox(height: 16),
+          _hdr('🚀 3. OTA APP UPDATE PUSHER (NEW APK LINK)'),
+          SwitchListTile(title: const Text('Show "Update Available" Banner'), activeColor: kSecondary, value: sUpd, onChanged: (v) => setState(() => sUpd = v)),
+          _inp(updVC, 'New Version Name (e.g. v11.0 Pro)'),
+          _inp(updUC, 'Direct APK Download Link (Drive / GitHub)'),
 
-          _secTitle('👨‍💻 4. DEVELOPER PROFILE & SOCIAL HANDLES'),
-          _field(devNCtrl, 'Developer Name'),
-          _field(devBCtrl, 'Developer About / Bio'),
-          _field(devImgCtrl, 'Developer Photo Image URL (https://...)'),
-          _field(devIgCtrl, 'Developer Instagram Handle'),
-          _field(devFbCtrl, 'Developer Facebook Link'),
-          _field(appIgCtrl, 'App Official Instagram Handle'),
-          _field(appFbCtrl, 'App Official Facebook Link'),
-          const SizedBox(height: 20),
+          _hdr('📢 4. HOME ANNOUNCEMENT BANNER'),
+          SwitchListTile(title: const Text('Show Home Top Banner'), activeColor: kPrimary, value: sBan, onChanged: (v) => setState(() => sBan = v)),
+          _inp(banTC, 'Banner Title'),
+          _inp(banMC, 'Banner Message'),
+
+          _hdr('✨ 5. CUSTOM AYAH & DUA OVERRIDE'),
+          SwitchListTile(title: const Text('Force Custom Ayah on Home & Widget'), activeColor: kPrimary, value: fAyah, onChanged: (v) => setState(() => fAyah = v)),
+          _inp(ayRefC, 'Custom Ayah Reference'),
+          _inp(ayArC, 'Custom Ayah Arabic'),
+          _inp(ayTrC, 'Custom Ayah Translation'),
+          SwitchListTile(title: const Text('Force Custom Daily Dua'), activeColor: kSecondary, value: fDua, onChanged: (v) => setState(() => fDua = v)),
+          _inp(duRefC, 'Custom Dua Reference'),
+          _inp(duArC, 'Custom Dua Arabic'),
+          _inp(duTrC, 'Custom Dua Translation'),
+
+          _hdr('👨‍💻 6. DEVELOPER PROFILE & SOCIAL HANDLES'),
+          _inp(devNC, 'Developer Name'),
+          _inp(devBC, 'Developer Bio / About'),
+          _inp(devImgC, 'Developer Photo URL (https://...)'),
+          _inp(devIgC, 'Developer Instagram'),
+          _inp(devFbC, 'Developer Facebook'),
+          _inp(appIgC, 'App Official Instagram'),
+          _inp(appFbC, 'App Official Facebook'),
+          const SizedBox(height: 16),
 
           ElevatedButton.icon(
             style: ElevatedButton.styleFrom(backgroundColor: kPrimary, padding: const EdgeInsets.symmetric(vertical: 15)),
-            onPressed: _saveAdminChanges,
+            onPressed: _saveAll,
             icon: const Icon(Icons.bolt_rounded, color: Colors.black),
-            label: const Text('SAVE & APPLY LIVE CHANGES', style: TextStyle(color: Colors.black, fontWeight: FontWeight.w900)),
+            label: const Text('SAVE & APPLY ALL ADMIN CONTROLS', style: TextStyle(color: Colors.black, fontWeight: FontWeight.w900)),
           ),
           const SizedBox(height: 10),
           OutlinedButton.icon(
-            onPressed: _exportCloudJson,
+            onPressed: _exportJson,
             icon: Icon(Icons.cloud_upload_rounded, color: kSecondary),
-            label: Text('Copy JSON for GitHub Cloud (admin_config.json)', style: TextStyle(color: kSecondary, fontWeight: FontWeight.bold)),
+            label: Text('Copy Cloud JSON for GitHub (admin_config.json)', style: TextStyle(color: kSecondary, fontWeight: FontWeight.bold)),
           ),
         ],
       ),
     );
   }
 
-  Widget _secTitle(String t) => Padding(padding: const EdgeInsets.only(bottom: 8), child: Text(t, style: TextStyle(fontSize: 11, fontWeight: FontWeight.w900, color: kPrimary)));
-
-  Widget _field(TextEditingController c, String label) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 10),
-      child: TextField(
-        controller: c,
-        decoration: InputDecoration(labelText: label, filled: true, fillColor: kCard, border: OutlineInputBorder(borderRadius: BorderRadius.circular(12))),
-      ),
-    );
-  }
+  Widget _hdr(String t) => Padding(padding: const EdgeInsets.only(top: 12, bottom: 6), child: Text(t, style: TextStyle(fontSize: 11, fontWeight: FontWeight.w900, color: kPrimary)));
+  Widget _inp(TextEditingController c, String l) => Padding(padding: const EdgeInsets.only(bottom: 8), child: TextField(controller: c, decoration: InputDecoration(labelText: l, filled: true, fillColor: kCard, border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)))));
 }
 
 
