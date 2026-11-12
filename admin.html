@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Sirat — Owner Web Admin Panel</title>
+  <style>
+    * { box-sizing: border-box; font-family: system-ui, sans-serif; }
+    body { background: #060D0B; color: #fff; margin: 0; padding: 18px; }
+    .card { background: #0E1A16; border: 1px solid #1E352F; border-radius: 18px; padding: 18px; margin-bottom: 16px; max-width: 540px; margin-left: auto; margin-right: auto; }
+    h1 { color: #D6B36A; font-family: Georgia, serif; font-size: 22px; margin: 0 0 4px 0; letter-spacing: 1px; }
+    h2 { color: #2DD4BF; font-size: 12px; letter-spacing: 1.2px; text-transform: uppercase; margin: 0 0 12px 0; }
+    label { display: block; font-size: 12px; color: #8E9E99; margin: 10px 0 4px; font-weight: 600; }
+    input[type="text"], textarea { width: 100%; background: #060D0B; border: 1px solid #1E352F; color: #fff; padding: 11px; border-radius: 10px; font-size: 13.5px; }
+    .row { display: flex; align-items: center; justify-content: space-between; margin: 8px 0; }
+    .btn { width: 100%; background: #D6B36A; color: #000; font-weight: 900; border: none; padding: 15px; border-radius: 14px; font-size: 13.5px; cursor: pointer; margin-top: 10px; }
+    .btn-sec { background: #142822; color: #2DD4BF; border: 1px solid #2DD4BF; }
+    #status { text-align: center; font-size: 13px; color: #2DD4BF; margin-top: 10px; font-weight: bold; }
+  </style>
+</head>
+<body>
+  <div class="card" style="border-color:#D6B36A;">
+    <h1>SIRAT WEB ADMIN</h1>
+    <div style="font-size:12px;color:#8E9E99;">Remote Control for justRohann18/islamic-app</div>
+    <label>GitHub Personal Token (Optional for 1-Click Direct Push)</label>
+    <input type="text" id="gh_token" placeholder="ghp_xxxxxxxxxxxx (Leave blank to use Copy mode)" />
+  </div>
+
+  <div class="card">
+    <h2>1. What's New Update Popup</h2>
+    <div class="row"><span>Show "What's New" Update Popup</span><input type="checkbox" id="update_available" /></div>
+    <label>New Version Name</label><input type="text" id="latest_version" value="v2.0.0" />
+    <label>What's New Changes (1 per line)</label>
+    <textarea id="changelog" rows="4">• Added Multi-Qari Quran Audio (Alafasy, Imam Sudais, Al-Husary)
+• Added Automatic Last-Read Surah Bookmark
+• Added Sunnah Fasting (Roza) Tracker on Home
+• Added Custom Widget Themes & Ayah Font Size Slider</textarea>
+    <label>APK Download Link (Update Button URL)</label>
+    <input type="text" id="update_url" value="https://github.com/justRohann18/islamic-app/releases" />
+  </div>
+
+  <div class="card">
+    <h2>2. Home Announcement Banner</h2>
+    <div class="row"><span>Show Top Home Banner</span><input type="checkbox" id="show_banner" checked /></div>
+    <label>Banner Heading</label><input type="text" id="banner_title" value="Sirat v2.0 Official" />
+    <label>Banner Message</label><input type="text" id="banner_message" value="Recite Surah Al-Mulk before sleeping and track your five daily prayers." />
+  </div>
+
+  <div class="card">
+    <h2>3. Developer & App Profile</h2>
+    <label>Developer Name</label><input type="text" id="dev_name" value="Jahidul Hassan" />
+    <label>Developer Photo URL</label><input type="text" id="dev_image" value="https://instasize.com/api/image/f82d477b378ee650f67b95f504fcdec6c2b01ca112ac64faa0d4aef2766656ec.jpeg" />
+    <label>Developer Bio</label><input type="text" id="dev_bio" value="Building modern, ad-free and authentic Islamic digital experiences as Sadaqah Jariyah." />
+    <label>Developer Instagram</label><input type="text" id="dev_insta" value="@just.jahidulx" />
+    <label>Developer Facebook URL</label><input type="text" id="dev_fb" value="https://www.facebook.com/share/1Bz6Qs6BKV/" />
+    <label>App Instagram</label><input type="text" id="app_insta" value="@app_sirat" />
+    <label>App Facebook URL</label><input type="text" id="app_fb" value="https://www.facebook.com/share/1Bz6Qs6BKV/" />
+  </div>
+
+  <div class="card">
+    <button class="btn" onclick="publishToGitHub()">PUBLISH LIVE TO ALL USERS</button>
+    <button class="btn btn-sec" onclick="copyAndOpenGitHub()">COPY JSON & OPEN GITHUB FILE</button>
+    <div id="status"></div>
+  </div>
+
+  <script>
+    const REPO = "justRohann18/islamic-app";
+    const FILE = "admin_config.json";
+    document.getElementById("gh_token").value = localStorage.getItem("sirat_gh_token") || "";
+
+    async function loadCurrentConfig() {
+      try {
+        const r = await fetch(`https://api.github.com/repos/${REPO}/contents/${FILE}?t=${Date.now()}`, { headers: { Accept: "application/vnd.github.v3.raw" } });
+        if (r.ok) {
+          const d = await r.json();
+          document.getElementById("update_available").checked = !!d.update_available;
+          if (d.latest_version) document.getElementById("latest_version").value = d.latest_version;
+          if (d.changelog) document.getElementById("changelog").value = d.changelog;
+          if (d.update_url) document.getElementById("update_url").value = d.update_url;
+          document.getElementById("show_banner").checked = d.show_banner !== false;
+          if (d.banner_title) document.getElementById("banner_title").value = d.banner_title;
+          if (d.banner_message) document.getElementById("banner_message").value = d.banner_message;
+          if (d.dev_name) document.getElementById("dev_name").value = d.dev_name;
+          if (d.dev_image) document.getElementById("dev_image").value = d.dev_image;
+          if (d.dev_bio) document.getElementById("dev_bio").value = d.dev_bio;
+          if (d.dev_insta) document.getElementById("dev_insta").value = d.dev_insta;
+          if (d.dev_fb) document.getElementById("dev_fb").value = d.dev_fb;
+          if (d.app_insta) document.getElementById("app_insta").value = d.app_insta;
+          if (d.app_fb) document.getElementById("app_fb").value = d.app_fb;
+        }
+      } catch (e) {}
+    }
+    loadCurrentConfig();
+
+    function buildJson() {
+      return JSON.stringify({
+        update_available: document.getElementById("update_available").checked,
+        latest_version: document.getElementById("latest_version").value.trim(),
+        changelog: document.getElementById("changelog").value.trim(),
+        update_url: document.getElementById("update_url").value.trim(),
+        show_banner: document.getElementById("show_banner").checked,
+        banner_title: document.getElementById("banner_title").value.trim(),
+        banner_message: document.getElementById("banner_message").value.trim(),
+        dev_name: document.getElementById("dev_name").value.trim(),
+        dev_image: document.getElementById("dev_image").value.trim(),
+        dev_bio: document.getElementById("dev_bio").value.trim(),
+        dev_insta: document.getElementById("dev_insta").value.trim(),
+        dev_fb: document.getElementById("dev_fb").value.trim(),
+        app_insta: document.getElementById("app_insta").value.trim(),
+        app_fb: document.getElementById("app_fb").value.trim()
+      }, null, 2);
+    }
+
+    async function publishToGitHub() {
+      const token = document.getElementById("gh_token").value.trim();
+      if (!token) return copyAndOpenGitHub();
+      localStorage.setItem("sirat_gh_token", token);
+      document.getElementById("status").innerText = "Publishing live to GitHub...";
+      try {
+        let sha = "";
+        const getR = await fetch(`https://api.github.com/repos/${REPO}/contents/${FILE}`, { headers: { Authorization: `token ${token}` } });
+        if (getR.ok) { const j = await getR.json(); sha = j.sha; }
+        const contentB64 = btoa(unescape(encodeURIComponent(buildJson())));
+        const putR = await fetch(`https://api.github.com/repos/${REPO}/contents/${FILE}`, {
+          method: "PUT",
+          headers: { Authorization: `token ${token}`, "Content-Type": "application/json" },
+          body: JSON.stringify({ message: "Live update via Sirat Web Admin", content: contentB64, sha: sha || undefined })
+        });
+        document.getElementById("status").innerText = putR.ok ? "Published Live! All users updated!" : "Token error — using Copy mode.";
+      } catch (e) { copyAndOpenGitHub(); }
+    }
+
+    function copyAndOpenGitHub() {
+      navigator.clipboard.writeText(buildJson());
+      document.getElementById("status").innerText = "JSON Copied! Opening GitHub editor...";
+      setTimeout(() => { window.open(`https://github.com/${REPO}/edit/main/${FILE}`, "_blank"); }, 600);
+    }
+  </script>
+</body>
+</html>
