@@ -42,3 +42,19 @@
   "dev_insta": "@just.jahidulx",
   "dev_fb": "https://www.facebook.com/share/1Bz6Qs6BKV/"
 }
+{
+  "update_available": true,
+  "latest_version": "v2.3.0",
+  "changelog": "• Added Multi-Qari Quran Audio (Alafasy, Imam Sudais, Al-Husary)\n• Added Automatic Last-Read Surah Bookmark\n• Added Sunnah Fasting (Roza) Tracker on Home\n• Added Custom Widget Themes & Ayah Font Size Slider",
+  "update_url": "https://github.com/justRohann18/islamic-app/releases",
+  "show_banner": false,
+  "banner_title": "Sirat v2.0 Official",
+  "banner_message": "Recite Surah Al-Mulk before sleeping and track your five daily prayers.",
+  "dev_name": "Jahidul Hassan",
+  "dev_image": "https://instasize.com/api/image/f82d477b378ee650f67b95f504fcdec6c2b01ca112ac64faa0d4aef2766656ec.jpeg",
+  "dev_bio": "Building modern, ad-free and authentic Islamic digital experiences as Sadaqah Jariyah.",
+  "dev_insta": "@just.jahidulx",
+  "dev_fb": "https://www.facebook.com/share/1Bz6Qs6BKV/",
+  "app_insta": "@app_sirat",
+  "app_fb": "https://www.facebook.com/share/1Bz6Qs6BKV/"
+}
