@@ -23,14 +23,13 @@ String globalUserName = 'Mumin';
 int widgetThemeIdx = 0;
 int widgetAyahSize = 22;
 
-String adminPinCode = '7860';
 bool adminShowBanner = true;
 String adminBannerTitle = 'Sirat v2.0 Official';
 String adminBannerMsg = 'Recite Surah Al-Mulk before sleeping and track your five daily prayers.';
 bool adminUpdateAvailable = false;
 String adminLatestVer = 'v2.0.0';
 String adminUpdateUrl = 'https://github.com/justRohann18/islamic-app/releases';
-String adminChangelog = '• Added Multi-Qari Quran Audio (Alafasy, Imam Sudais, Al-Husary)\n• Added Automatic Last-Read Surah Bookmark\n• Added Sunnah Fasting (Roza) Tracker on Home\n• Added Custom Widget Themes & Ayah Font Size Slider\n• Enhanced 36,000+ Global Hadith Search Speed';
+String adminChangelog = '• Added Multi-Qari Quran Audio (Alafasy, Imam Sudais, Al-Husary)\n• Added Automatic Last-Read Surah Bookmark\n• Added Sunnah Fasting (Roza) Tracker on Home\n• Added Custom Widget Themes & Ayah Font Size Slider';
 
 String adminAppInsta = '@app_sirat';
 String adminAppFb = 'https://www.facebook.com/share/1Bz6Qs6BKV/';
@@ -60,11 +59,6 @@ Color get kMuted => isDarkMode ? const Color(0xFF8E9E99) : const Color(0xFF64748
 String liveAyahRef = 'Surah Ash-Sharh • 94:5';
 String liveAyahArab = 'فَإِنَّ مَعَ الْعُسْرِ يُسْرًا';
 String liveAyahTrans = '"Indeed, with hardship comes ease."';
-String liveAyahAudio = 'https://cdn.islamic.network/quran/audio/128/ar.alafasy/6095.mp3';
-
-String liveDuaRef = 'Quranic Dua • 2:201';
-String liveDuaArab = 'رَبَّنَا آتِنَا فِي الدُّنْيَا حَسَنَةً وَفِي الْآخِرَةِ حَسَنَةً وَقِنَا عَذَابَ النَّارِ';
-String liveDuaTrans = '"Our Lord, grant us good in this world and good in the Hereafter."';
 
 Future<void> openSocialProfile(bool isInstagram, String handleOrUrl) async {
   String clean = handleOrUrl.trim();
@@ -236,7 +230,6 @@ Future<void> fetchLiveDailyAyahAndDua({bool forceRandom = false}) async {
     if (r.statusCode == 200) {
       final d = json.decode(r.body)['data'];
       liveAyahArab = d[0]['text'];
-      liveAyahAudio = d[0]['audio'] ?? liveAyahAudio;
       liveAyahTrans = '"${d[1]['text']}"';
       liveAyahRef = '${d[0]['surah']['englishName']} • ${d[0]['surah']['number']}:${d[0]['numberInSurah']}';
     }
@@ -440,6 +433,18 @@ class _MainShellState extends State<MainShell> {
   }
 }
 
+
+
+
+
+
+
+
+
+
+
+
+// ---------------- HOME, WIDGET STUDIO, STREAK, KITAB (MULTI-QARI) & CLEAN SETTINGS ----------------
 class InteractiveHomeScreen extends StatefulWidget {
   final Function(int, {int sub}) onNav;
   final VoidCallback onRebuild;
@@ -452,24 +457,22 @@ class _InteractiveHomeScreenState extends State<InteractiveHomeScreen> {
   String loc = 'Barpaka', hijri = '1448 AH';
   double lat = 26.4167, lon = 92.7333;
   int school = 0, remSeconds = 3600;
-  bool manual = false, isPlayingAyah = false, isFastingToday = false;
+  bool manual = false, isFastingToday = false;
   Timer? timer;
   String nextP = 'Dhuhr', countdown = '-02:14:30';
   final prayers = ['Fajr', 'Dhuhr', 'Asr', 'Maghrib', 'Isha'];
   Map<String, String> times = {'Fajr': '04:15', 'Dhuhr': '12:15', 'Asr': '15:25', 'Maghrib': '16:45', 'Isha': '18:15'};
   Map<String, int> status = {'Fajr': 0, 'Dhuhr': 0, 'Asr': 0, 'Maghrib': 0, 'Isha': 0};
-  final AudioPlayer audioPlayer = AudioPlayer();
 
   @override
   void initState() {
     super.initState();
     _load();
     timer = Timer.periodic(const Duration(seconds: 1), (_) => _tick());
-    audioPlayer.onPlayerComplete.listen((_) => mounted ? setState(() => isPlayingAyah = false) : null);
   }
 
   @override
-  void dispose() { timer?.cancel(); audioPlayer.dispose(); super.dispose(); }
+  void dispose() { timer?.cancel(); super.dispose(); }
 
   void _tick() {
     final now = DateTime.now();
@@ -541,6 +544,13 @@ class _InteractiveHomeScreenState extends State<InteractiveHomeScreen> {
       child: ListView(
         padding: const EdgeInsets.fromLTRB(18, 12, 18, 100),
         children: [
+          if (adminShowBanner)
+            Container(
+              margin: const EdgeInsets.only(bottom: 12),
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(color: kPrimary.withOpacity(0.14), borderRadius: BorderRadius.circular(16), border: Border.all(color: kPrimary.withOpacity(0.5))),
+              child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [Text(adminBannerTitle, style: TextStyle(fontWeight: FontWeight.w900, fontSize: 12.5, color: kPrimary)), Text(adminBannerMsg, style: TextStyle(fontSize: 11.5, color: kText))]),
+            ),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
@@ -672,19 +682,6 @@ class _InteractiveHomeScreenState extends State<InteractiveHomeScreen> {
   }
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-// ---------------- WIDGET STUDIO, STREAK, KITAB (MULTI-QARI), JAHIDUL HASSAN PROFILE & ADMIN ----------------
 class LiveAnimatedWidgetStudioPage extends StatefulWidget {
   const LiveAnimatedWidgetStudioPage({super.key});
   @override
@@ -761,12 +758,6 @@ class _LiveAnimatedWidgetStudioPageState extends State<LiveAnimatedWidgetStudioP
             icon: const Icon(Icons.sync_rounded, color: Colors.black),
             label: const Text('APPLY TO HOME SCREEN WIDGET', style: TextStyle(color: Colors.black, fontWeight: FontWeight.w900)),
           ),
-          const SizedBox(height: 10),
-          OutlinedButton.icon(
-            onPressed: () async { try { await _widgetChannel.invokeMethod('testNotification', {'prayer': 'Fajr'}); } catch (_) {} },
-            icon: Icon(Icons.notifications_active_outlined, size: 18, color: kSecondary),
-            label: Text('TEST PRAYER NOTIFICATION', style: TextStyle(color: kSecondary, fontWeight: FontWeight.bold)),
-          ),
         ],
       ),
     );
@@ -791,13 +782,12 @@ class _UniqueStreakScreenState extends State<UniqueStreakScreen> {
     final now = DateTime.now();
     int daysInM = DateUtils.getDaysInMonth(now.year, now.month);
     int mAda = 0, mJamaat = 0, fastDays = 0;
-    Map<String, int> pCounts = {'Fajr': 0, 'Dhuhr': 0, 'Asr': 0, 'Maghrib': 0, 'Isha': 0};
     for (int i = 1; i <= daysInM; i++) {
       final dt = DateTime(now.year, now.month, i);
       if (prefs?.getBool('fast_${getDateKey(dt)}') ?? false) fastDays++;
       for (var p in prayers) {
         int s = _st(dt, p);
-        if (s > 0 && s < 4) { mAda++; pCounts[p] = (pCounts[p] ?? 0) + 1; }
+        if (s > 0 && s < 4) mAda++;
         if (s == 1) mJamaat++;
       }
     }
@@ -835,27 +825,6 @@ class _UniqueStreakScreenState extends State<UniqueStreakScreen> {
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(color: kCard, borderRadius: BorderRadius.circular(22), border: Border.all(color: kBorder)),
-            child: Column(
-              children: prayers.map((p) {
-                int c = pCounts[p] ?? 0;
-                double r = (c / passedDays).clamp(0.0, 1.0);
-                return Padding(
-                  padding: const EdgeInsets.only(bottom: 8),
-                  child: Column(
-                    children: [
-                      Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [Text(p, style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: kText)), Text('${(r * 100).toInt()}%', style: TextStyle(fontSize: 11, color: kSecondary))]),
-                      const SizedBox(height: 4),
-                      LinearProgressIndicator(value: r, minHeight: 6, backgroundColor: kBg, valueColor: AlwaysStoppedAnimation(kSecondary)),
-                    ],
-                  ),
-                );
-              }).toList(),
-            ),
-          ),
-          const SizedBox(height: 14),
-          Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(color: kCard, borderRadius: BorderRadius.circular(22), border: Border.all(color: kBorder)),
             child: GridView.builder(
               shrinkWrap: true,
               physics: const NeverScrollableScrollPhysics(),
@@ -887,7 +856,7 @@ class KitabScreen extends StatefulWidget {
 class _KitabScreenState extends State<KitabScreen> {
   late int tab;
   List surahs = [];
-  bool loadingQuran = true, loadingCloudHadiths = false;
+  bool loadingQuran = true;
   String qSearch = '', globalHadithQuery = '';
   int lastSurahNum = 1;
   String lastSurahName = 'Al-Faatiha';
@@ -914,7 +883,7 @@ class _KitabScreenState extends State<KitabScreen> {
     http.get(Uri.parse('https://api.alquran.cloud/v1/surah')).then((r) {
       if (r.statusCode == 200 && mounted) setState(() { surahs = json.decode(r.body)['data']; loadingQuran = false; });
     });
-    _preloadMassiveHadithDatabase();
+    _preloadHadiths();
   }
 
   Future<void> _loadBookmark() async {
@@ -922,15 +891,11 @@ class _KitabScreenState extends State<KitabScreen> {
     if (mounted) setState(() { lastSurahNum = p.getInt('last_surah_num') ?? 1; lastSurahName = p.getString('last_surah_name') ?? 'Al-Faatiha'; });
   }
 
-  Future<void> _preloadMassiveHadithDatabase() async {
-    if (loadingCloudHadiths) return;
-    setState(() => loadingCloudHadiths = true);
+  Future<void> _preloadHadiths() async {
     try {
       for (var src in [
         {'b': 'An-Nawawi 40', 'url': 'https://cdn.jsdelivr.net/gh/fawazahmed0/hadith-api@1/editions/eng-nawawi.min.json'},
-        {'b': 'Hadith Qudsi', 'url': 'https://cdn.jsdelivr.net/gh/fawazahmed0/hadith-api@1/editions/eng-qudsi.min.json'},
         {'b': 'Sahih Bukhari', 'url': 'https://cdn.jsdelivr.net/gh/fawazahmed0/hadith-api@1/editions/eng-bukhari.min.json'},
-        {'b': 'Sahih Muslim', 'url': 'https://cdn.jsdelivr.net/gh/fawazahmed0/hadith-api@1/editions/eng-muslim.min.json'},
       ]) {
         final r = await http.get(Uri.parse(src['url']!));
         if (r.statusCode == 200) {
@@ -942,19 +907,6 @@ class _KitabScreenState extends State<KitabScreen> {
         }
       }
     } catch (_) {}
-    if (mounted) setState(() => loadingCloudHadiths = false);
-  }
-
-  void _openFullHadithModal(Map<String, String> h) {
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: kCard,
-      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
-      builder: (ctx) => Padding(
-        padding: const EdgeInsets.all(22),
-        child: SingleChildScrollView(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [Text('${h['book']} • Hadith #${h['num']}', style: TextStyle(color: kPrimary, fontWeight: FontWeight.w900)), const SizedBox(height: 12), Text(h['en']!, style: TextStyle(fontSize: 15, fontFamily: 'serif', color: kText, height: 1.55))])),
-      ),
-    );
   }
 
   @override
@@ -962,7 +914,7 @@ class _KitabScreenState extends State<KitabScreen> {
     final fS = surahs.where((s) => s['englishName'].toString().toLowerCase().contains(qSearch.toLowerCase()) || s['number'].toString().contains(qSearch)).toList();
     final bool isSearchingH = globalHadithQuery.trim().isNotEmpty;
     final hResults = isSearchingH
-        ? globalHadithPool.where((h) => h['en']!.toLowerCase().contains(globalHadithQuery.toLowerCase()) || h['book']!.toLowerCase().contains(globalHadithQuery.toLowerCase()) || h['num']!.contains(globalHadithQuery)).take(150).toList()
+        ? globalHadithPool.where((h) => h['en']!.toLowerCase().contains(globalHadithQuery.toLowerCase()) || h['num']!.contains(globalHadithQuery)).take(120).toList()
         : <Map<String, String>>[];
 
     return SafeArea(
@@ -1021,16 +973,7 @@ class _KitabScreenState extends State<KitabScreen> {
                     )
                   : Column(
                       children: [
-                        TextField(
-                          onChanged: (v) => setState(() => globalHadithQuery = v),
-                          decoration: InputDecoration(
-                            hintText: 'Search across ${globalHadithPool.length}+ Hadiths (word or #)...',
-                            prefixIcon: Icon(Icons.search_rounded, color: kPrimary),
-                            filled: true,
-                            fillColor: kCard,
-                            border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
-                          ),
-                        ),
+                        TextField(onChanged: (v) => setState(() => globalHadithQuery = v), decoration: InputDecoration(hintText: 'Search across ${globalHadithPool.length}+ Hadiths...', prefixIcon: Icon(Icons.search_rounded, color: kPrimary), filled: true, fillColor: kCard, border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)))),
                         const SizedBox(height: 12),
                         Expanded(
                           child: isSearchingH
@@ -1038,21 +981,11 @@ class _KitabScreenState extends State<KitabScreen> {
                                   itemCount: hResults.length,
                                   itemBuilder: (_, i) {
                                     final h = hResults[i];
-                                    return GestureDetector(
-                                      onTap: () => _openFullHadithModal(h),
-                                      child: Container(
-                                        margin: const EdgeInsets.only(bottom: 10),
-                                        padding: const EdgeInsets.all(14),
-                                        decoration: BoxDecoration(color: kCard, borderRadius: BorderRadius.circular(16), border: Border.all(color: kPrimary.withOpacity(0.4))),
-                                        child: Column(
-                                          crossAxisAlignment: CrossAxisAlignment.start,
-                                          children: [
-                                            Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [Text('${h['book']} • #${h['num']}', style: TextStyle(color: kPrimary, fontWeight: FontWeight.bold, fontSize: 11.5)), Text('View Full Hadith', style: TextStyle(color: kSecondary, fontSize: 10.5, fontWeight: FontWeight.bold))]),
-                                            const SizedBox(height: 6),
-                                            Text(h['en']!, maxLines: 2, overflow: TextOverflow.ellipsis, style: TextStyle(fontSize: 13, color: kText)),
-                                          ],
-                                        ),
-                                      ),
+                                    return Container(
+                                      margin: const EdgeInsets.only(bottom: 10),
+                                      padding: const EdgeInsets.all(14),
+                                      decoration: BoxDecoration(color: kCard, borderRadius: BorderRadius.circular(16), border: Border.all(color: kPrimary.withOpacity(0.4))),
+                                      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [Text('${h['book']} • #${h['num']}', style: TextStyle(color: kPrimary, fontWeight: FontWeight.bold, fontSize: 11.5)), const SizedBox(height: 6), Text(h['en']!, style: TextStyle(fontSize: 13.5, color: kText))]),
                                     );
                                   },
                                 )
@@ -1147,14 +1080,7 @@ class _HadithBookReaderPageState extends State<HadithBookReaderPage> {
                         margin: const EdgeInsets.only(bottom: 10),
                         padding: const EdgeInsets.all(14),
                         decoration: BoxDecoration(color: kCard, borderRadius: BorderRadius.circular(16), border: Border.all(color: kBorder)),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text('Hadith #${h['hadithnumber']}', style: TextStyle(color: widget.accentColor, fontWeight: FontWeight.bold, fontSize: 12)),
-                            const SizedBox(height: 6),
-                            Text(txt, style: TextStyle(color: kText, fontSize: 14, height: 1.5)),
-                          ],
-                        ),
+                        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [Text('Hadith #${h['hadithnumber']}', style: TextStyle(color: widget.accentColor, fontWeight: FontWeight.bold, fontSize: 12)), const SizedBox(height: 6), Text(txt, style: TextStyle(color: kText, fontSize: 14, height: 1.5))]),
                       );
                     },
                   ),
@@ -1298,31 +1224,6 @@ class _SettingsProfileScreenState extends State<SettingsProfileScreen> {
     );
   }
 
-  void _openSecretAdminPin() {
-    HapticFeedback.heavyImpact();
-    final pinC = TextEditingController();
-    showDialog(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        backgroundColor: kCard,
-        title: Text('Owner Command Center', style: TextStyle(color: kPrimary, fontWeight: FontWeight.bold)),
-        content: TextField(controller: pinC, obscureText: true, keyboardType: TextInputType.number, decoration: const InputDecoration(hintText: 'Enter Secret PIN')),
-        actions: [
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(backgroundColor: kPrimary),
-            onPressed: () {
-              if (pinC.text.trim() == adminPinCode) {
-                Navigator.pop(ctx);
-                Navigator.push(context, MaterialPageRoute(builder: (_) => AdminDashboardPage(onRebuild: () { setState(() {}); widget.onRebuild(); })));
-              }
-            },
-            child: const Text('Unlock', style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
-          ),
-        ],
-      ),
-    );
-  }
-
   Widget _brandBadge(bool isInsta, String handleOrUrl, String displayLabel) {
     return GestureDetector(
       onTap: () => openSocialProfile(isInsta, handleOrUrl),
@@ -1349,21 +1250,18 @@ class _SettingsProfileScreenState extends State<SettingsProfileScreen> {
       child: ListView(
         padding: const EdgeInsets.fromLTRB(18, 16, 18, 100),
         children: [
-          GestureDetector(
-            onLongPress: _openSecretAdminPin,
-            child: Container(
-              padding: const EdgeInsets.all(22),
-              decoration: BoxDecoration(color: kCard, borderRadius: BorderRadius.circular(24), border: Border.all(color: kPrimary.withOpacity(0.45))),
-              child: Column(
-                children: [
-                  SizedBox(width: 72, height: 72, child: CustomPaint(painter: SiratLogoPainter())),
-                  const SizedBox(height: 12),
-                  Text('SIRAT', style: TextStyle(fontSize: 22, fontFamily: 'serif', fontWeight: FontWeight.w900, color: kText, letterSpacing: 2.5)),
-                  Text('The Straight Path • $kInstalledVersion Official', style: TextStyle(fontSize: 11, color: kMuted)),
-                  const SizedBox(height: 14),
-                  Row(mainAxisAlignment: MainAxisAlignment.center, children: [_brandBadge(true, adminAppInsta, '@app_sirat'), const SizedBox(width: 10), _brandBadge(false, adminAppFb, 'Facebook')]),
-                ],
-              ),
+          Container(
+            padding: const EdgeInsets.all(22),
+            decoration: BoxDecoration(color: kCard, borderRadius: BorderRadius.circular(24), border: Border.all(color: kPrimary.withOpacity(0.45))),
+            child: Column(
+              children: [
+                SizedBox(width: 72, height: 72, child: CustomPaint(painter: SiratLogoPainter())),
+                const SizedBox(height: 12),
+                Text('SIRAT', style: TextStyle(fontSize: 22, fontFamily: 'serif', fontWeight: FontWeight.w900, color: kText, letterSpacing: 2.5)),
+                Text('The Straight Path • $kInstalledVersion Official', style: TextStyle(fontSize: 11, color: kMuted)),
+                const SizedBox(height: 14),
+                Row(mainAxisAlignment: MainAxisAlignment.center, children: [_brandBadge(true, adminAppInsta, '@app_sirat'), const SizedBox(width: 10), _brandBadge(false, adminAppFb, 'Facebook')]),
+              ],
             ),
           ),
           const SizedBox(height: 14),
@@ -1496,69 +1394,6 @@ class _SettingsProfileScreenState extends State<SettingsProfileScreen> {
                 ),
               ],
             ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class AdminDashboardPage extends StatefulWidget {
-  final VoidCallback onRebuild;
-  const AdminDashboardPage({super.key, required this.onRebuild});
-  @override
-  State<AdminDashboardPage> createState() => _AdminDashboardPageState();
-}
-
-class _AdminDashboardPageState extends State<AdminDashboardPage> {
-  late TextEditingController pinC, banTC, banMC, updVC, updUC, logC;
-  bool sBan = adminShowBanner, sUpd = adminUpdateAvailable;
-
-  @override
-  void initState() {
-    super.initState();
-    pinC = TextEditingController(text: adminPinCode);
-    banTC = TextEditingController(text: adminBannerTitle);
-    banMC = TextEditingController(text: adminBannerMsg);
-    updVC = TextEditingController(text: adminLatestVer);
-    updUC = TextEditingController(text: adminUpdateUrl);
-    logC = TextEditingController(text: adminChangelog);
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('Sirat Owner Command Center'), backgroundColor: kBg),
-      body: ListView(
-        padding: const EdgeInsets.all(18),
-        children: [
-          SwitchListTile(title: const Text('Show "What\'s New" Update Dialog on Launch'), activeColor: kSecondary, value: sUpd, onChanged: (v) => setState(() => sUpd = v)),
-          TextField(controller: updVC, decoration: const InputDecoration(labelText: 'Update Version Tag (e.g. v2.0.0)')),
-          const SizedBox(height: 8),
-          TextField(controller: logC, maxLines: 4, decoration: const InputDecoration(labelText: 'What\'s New Changes (1 per line)')),
-          const SizedBox(height: 8),
-          TextField(controller: updUC, decoration: const InputDecoration(labelText: 'Update Button APK Download Link')),
-          const SizedBox(height: 14),
-          SwitchListTile(title: const Text('Show Home Banner'), activeColor: kPrimary, value: sBan, onChanged: (v) => setState(() => sBan = v)),
-          TextField(controller: banTC, decoration: const InputDecoration(labelText: 'Banner Heading')),
-          TextField(controller: banMC, decoration: const InputDecoration(labelText: 'Banner Description')),
-          const SizedBox(height: 18),
-          ElevatedButton.icon(
-            style: ElevatedButton.styleFrom(backgroundColor: kPrimary, padding: const EdgeInsets.symmetric(vertical: 15)),
-            onPressed: () {
-              adminShowBanner = sBan;
-              adminBannerTitle = banTC.text.trim();
-              adminBannerMsg = banMC.text.trim();
-              adminUpdateAvailable = sUpd;
-              adminLatestVer = updVC.text.trim();
-              adminUpdateUrl = updUC.text.trim();
-              adminChangelog = logC.text.trim();
-              widget.onRebuild();
-              Navigator.pop(context);
-              showWhatsNewUpdateModal(context);
-            },
-            icon: const Icon(Icons.system_update_rounded, color: Colors.black),
-            label: const Text('SAVE & PREVIEW WHAT\'S NEW POPUP', style: TextStyle(color: Colors.black, fontWeight: FontWeight.w900, fontSize: 12)),
           ),
         ],
       ),
