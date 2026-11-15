@@ -1,7 +1,10 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:math' as math;
+import 'dart:typed_data';
+import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
@@ -13,7 +16,7 @@ void main() {
 }
 
 const MethodChannel _widgetChannel = MethodChannel('com.noor/widgets');
-const String kInstalledVersion = 'v2.5.0';
+const String kInstalledVersion = 'v3.0.0';
 
 bool isDarkMode = true;
 int accentIndex = 0;
@@ -21,15 +24,15 @@ String appLang = 'en';
 bool use12Hour = true;
 String globalUserName = 'Mumin';
 int widgetThemeIdx = 0;
-int widgetAyahSize = 22;
+int widgetAyahSize = 24;
 
 bool adminShowBanner = true;
-String adminBannerTitle = 'Sirat v2.5 Official';
-String adminBannerMsg = 'Recite Surah Al-Mulk before sleeping and track your five daily prayers.';
+String adminBannerTitle = 'Sirat v3.0 Indo-Pak Edition';
+String adminBannerMsg = 'Authentic Indo-Pak 15-Line Quran script and direct Instagram/WhatsApp Story poster sharing.';
 bool adminUpdateAvailable = false;
-String adminLatestVer = 'v2.5.0';
+String adminLatestVer = 'v3.0.0';
 String adminUpdateUrl = 'https://github.com/justRohann18/islamic-app/releases';
-String adminChangelog = '• Added Viral Quote Card Studio for WhatsApp & Instagram\n• Added Smart Haptic Adhkar & Auto-Advance Tasbih\n• Added Jummah Sunnah Checklist & 1-Tap Surah Al-Kahf\n• Added 99 Names of Allah (Asma-ul-Husna) in Kitab\n• Added Islamic Hijri Events Countdown';
+String adminChangelog = '• Added Authentic Indo-Pak 15-Line Quran Majeed Font & Classic Mushaf Rulings\n• Added Direct Image Poster Sharing to Instagram Story & WhatsApp Status\n• Added 6 Kalimas, Namaz Duas & 99 Names of Allah in Kitab\n• Added Multi-Qari Audio & Continue Reading Bookmark';
 
 String adminAppInsta = '@app_sirat';
 String adminAppFb = 'https://www.facebook.com/share/1Bz6Qs6BKV/';
@@ -56,14 +59,10 @@ Color get kBorder => isDarkMode ? const Color(0xFF1E352F) : const Color(0xFFD0DF
 Color get kText => isDarkMode ? Colors.white : const Color(0xFF0F172A);
 Color get kMuted => isDarkMode ? const Color(0xFF8E9E99) : const Color(0xFF64748B);
 
-String liveAyahRef = 'Surah Ash-Sharh • 94:5';
-String liveAyahArab = 'فَإِنَّ مَعَ الْعُسْرِ يُسْرًا';
-String liveAyahTrans = '"Indeed, with hardship comes ease."';
+String liveAyahRef = 'Surah At-Tin • 95:4';
+String liveAyahArab = 'لَقَدْ خَلَقْنَا الْإِنْسَانَ فِي أَحْسَنِ تَقْوِيمٍ';
+String liveAyahTrans = '"We have certainly created man in the best of stature."';
 String liveAyahAudio = 'https://cdn.islamic.network/quran/audio/128/ar.alafasy/6095.mp3';
-
-String liveDuaRef = 'Quranic Dua • 2:201';
-String liveDuaArab = 'رَبَّنَا آتِنَا فِي الدُّنْيَا حَسَنَةً وَفِي الْآخِرَةِ حَسَنَةً وَقِنَا عَذَابَ النَّارِ';
-String liveDuaTrans = '"Our Lord, grant us good in this world and good in the Hereafter."';
 
 Future<void> openSocialProfile(bool isInstagram, String handleOrUrl) async {
   String clean = handleOrUrl.trim();
@@ -99,90 +98,103 @@ Future<void> syncFromGitHubCloudGlobal() async {
   } catch (_) {}
 }
 
-// FEATURE 1: VIRAL QUOTE CARD MAKER (FOR WHATSAPP STATUS & INSTAGRAM STORY)
 void openViralQuoteCardStudio(BuildContext context, String ref, String arab, String trans) {
   int bgStyle = 0;
+  bool isSharing = false;
+  final GlobalKey posterKey = GlobalKey();
   final bgGradients = [
     [const Color(0xFF0D2621), const Color(0xFF050B09)],
     [const Color(0xFF261B0E), const Color(0xFF080604)],
     [const Color(0xFF0E1B33), const Color(0xFF050811)],
+    [const Color(0xFFFDFBF7), const Color(0xFFEAE3D2)],
   ];
   showDialog(
     context: context,
     builder: (ctx) => StatefulBuilder(
-      builder: (ctx, setS) => Dialog(
-        backgroundColor: Colors.transparent,
-        insetPadding: const EdgeInsets.all(18),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              padding: const EdgeInsets.all(26),
-              decoration: BoxDecoration(
-                gradient: LinearGradient(colors: bgGradients[bgStyle], begin: Alignment.topLeft, end: Alignment.bottomRight),
-                borderRadius: BorderRadius.circular(28),
-                border: Border.all(color: kPrimary, width: 1.8),
-                boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.7), blurRadius: 30)],
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      builder: (ctx, setS) {
+        bool isLight = bgStyle == 3;
+        return Dialog(
+          backgroundColor: Colors.transparent,
+          insetPadding: const EdgeInsets.all(16),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              RepaintBoundary(
+                key: posterKey,
+                child: Container(
+                  padding: const EdgeInsets.all(24),
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(colors: bgGradients[bgStyle], begin: Alignment.topLeft, end: Alignment.bottomRight),
+                    borderRadius: BorderRadius.circular(26),
+                    border: Border.all(color: isLight ? const Color(0xFF0284C7) : kPrimary, width: 2.2),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      Row(children: [SizedBox(width: 22, height: 22, child: CustomPaint(painter: SiratLogoPainter())), const SizedBox(width: 8), Text('SIRAT', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w900, letterSpacing: 2, color: kPrimary))]),
-                      Text(ref.toUpperCase(), style: TextStyle(fontSize: 10, color: kSecondary, fontWeight: FontWeight.bold)),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Row(children: [SizedBox(width: 20, height: 20, child: CustomPaint(painter: SiratLogoPainter())), const SizedBox(width: 8), Text('SIRAT', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w900, letterSpacing: 2, color: isLight ? Colors.black : kPrimary))]),
+                          Text(ref.toUpperCase(), style: TextStyle(fontSize: 10, color: isLight ? const Color(0xFF0284C7) : kSecondary, fontWeight: FontWeight.bold)),
+                        ],
+                      ),
+                      const SizedBox(height: 18),
+                      if (arab.isNotEmpty) ...[
+                        Text(arab, textAlign: TextAlign.center, style: TextStyle(fontSize: 28, fontFamily: 'QuranFont', color: isLight ? Colors.black : Colors.white, height: 1.9)),
+                        const SizedBox(height: 14),
+                      ],
+                      Text(trans, textAlign: TextAlign.center, style: TextStyle(fontSize: 13.5, fontFamily: 'serif', color: isLight ? Colors.black87 : Colors.white70, fontStyle: FontStyle.italic, height: 1.45)),
+                      const SizedBox(height: 18),
+                      Divider(color: isLight ? Colors.black26 : Colors.white12, height: 1),
+                      const SizedBox(height: 8),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text('SIRAT ISLAMIC APP', style: TextStyle(fontSize: 9, fontWeight: FontWeight.w900, color: isLight ? Colors.black : kPrimary)),
+                          Text(adminAppInsta, style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: isLight ? const Color(0xFF0284C7) : kSecondary)),
+                        ],
+                      ),
                     ],
                   ),
-                  const SizedBox(height: 22),
-                  if (arab.isNotEmpty) ...[
-                    Text(arab, textAlign: TextAlign.center, style: const TextStyle(fontSize: 26, fontFamily: 'QuranFont', color: Colors.white, height: 1.85)),
-                    const SizedBox(height: 16),
-                  ],
-                  Text(trans, textAlign: TextAlign.center, style: const TextStyle(fontSize: 14.5, fontFamily: 'serif', color: Colors.white70, fontStyle: FontStyle.italic, height: 1.5)),
-                  const SizedBox(height: 24),
-                  Divider(color: Colors.white12, height: 1),
-                  const SizedBox(height: 10),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text('SIRAT ISLAMIC APP', style: TextStyle(fontSize: 9.5, fontWeight: FontWeight.w900, color: kPrimary, letterSpacing: 1.2)),
-                      Text(adminAppInsta, style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: kSecondary)),
-                    ],
+                ),
+              ),
+              const SizedBox(height: 12),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  OutlinedButton(style: OutlinedButton.styleFrom(backgroundColor: kCard, side: BorderSide(color: kPrimary)), onPressed: () => setS(() => bgStyle = (bgStyle + 1) % 4), child: Text('Theme', style: TextStyle(color: kPrimary, fontSize: 12))),
+                  const SizedBox(width: 10),
+                  ElevatedButton.icon(
+                    style: ElevatedButton.styleFrom(backgroundColor: kPrimary, padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11)),
+                    onPressed: isSharing
+                        ? null
+                        : () async {
+                            setS(() => isSharing = true);
+                            try {
+                              final b = posterKey.currentContext?.findRenderObject() as RenderRepaintBoundary?;
+                              if (b != null) {
+                                final ui.Image img = await b.toImage(pixelRatio: 3.0);
+                                final ByteData? bd = await img.toByteData(format: ui.ImageByteFormat.png);
+                                if (bd != null) {
+                                  await _widgetChannel.invokeMethod('sharePosterImage', {'bytes': bd.buffer.asUint8List(), 'caption': '$ref — Shared via Sirat App ($adminAppInsta)'});
+                                }
+                              }
+                            } catch (_) {}
+                            if (ctx.mounted) Navigator.pop(ctx);
+                          },
+                    icon: const Icon(Icons.ios_share_rounded, size: 16, color: Colors.black),
+                    label: Text(isSharing ? 'Sharing...' : 'Share to Insta / WhatsApp', style: const TextStyle(color: Colors.black, fontWeight: FontWeight.w900, fontSize: 11.5)),
                   ),
                 ],
               ),
-            ),
-            const SizedBox(height: 12),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                OutlinedButton(
-                  style: OutlinedButton.styleFrom(backgroundColor: kCard, side: BorderSide(color: kPrimary)),
-                  onPressed: () => setS(() => bgStyle = (bgStyle + 1) % 3),
-                  child: Text('Change Poster Theme', style: TextStyle(color: kPrimary, fontSize: 12)),
-                ),
-                const SizedBox(width: 10),
-                ElevatedButton.icon(
-                  style: ElevatedButton.styleFrom(backgroundColor: kPrimary),
-                  onPressed: () {
-                    Clipboard.setData(ClipboardData(text: '$arab\n\n$trans\n— $ref\nShared via Sirat App ($adminAppInsta)'));
-                    Navigator.pop(ctx);
-                    ScaffoldMessenger.of(context).showSnackBar(SnackBar(backgroundColor: kSecondary, content: const Text('Quote Copied & Ready to Share!', style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold))));
-                  },
-                  icon: const Icon(Icons.share_rounded, size: 16, color: Colors.black),
-                  label: const Text('Copy & Share', style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
-                ),
-              ],
-            ),
-          ],
-        ),
-      ),
+            ],
+          ),
+        );
+      },
     ),
   );
 }
-
-// FEATURE 2: SMART HAPTIC ADHKAR & AUTO-ADVANCE TASBIH STUDIO
+// ---------------- ADHKAR STUDIO, WHAT'S NEW MODAL, PAINTERS, APP SHELL & ONBOARDING ----------------
 void openSmartAdhkarStudio(BuildContext context) {
   int idx = 0, count = 0;
   final azkarList = [
@@ -208,49 +220,35 @@ void openSmartAdhkarStudio(BuildContext context) {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text('SMART ADHKAR & TASBIH STUDIO', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w900, color: kPrimary, letterSpacing: 1.2)),
+                  Text('SMART ADHKAR & TASBIH STUDIO', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w900, color: kPrimary)),
                   TextButton(onPressed: () => setM(() { idx = (idx + 1) % azkarList.length; count = 0; }), child: Text('Switch Zikr', style: TextStyle(color: kSecondary, fontSize: 12, fontWeight: FontWeight.bold))),
                 ],
               ),
-              const SizedBox(height: 10),
-              Text(item['ar'] as String, style: TextStyle(fontSize: 30, fontFamily: 'QuranFont', color: kText)),
-              const SizedBox(height: 4),
-              Text(item['en'] as String, style: TextStyle(fontSize: 12.5, color: kMuted)),
-              const SizedBox(height: 20),
+              Text(item['ar'] as String, style: TextStyle(fontSize: 32, fontFamily: 'QuranFont', color: kText)),
+              Text(item['en'] as String, style: TextStyle(fontSize: 12, color: kMuted)),
+              const SizedBox(height: 18),
               GestureDetector(
                 onTap: () {
                   HapticFeedback.mediumImpact();
                   setM(() {
                     count++;
-                    if (count >= target) {
-                      HapticFeedback.heavyImpact();
-                      idx = (idx + 1) % azkarList.length;
-                      count = 0;
-                    }
+                    if (count >= target) { HapticFeedback.heavyImpact(); idx = (idx + 1) % azkarList.length; count = 0; }
                   });
                 },
                 child: SizedBox(
-                  width: 130,
-                  height: 130,
+                  width: 125,
+                  height: 125,
                   child: Stack(
                     fit: StackFit.expand,
                     children: [
                       CircularProgressIndicator(value: count / target, strokeWidth: 9, backgroundColor: kBg, valueColor: AlwaysStoppedAnimation(kPrimary)),
-                      Center(
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Text('$count', style: TextStyle(fontSize: 34, fontFamily: 'serif', fontWeight: FontWeight.w900, color: kText)),
-                            Text('OF $target', style: TextStyle(fontSize: 10, color: kSecondary, fontWeight: FontWeight.bold)),
-                          ],
-                        ),
-                      ),
+                      Center(child: Column(mainAxisSize: MainAxisSize.min, children: [Text('$count', style: TextStyle(fontSize: 32, fontFamily: 'serif', fontWeight: FontWeight.w900, color: kText)), Text('OF $target', style: TextStyle(fontSize: 10, color: kSecondary, fontWeight: FontWeight.bold))])),
                     ],
                   ),
                 ),
               ),
-              const SizedBox(height: 14),
-              Text('TAP CIRCLE TO COUNT • AUTO-ADVANCES AT $target', style: TextStyle(fontSize: 9.5, color: kMuted, fontWeight: FontWeight.bold, letterSpacing: 0.8)),
+              const SizedBox(height: 12),
+              Text('TAP CIRCLE TO COUNT • AUTO-ADVANCES AT $target', style: TextStyle(fontSize: 9.5, color: kMuted, fontWeight: FontWeight.bold)),
             ],
           ),
         );
@@ -275,20 +273,20 @@ void showWhatsNewUpdateModal(BuildContext context) {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Column(crossAxisAlignment: CrossAxisAlignment.start, children: [Text('WHAT\'S NEW', style: TextStyle(fontSize: 19, fontFamily: 'serif', fontWeight: FontWeight.w900, color: kText, letterSpacing: 1)), Text('Sirat Update • $adminLatestVer', style: TextStyle(fontSize: 11.5, color: kSecondary, fontWeight: FontWeight.bold))]),
+                Column(crossAxisAlignment: CrossAxisAlignment.start, children: [Text('WHAT\'S NEW', style: TextStyle(fontSize: 19, fontFamily: 'serif', fontWeight: FontWeight.w900, color: kText)), Text('Sirat Update • $adminLatestVer', style: TextStyle(fontSize: 11.5, color: kSecondary, fontWeight: FontWeight.bold))]),
                 IconButton(icon: Icon(Icons.close_rounded, color: kMuted, size: 20), onPressed: () => Navigator.pop(ctx)),
               ],
             ),
-            Divider(color: kBorder, height: 22),
-            ...lines.map((item) => Padding(padding: const EdgeInsets.only(bottom: 8), child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [Icon(Icons.check_circle_outline_rounded, size: 15, color: kSecondary), const SizedBox(width: 8), Expanded(child: Text(item.replaceAll('•', '').trim(), style: TextStyle(fontSize: 13, color: kText, height: 1.35)))]))),
-            const SizedBox(height: 16),
+            Divider(color: kBorder, height: 20),
+            ...lines.map((item) => Padding(padding: const EdgeInsets.only(bottom: 8), child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [Icon(Icons.check_circle_outline_rounded, size: 15, color: kSecondary), const SizedBox(width: 8), Expanded(child: Text(item.replaceAll('•', '').trim(), style: TextStyle(fontSize: 13, color: kText)))]))),
+            const SizedBox(height: 14),
             SizedBox(
               width: double.infinity,
               child: ElevatedButton.icon(
-                style: ElevatedButton.styleFrom(backgroundColor: kPrimary, padding: const EdgeInsets.symmetric(vertical: 14), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16))),
+                style: ElevatedButton.styleFrom(backgroundColor: kPrimary, padding: const EdgeInsets.symmetric(vertical: 14)),
                 onPressed: () { Navigator.pop(ctx); openSocialProfile(false, adminUpdateUrl); },
                 icon: const Icon(Icons.download_rounded, color: Colors.black, size: 19),
-                label: const Text('UPDATE NOW', style: TextStyle(color: Colors.black, fontWeight: FontWeight.w900, letterSpacing: 1)),
+                label: const Text('UPDATE NOW', style: TextStyle(color: Colors.black, fontWeight: FontWeight.w900)),
               ),
             ),
           ],
@@ -407,7 +405,7 @@ class _NoorSuperAppState extends State<NoorSuperApp> {
         use12Hour = p.getBool('use12') ?? true;
         globalUserName = p.getString('user_name') ?? 'Mumin';
         widgetThemeIdx = p.getInt('wid_theme') ?? 0;
-        widgetAyahSize = p.getInt('wid_size') ?? 22;
+        widgetAyahSize = p.getInt('wid_size') ?? 24;
         showOnboarding = !(p.getBool('sirat_onboarded') ?? false);
       });
       await fetchLiveDailyAyahAndDua();
@@ -439,10 +437,10 @@ class _SiratOnboardingFlashcardsState extends State<SiratOnboardingFlashcards> {
   final nameC = TextEditingController(text: 'Mumin'), cityC = TextEditingController(text: 'Barpaka');
 
   final List<Map<String, dynamic>> cards = const [
-    {'tag': 'WELCOME TO SIRAT', 'title': 'Your Companion on\nthe Straight Path', 'sub': 'An architectural, ad-free Islamic ecosystem crafted for daily Salah discipline, Quranic reflection, and authentic Sunnah.', 'ic': Icons.mosque_outlined},
+    {'tag': 'WELCOME TO SIRAT', 'title': 'Your Companion on\nthe Straight Path', 'sub': 'An architectural, ad-free Islamic ecosystem crafted for daily Salah discipline, Indo-Pak Quranic reflection, and authentic Sunnah.', 'ic': Icons.mosque_outlined},
     {'tag': 'PRECISION SALAH & ALARMS', 'title': 'Dual-Pane Live Timer\n& Prayer Alerts', 'sub': 'Track your 5 daily prayers in Jamaat or On-Time. Hold any prayer time to set your local Masjid schedule and receive exact prayer notifications.', 'ic': Icons.notifications_active_outlined},
-    {'tag': 'QURAN, HADITH & 99 NAMES', 'title': '114 Surahs, 10 Hadith\nBooks & Asma-ul-Husna', 'sub': 'Read the Noble Quran in Uthmani calligraphy with Multi-Qari audio, explore 99 Names of Allah, and search 36,000+ Hadiths.', 'ic': Icons.menu_book_rounded},
-    {'tag': 'HOME WIDGETS & PERSONALIZE', 'title': 'Live Wallpaper Widgets\n& Viral Quote Studio', 'sub': 'Sync dual-pane countdown widgets to your phone wallpaper and share luxury Quranic status cards. Enter your name and city below.', 'ic': Icons.layers_outlined},
+    {'tag': 'INDO-PAK QURAN & HADITH', 'title': '15-Line Indo-Pak Script,\n10 Books & 6 Kalimas', 'sub': 'Read the Noble Quran in classic Indo-Pak Mushaf lines with Multi-Qari audio, explore 99 Names & 6 Kalimas, and search 36,000+ Hadiths.', 'ic': Icons.menu_book_rounded},
+    {'tag': 'DIRECT STORY SHARING', 'title': 'Share HD Posters to\nInstagram & WhatsApp', 'sub': 'Generate high-resolution Quran & Hadith image posters and share directly to your Instagram Story or WhatsApp Status in one tap.', 'ic': Icons.ios_share_rounded},
   ];
 
   @override
@@ -579,29 +577,7 @@ class _MainShellState extends State<MainShell> {
     );
   }
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-// ---------------- HOME (ADHKAR + JUMMAH + VIRAL CARDS + AZAAN), STREAK (EVENTS), KITAB (99 NAMES) & SETTINGS ----------------
+// ---------------- HOME SCREEN, WIDGET STUDIO & STREAK SCREEN ----------------
 class InteractiveHomeScreen extends StatefulWidget {
   final Function(int, {int sub}) onNav;
   final VoidCallback onRebuild;
@@ -726,7 +702,6 @@ class _InteractiveHomeScreenState extends State<InteractiveHomeScreen> {
           ),
           const SizedBox(height: 14),
 
-          // Dual-Pane Hero Card
           Container(
             padding: const EdgeInsets.all(18),
             decoration: BoxDecoration(gradient: const LinearGradient(colors: [Color(0xFF0D2621), Color(0xFF060D0B)]), borderRadius: BorderRadius.circular(24), border: Border.all(color: kSecondary.withOpacity(0.55), width: 1.5)),
@@ -812,7 +787,6 @@ class _InteractiveHomeScreenState extends State<InteractiveHomeScreen> {
           ),
           const SizedBox(height: 14),
 
-          // Quick Actions Row: Smart Adhkar Studio + Roza Tracker
           Row(
             children: [
               Expanded(
@@ -857,7 +831,6 @@ class _InteractiveHomeScreenState extends State<InteractiveHomeScreen> {
           ),
           const SizedBox(height: 14),
 
-          // Jummah & Sunnah Checklist Card with 1-Tap Surah Al-Kahf!
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(color: kCard, borderRadius: BorderRadius.circular(20), border: Border.all(color: kBorder)),
@@ -867,29 +840,19 @@ class _InteractiveHomeScreenState extends State<InteractiveHomeScreen> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text('JUMMAH & SUNNAH CHECKLIST', style: TextStyle(fontSize: 10.5, fontWeight: FontWeight.w900, color: kPrimary, letterSpacing: 1)),
+                    Text('JUMMAH & SUNNAH CHECKLIST', style: TextStyle(fontSize: 10.5, fontWeight: FontWeight.w900, color: kPrimary)),
                     GestureDetector(
                       onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const SurahReaderPage(num: 18, name: 'Al-Kahf'))),
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                        decoration: BoxDecoration(color: kPrimary, borderRadius: BorderRadius.circular(10)),
-                        child: const Text('READ SURAH AL-KAHF', style: TextStyle(fontSize: 9.5, fontWeight: FontWeight.w900, color: Colors.black)),
-                      ),
+                      child: Container(padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4), decoration: BoxDecoration(color: kPrimary, borderRadius: BorderRadius.circular(10)), child: const Text('READ SURAH AL-KAHF', style: TextStyle(fontSize: 9.5, fontWeight: FontWeight.w900, color: Colors.black))),
                     ),
                   ],
                 ),
-                const SizedBox(height: 10),
+                const SizedBox(height: 8),
                 Wrap(
                   spacing: 8,
                   children: jummahChecklist.keys.map((k) {
                     bool done = jummahChecklist[k] ?? false;
-                    return FilterChip(
-                      selected: done,
-                      selectedColor: kSecondary.withOpacity(0.25),
-                      checkmarkColor: kSecondary,
-                      label: Text(k, style: TextStyle(fontSize: 11, color: kText)),
-                      onSelected: (v) => setState(() => jummahChecklist[k] = v),
-                    );
+                    return FilterChip(selected: done, selectedColor: kSecondary.withOpacity(0.25), checkmarkColor: kSecondary, label: Text(k, style: TextStyle(fontSize: 11, color: kText)), onSelected: (v) => setState(() => jummahChecklist[k] = v));
                   }).toList(),
                 ),
               ],
@@ -897,7 +860,6 @@ class _InteractiveHomeScreenState extends State<InteractiveHomeScreen> {
           ),
           const SizedBox(height: 14),
 
-          // Live Verse of the Day with Viral Poster Share Studio Button!
           Container(
             padding: const EdgeInsets.all(18),
             decoration: BoxDecoration(color: kCard, borderRadius: BorderRadius.circular(20), border: Border.all(color: kBorder)),
@@ -912,16 +874,20 @@ class _InteractiveHomeScreenState extends State<InteractiveHomeScreen> {
                       children: [
                         GestureDetector(
                           onTap: () => openViralQuoteCardStudio(context, liveAyahRef, liveAyahArab, liveAyahTrans),
-                          child: Icon(Icons.ios_share_rounded, size: 17, color: kSecondary),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                            decoration: BoxDecoration(color: kSecondary.withOpacity(0.18), borderRadius: BorderRadius.circular(8)),
+                            child: Row(children: [Icon(Icons.ios_share_rounded, size: 13, color: kSecondary), const SizedBox(width: 4), Text('SHARE POSTER', style: TextStyle(fontSize: 9, fontWeight: FontWeight.w900, color: kSecondary))]),
+                          ),
                         ),
-                        const SizedBox(width: 12),
+                        const SizedBox(width: 10),
                         GestureDetector(onTap: () async { await fetchLiveDailyAyahAndDua(forceRandom: true); if (mounted) setState(() {}); }, child: Icon(Icons.refresh_rounded, size: 18, color: kPrimary)),
                       ],
                     ),
                   ],
                 ),
-                const SizedBox(height: 10),
-                Text(liveAyahArab, textAlign: TextAlign.right, style: TextStyle(fontSize: 25, fontFamily: 'QuranFont', color: kText, height: 1.8)),
+                const SizedBox(height: 12),
+                Text(liveAyahArab, textAlign: TextAlign.right, style: TextStyle(fontSize: 28, fontFamily: 'QuranFont', color: kText, height: 1.9)),
                 const SizedBox(height: 8),
                 Text(liveAyahTrans, style: TextStyle(fontSize: 13, fontFamily: 'serif', color: kSecondary, fontStyle: FontStyle.italic)),
               ],
@@ -996,7 +962,7 @@ class _LiveAnimatedWidgetStudioPageState extends State<LiveAnimatedWidgetStudioP
               children: [
                 Text(liveAyahRef.toUpperCase(), style: const TextStyle(color: Color(0xFFD6B36A), fontSize: 9.5, fontWeight: FontWeight.bold)),
                 const SizedBox(height: 10),
-                Text(liveAyahArab, textAlign: TextAlign.right, style: TextStyle(color: Colors.white, fontSize: widgetAyahSize.toDouble(), fontFamily: 'QuranFont', height: 1.8)),
+                Text(liveAyahArab, textAlign: TextAlign.right, style: TextStyle(color: Colors.white, fontSize: widgetAyahSize.toDouble(), fontFamily: 'QuranFont', height: 1.9)),
                 const SizedBox(height: 8),
                 Text(liveAyahTrans, style: TextStyle(color: bCol, fontSize: 11.5, fontFamily: 'serif', fontStyle: FontStyle.italic)),
               ],
@@ -1025,7 +991,7 @@ class _UniqueStreakScreenState extends State<UniqueStreakScreen> {
   SharedPreferences? prefs;
   final prayers = ['Fajr', 'Dhuhr', 'Asr', 'Maghrib', 'Isha'];
   final upcomingEvents = const [
-    {'name': 'Ramadan 1448 AH', 'date': 'Feb 8, 2027', 'sub': 'Month of Fasting & Quran'},
+    {'name': 'Ramadan 1448 AH', 'date': 'Feb 8, 2027', 'sub': 'Blessed Month of Fasting'},
     {'name': 'Laylatul Qadr', 'date': 'Mar 5, 2027', 'sub': 'Night of Power (27th Ramadan)'},
     {'name': 'Eid al-Fitr', 'date': 'Mar 10, 2027', 'sub': '1st Shawwal Celebration'},
     {'name': 'Day of Arafah & Eid al-Adha', 'date': 'May 16, 2027', 'sub': '9th & 10th Dhul Hijjah'},
@@ -1118,7 +1084,7 @@ class _UniqueStreakScreenState extends State<UniqueStreakScreen> {
     );
   }
 }
-
+// ---------------- PART 4A: KITAB VAULT (QURAN + HADITH + 99 NAMES + 6 KALIMAS) ----------------
 class KitabScreen extends StatefulWidget {
   final int initTab;
   const KitabScreen({super.key, this.initTab = 0});
@@ -1146,6 +1112,16 @@ class _KitabScreenState extends State<KitabScreen> {
     {'id': 'nawawi', 'title': 'An-Nawawi\'s\n40 Hadith', 'count': '42', 'sec': 1, 'col': Color(0xFFF43F5E), 'ic': Icons.star_border_rounded},
     {'id': 'qudsi', 'title': 'Hadith\nQudsi', 'count': '40', 'sec': 1, 'col': Color(0xFF60A5FA), 'ic': Icons.article_outlined},
     {'id': 'dehlawi', 'title': 'Shah Waliullah\n40 Hadith', 'count': '40', 'sec': 1, 'col': Color(0xFF10B981), 'ic': Icons.history_edu_rounded},
+  ];
+
+  final List<Map<String, String>> kalimasAndSalahDuas = const [
+    {'title': '1. First Kalima (Tayyibah)', 'ar': 'لَا إِلٰهَ إِلَّا اللّٰهُ مُحَمَّدٌ رَّسُولُ اللّٰهِ', 'en': 'There is none worthy of worship except Allah, and Muhammad is the Messenger of Allah.'},
+    {'title': '2. Second Kalima (Shahadah)', 'ar': 'أَشْهَدُ أَنْ لَا إِلٰهَ إِلَّا اللّٰهُ وَحْدَهُ لَا شَرِيكَ لَهُ وَأَشْهَدُ أَنَّ مُحَمَّدًا عَبْدُهُ وَرَسُولُهُ', 'en': 'I bear witness that there is none worthy of worship except Allah, the One alone, without partner, and I bear witness that Muhammad is His servant and Messenger.'},
+    {'title': '3. Third Kalima (Tamjeed)', 'ar': 'سُبْحَانَ اللّٰهِ وَالْحَمْدُ لِلّٰهِ وَلَا إِلٰهَ إِلَّا اللّٰهُ وَاللّٰهُ أَكْبَرُ وَلَا حَوْلَ وَلَا قُوَّةَ إِلَّا بِاللّٰهِ الْعَلِيِّ الْعَظِيمِ', 'en': 'Glory be to Allah, all praise be to Allah, there is none worthy of worship except Allah, and Allah is the Greatest.'},
+    {'title': '4. Sana (Opening Prayer of Salah)', 'ar': 'سُبْحَانَكَ اللّٰهُمَّ وَبِحَمْدِكَ وَتَبَارَكَ اسْمُكَ وَتَعَالَى جَدُّكَ وَلَا إِلٰهَ غَيْرُكَ', 'en': 'Glory be to You, O Allah, and all praise is Yours; blessed is Your Name and exalted is Your Majesty.'},
+    {'title': '5. Tashahhud (At-Tahiyyat)', 'ar': 'التَّحِيَّاتُ لِلّٰهِ وَالصَّلَوَاتُ وَالطَّيِّبَاتُ، السَّلَامُ عَلَيْكَ أَيُّهَا النَّبِيُّ وَرَحْمَةُ اللّٰهِ وَبَرَكَاتُهُ', 'en': 'All compliments, prayers and pure words are due to Allah. Peace be upon you, O Prophet, and the mercy of Allah.'},
+    {'title': '6. Durood-e-Ibrahim', 'ar': 'اللّٰهُمَّ صَلِّ عَلَى مُحَمَّدٍ وَعَلَى آلِ مُحَمَّدٍ كَمَا صَلَّيْتَ عَلَى إِبْرَاهِيمَ وَعَلَى آلِ إِبْرَاهِيمَ إِنَّكَ حَمِيدٌ مَجِيدٌ', 'en': 'O Allah, send grace and honor upon Muhammad and upon the family of Muhammad, just as You sent upon Ibrahim.'},
+    {'title': '7. Dua-e-Qunoot (Witr Prayer)', 'ar': 'اللّٰهُمَّ إِنَّا نَسْتَعِينُكَ وَنَسْتَغْفِرُكَ وَنُؤْمِنُ بِكَ وَنَتَوَكَّلُ عَلَيْكَ وَنُثْنِي عَلَيْكَ الْخَيْرَ', 'en': 'O Allah! We implore You for help and beg forgiveness of You and believe in You and rely on You.'},
   ];
 
   @override
@@ -1200,11 +1176,13 @@ class _KitabScreenState extends State<KitabScreen> {
           children: [
             Row(
               children: [
-                Expanded(child: ElevatedButton(style: ElevatedButton.styleFrom(backgroundColor: tab == 0 ? kPrimary : kCard, padding: EdgeInsets.zero), onPressed: () => setState(() => tab = 0), child: Text('QURAN (114)', style: TextStyle(color: tab == 0 ? Colors.black : kText, fontWeight: FontWeight.bold, fontSize: 10.5)))),
-                const SizedBox(width: 6),
-                Expanded(child: ElevatedButton(style: ElevatedButton.styleFrom(backgroundColor: tab == 1 ? kPrimary : kCard, padding: EdgeInsets.zero), onPressed: () => setState(() => tab = 1), child: Text('10 HADITH', style: TextStyle(color: tab == 1 ? Colors.black : kText, fontWeight: FontWeight.bold, fontSize: 10.5)))),
-                const SizedBox(width: 6),
-                Expanded(child: ElevatedButton(style: ElevatedButton.styleFrom(backgroundColor: tab == 2 ? kPrimary : kCard, padding: EdgeInsets.zero), onPressed: () => setState(() => tab = 2), child: Text('99 NAMES', style: TextStyle(color: tab == 2 ? Colors.black : kText, fontWeight: FontWeight.bold, fontSize: 10.5)))),
+                Expanded(child: ElevatedButton(style: ElevatedButton.styleFrom(backgroundColor: tab == 0 ? kPrimary : kCard, padding: EdgeInsets.zero), onPressed: () => setState(() => tab = 0), child: Text('QURAN', style: TextStyle(color: tab == 0 ? Colors.black : kText, fontWeight: FontWeight.bold, fontSize: 10)))),
+                const SizedBox(width: 5),
+                Expanded(child: ElevatedButton(style: ElevatedButton.styleFrom(backgroundColor: tab == 1 ? kPrimary : kCard, padding: EdgeInsets.zero), onPressed: () => setState(() => tab = 1), child: Text('HADITH', style: TextStyle(color: tab == 1 ? Colors.black : kText, fontWeight: FontWeight.bold, fontSize: 10)))),
+                const SizedBox(width: 5),
+                Expanded(child: ElevatedButton(style: ElevatedButton.styleFrom(backgroundColor: tab == 2 ? kPrimary : kCard, padding: EdgeInsets.zero), onPressed: () => setState(() => tab = 2), child: Text('99 NAMES', style: TextStyle(color: tab == 2 ? Colors.black : kText, fontWeight: FontWeight.bold, fontSize: 10)))),
+                const SizedBox(width: 5),
+                Expanded(child: ElevatedButton(style: ElevatedButton.styleFrom(backgroundColor: tab == 3 ? kPrimary : kCard, padding: EdgeInsets.zero), onPressed: () => setState(() => tab = 3), child: Text('KALIMAS', style: TextStyle(color: tab == 3 ? Colors.black : kText, fontWeight: FontWeight.bold, fontSize: 10)))),
               ],
             ),
             const SizedBox(height: 12),
@@ -1234,7 +1212,7 @@ class _KitabScreenState extends State<KitabScreen> {
                                   itemBuilder: (_, i) => ListTile(
                                     leading: Text('${fS[i]['number']}', style: TextStyle(color: kPrimary, fontWeight: FontWeight.bold)),
                                     title: Text(fS[i]['englishName'], style: TextStyle(fontWeight: FontWeight.bold, color: kText)),
-                                    trailing: Text(fS[i]['name'], style: TextStyle(fontSize: 20, fontFamily: 'QuranFont', color: kPrimary)),
+                                    trailing: Text(fS[i]['name'], style: TextStyle(fontSize: 22, fontFamily: 'QuranFont', color: kPrimary)),
                                     onTap: () async {
                                       final p = await SharedPreferences.getInstance();
                                       await p.setInt('last_surah_num', fS[i]['number']);
@@ -1307,26 +1285,54 @@ class _KitabScreenState extends State<KitabScreen> {
                             ),
                           ],
                         )
-                      : GridView.builder(
-                          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: 2, crossAxisSpacing: 10, mainAxisSpacing: 10, childAspectRatio: 1.15),
-                          itemCount: asmaList.length,
-                          itemBuilder: (_, i) {
-                            final n = asmaList[i];
-                            return Container(
-                              padding: const EdgeInsets.all(12),
-                              decoration: BoxDecoration(color: kCard, borderRadius: BorderRadius.circular(18), border: Border.all(color: kBorder)),
-                              child: Column(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Text(n['name'] ?? '', style: TextStyle(fontSize: 24, fontFamily: 'QuranFont', color: kPrimary)),
-                                  const SizedBox(height: 4),
-                                  Text(n['transliteration'] ?? '', style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.bold, color: kText)),
-                                  Text(n['en']?['meaning'] ?? '', maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(fontSize: 10.5, color: kMuted)),
-                                ],
-                              ),
-                            );
-                          },
-                        )),
+                      : (tab == 2
+                          ? GridView.builder(
+                              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: 2, crossAxisSpacing: 10, mainAxisSpacing: 10, childAspectRatio: 1.15),
+                              itemCount: asmaList.length,
+                              itemBuilder: (_, i) {
+                                final n = asmaList[i];
+                                return Container(
+                                  padding: const EdgeInsets.all(12),
+                                  decoration: BoxDecoration(color: kCard, borderRadius: BorderRadius.circular(18), border: Border.all(color: kBorder)),
+                                  child: Column(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      Text(n['name'] ?? '', style: TextStyle(fontSize: 26, fontFamily: 'QuranFont', color: kPrimary)),
+                                      const SizedBox(height: 4),
+                                      Text(n['transliteration'] ?? '', style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.bold, color: kText)),
+                                      Text(n['en']?['meaning'] ?? '', maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(fontSize: 10.5, color: kMuted)),
+                                    ],
+                                  ),
+                                );
+                              },
+                            )
+                          : ListView.builder(
+                              itemCount: kalimasAndSalahDuas.length,
+                              itemBuilder: (_, i) {
+                                final kd = kalimasAndSalahDuas[i];
+                                return Container(
+                                  margin: const EdgeInsets.only(bottom: 12),
+                                  padding: const EdgeInsets.all(16),
+                                  decoration: BoxDecoration(color: kCard, borderRadius: BorderRadius.circular(18), border: Border.all(color: kBorder)),
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                                    children: [
+                                      Row(
+                                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                        children: [
+                                          Text(kd['title']!, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w900, color: kPrimary)),
+                                          GestureDetector(onTap: () => openViralQuoteCardStudio(context, kd['title']!, kd['ar']!, kd['en']!), child: Icon(Icons.ios_share_rounded, size: 16, color: kSecondary)),
+                                        ],
+                                      ),
+                                      const SizedBox(height: 10),
+                                      Text(kd['ar']!, textAlign: TextAlign.right, style: TextStyle(fontSize: 27, fontFamily: 'QuranFont', color: kText, height: 1.9)),
+                                      const SizedBox(height: 8),
+                                      Text(kd['en']!, style: TextStyle(fontSize: 13, fontFamily: 'serif', color: kMuted, height: 1.45)),
+                                    ],
+                                  ),
+                                );
+                              },
+                            ))),
             ),
           ],
         ),
@@ -1334,7 +1340,7 @@ class _KitabScreenState extends State<KitabScreen> {
     );
   }
 }
-
+// ---------------- PART 4B: INDO-PAK MUSHAF READER & JAHIDUL HASSAN SETTINGS ----------------
 class HadithBookReaderPage extends StatefulWidget {
   final String bookId, bookTitle;
   final int maxSections;
@@ -1426,7 +1432,7 @@ class SurahReaderPage extends StatefulWidget {
 
 class _SurahReaderPageState extends State<SurahReaderPage> {
   List ar = [], tr = [];
-  bool loading = true;
+  bool loading = true, isMushafPageMode = true;
   String qariCode = 'ar.alafasy';
   final player = AudioPlayer();
   int? playingIdx;
@@ -1460,54 +1466,112 @@ class _SurahReaderPageState extends State<SurahReaderPage> {
         title: Text(widget.name),
         backgroundColor: kBg,
         actions: [
+          TextButton(
+            onPressed: () => setState(() => isMushafPageMode = !isMushafPageMode),
+            child: Text(isMushafPageMode ? 'TRANSLATION' : 'MUSHAF PAGE', style: TextStyle(fontSize: 10.5, fontWeight: FontWeight.w900, color: kSecondary)),
+          ),
           DropdownButtonHideUnderline(
             child: DropdownButton<String>(
               value: qariCode,
               dropdownColor: kCard,
-              items: qaris.map((q) => DropdownMenuItem(value: q['id'], child: Text(q['name']!, style: TextStyle(fontSize: 12, color: kPrimary, fontWeight: FontWeight.bold)))).toList(),
+              items: qaris.map((q) => DropdownMenuItem(value: q['id'], child: Text(q['name']!, style: TextStyle(fontSize: 11.5, color: kPrimary, fontWeight: FontWeight.bold)))).toList(),
               onChanged: (v) { if (v != null) { player.stop(); setState(() { qariCode = v; playingIdx = null; }); _loadSurah(); } },
             ),
           ),
-          const SizedBox(width: 12),
+          const SizedBox(width: 10),
         ],
       ),
       body: loading
           ? Center(child: CircularProgressIndicator(color: kPrimary))
-          : ListView.builder(
-              padding: const EdgeInsets.all(16),
-              itemCount: ar.length,
-              itemBuilder: (_, i) => Container(
-                margin: const EdgeInsets.only(bottom: 12),
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(color: kCard, borderRadius: BorderRadius.circular(16), border: Border.all(color: playingIdx == i ? kPrimary : kBorder)),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
+          : (isMushafPageMode
+              ? ListView(
+                  padding: const EdgeInsets.all(14),
                   children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFFDFBF7),
+                        borderRadius: BorderRadius.circular(18),
+                        border: Border.all(color: const Color(0xFF0284C7), width: 3),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 14),
+                            decoration: BoxDecoration(color: const Color(0xFFE0F2FE), borderRadius: BorderRadius.circular(10), border: Border.all(color: const Color(0xFF0284C7), width: 1.5)),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Text('Ayahs: ${ar.length}', style: const TextStyle(color: Color(0xFF0369A1), fontWeight: FontWeight.bold, fontSize: 11)),
+                                Text('Surah ${widget.name}', style: const TextStyle(color: Colors.black, fontFamily: 'serif', fontWeight: FontWeight.w900, fontSize: 16)),
+                                Text('No. ${widget.num}', style: const TextStyle(color: Color(0xFF0369A1), fontWeight: FontWeight.bold, fontSize: 11)),
+                              ],
+                            ),
+                          ),
+                          if (widget.num != 9) ...[
+                            const SizedBox(height: 10),
+                            const Text('بِسْمِ اللّٰهِ الرَّحْمٰنِ الرَّحِيْمِ', textAlign: TextAlign.center, style: TextStyle(fontSize: 28, fontFamily: 'QuranFont', color: Colors.black, height: 1.8)),
+                            const Divider(color: Colors.black87, thickness: 1.4),
+                          ],
+                          ...List.generate(ar.length, (i) => GestureDetector(
+                                onTap: () {
+                                  if (playingIdx == i) { player.stop(); setState(() => playingIdx = null); }
+                                  else { setState(() => playingIdx = i); player.play(UrlSource(ar[i]['audio'])); }
+                                },
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(vertical: 8),
+                                  decoration: BoxDecoration(
+                                    color: playingIdx == i ? const Color(0xFFE0F2FE) : Colors.transparent,
+                                    border: const Border(bottom: BorderSide(color: Colors.black87, width: 1.3)),
+                                  ),
+                                  child: Text(
+                                    '${ar[i]['text']} ﴿${ar[i]['numberInSurah']}﴾',
+                                    textAlign: TextAlign.right,
+                                    style: const TextStyle(fontSize: 30, fontFamily: 'QuranFont', color: Colors.black, height: 1.95),
+                                  ),
+                                ),
+                              )),
+                        ],
+                      ),
+                    ),
+                  ],
+                )
+              : ListView.builder(
+                  padding: const EdgeInsets.all(16),
+                  itemCount: ar.length,
+                  itemBuilder: (_, i) => Container(
+                    margin: const EdgeInsets.only(bottom: 12),
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(color: kCard, borderRadius: BorderRadius.circular(16), border: Border.all(color: playingIdx == i ? kPrimary : kBorder)),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                        Text('VERSE ${ar[i]['numberInSurah']}', style: TextStyle(fontSize: 10, color: kPrimary, fontWeight: FontWeight.bold)),
                         Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            IconButton(icon: Icon(Icons.ios_share_rounded, size: 17, color: kPrimary), onPressed: () => openViralQuoteCardStudio(context, 'Surah ${widget.name} • ${ar[i]['numberInSurah']}', ar[i]['text'], tr[i]['text'])),
-                            IconButton(
-                              icon: Icon(playingIdx == i ? Icons.stop_circle_outlined : Icons.play_circle_outline, color: kSecondary),
-                              onPressed: () {
-                                if (playingIdx == i) { player.stop(); setState(() => playingIdx = null); }
-                                else { setState(() => playingIdx = i); player.play(UrlSource(ar[i]['audio'])); }
-                              },
+                            Text('VERSE ${ar[i]['numberInSurah']}', style: TextStyle(fontSize: 10, color: kPrimary, fontWeight: FontWeight.bold)),
+                            Row(
+                              children: [
+                                IconButton(icon: Icon(Icons.ios_share_rounded, size: 17, color: kPrimary), onPressed: () => openViralQuoteCardStudio(context, 'Surah ${widget.name} • ${ar[i]['numberInSurah']}', ar[i]['text'], tr[i]['text'])),
+                                IconButton(
+                                  icon: Icon(playingIdx == i ? Icons.stop_circle_outlined : Icons.play_circle_outline, color: kSecondary),
+                                  onPressed: () {
+                                    if (playingIdx == i) { player.stop(); setState(() => playingIdx = null); }
+                                    else { setState(() => playingIdx = i); player.play(UrlSource(ar[i]['audio'])); }
+                                  },
+                                ),
+                              ],
                             ),
                           ],
                         ),
+                        Text(ar[i]['text'], textAlign: TextAlign.right, style: TextStyle(fontSize: 28, fontFamily: 'QuranFont', color: kText, height: 1.9)),
+                        const SizedBox(height: 10),
+                        Text(tr[i]['text'], style: TextStyle(fontSize: 13.5, color: kMuted)),
                       ],
                     ),
-                    Text(ar[i]['text'], textAlign: TextAlign.right, style: TextStyle(fontSize: 26, fontFamily: 'QuranFont', color: kText, height: 1.85)),
-                    const SizedBox(height: 10),
-                    Text(tr[i]['text'], style: TextStyle(fontSize: 13.5, color: kMuted)),
-                  ],
-                ),
-              ),
-            ),
+                  ),
+                )),
     );
   }
 }
@@ -1730,8 +1794,3 @@ class _SettingsProfileScreenState extends State<SettingsProfileScreen> {
     );
   }
 }
-
-
-
-
-
