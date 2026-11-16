@@ -18,7 +18,7 @@ jobs:
         with:
           channel: 'stable'
 
-      - name: Build Sirat v1.0.0 Official Release
+      - name: Build Sirat v4.0 with Official Image Share & Indo-Pak Font
         run: |
           cp lib/main.dart /tmp/main.dart
           rm -rf lib pubspec.yaml
@@ -26,17 +26,18 @@ jobs:
           cp /tmp/main.dart lib/main.dart
 
           mkdir -p assets/fonts
-          curl -L -s "https://github.com/google/fonts/raw/main/ofl/amiriquran/AmiriQuran-Regular.ttf" -o assets/fonts/QuranFont.ttf
+          curl -L -s "https://cdn.jsdelivr.net/gh/fawazahmed0/quran-api@1/fonts/al-qalam-quran-majeed-1-org.ttf" -o assets/fonts/QuranFont.ttf
+          if [ ! -s assets/fonts/QuranFont.ttf ]; then
+            curl -L -s "https://cdn.jsdelivr.net/gh/fawazahmed0/quran-api@1/fonts/pdms-saleem-quran-full-org.ttf" -o assets/fonts/QuranFont.ttf
+          fi
 
           mkdir -p android/app/src/main/res/layout android/app/src/main/res/xml android/app/src/main/res/drawable
 
           cat << 'EOF' > android/app/src/main/res/drawable/ic_sirat_logo.xml
           <?xml version="1.0" encoding="utf-8"?>
           <vector xmlns:android="http://schemas.android.com/apk/res/android"
-              android:width="108dp"
-              android:height="108dp"
-              android:viewportWidth="108"
-              android:viewportHeight="108">
+              android:width="108dp" android:height="108dp"
+              android:viewportWidth="108" android:viewportHeight="108">
               <path android:fillColor="#06120F" android:pathData="M0,0h108v108h-108z"/>
               <path android:fillColor="#0E241E" android:pathData="M14,14h80v80h-80z"/>
               <path android:strokeColor="#D6B36A" android:strokeWidth="2.8" android:fillColor="#091915"
@@ -248,11 +249,8 @@ jobs:
                           }
                           val intent = Intent(context, PrayerAlarmReceiver::class.java).apply { putExtra("prayer", prayer) }
                           val pi = PendingIntent.getBroadcast(context, reqCode++, intent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
-                          try {
-                              am.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, cal.timeInMillis, pi)
-                          } catch (_: Exception) {
-                              am.set(AlarmManager.RTC_WAKEUP, cal.timeInMillis, pi)
-                          }
+                          try { am.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, cal.timeInMillis, pi) }
+                          catch (_: Exception) { am.set(AlarmManager.RTC_WAKEUP, cal.timeInMillis, pi) }
                       }
                   }
               }
@@ -317,7 +315,7 @@ jobs:
           sed -i '/<manifest/a <uses-permission android:name="android.permission.INTERNET"/><uses-permission android:name="android.permission.POST_NOTIFICATIONS"/><uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM"/><uses-permission android:name="android.permission.USE_EXACT_ALARM"/>' android/app/src/main/AndroidManifest.xml
           sed -i 's/<\/application>/<receiver android:name=".PrayerAlarmReceiver" android:exported="true"\/><receiver android:name=".QuranWidget" android:label="Sirat Verse Widget" android:exported="true"><intent-filter><action android:name="android.appwidget.action.APPWIDGET_UPDATE"\/><\/intent-filter><meta-data android:name="android.appwidget.provider" android:resource="@xml\/info_quran"\/><\/receiver><receiver android:name=".PrayerWidget" android:label="Sirat Prayer Widget" android:exported="true"><intent-filter><action android:name="android.appwidget.action.APPWIDGET_UPDATE"\/><\/intent-filter><meta-data android:name="android.appwidget.provider" android:resource="@xml\/info_prayer"\/><\/receiver><\/application>/g' android/app/src/main/AndroidManifest.xml
 
-          flutter pub add http shared_preferences audioplayers
+          flutter pub add http shared_preferences audioplayers share_plus path_provider
           cat << 'EOF' >> pubspec.yaml
             fonts:
               - family: QuranFont
@@ -329,5 +327,5 @@ jobs:
       - name: Upload Sirat Official APK
         uses: actions/upload-artifact@v4
         with:
-          name: Sirat-v1.0.0-Official-APK
+          name: Sirat-v4.0.0-Official-APK
           path: build/app/outputs/flutter-apk/app-release.apk
